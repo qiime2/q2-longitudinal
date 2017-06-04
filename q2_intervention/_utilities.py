@@ -106,8 +106,8 @@ def _between_subject_distance_distribution(
 def _get_paired_differences(df, pairs, category):
     result = []
     for pre_idx, post_idx in pairs:
-        pre_value = df[category][pre_idx]
-        post_value = df[category][post_idx]
+        pre_value = float(df[category][pre_idx])
+        post_value = float(df[category][post_idx])
         paired_difference = post_value - pre_value
         if not np.isnan(paired_difference):
             result.append(paired_difference)
