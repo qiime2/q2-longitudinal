@@ -7,14 +7,11 @@
 # ----------------------------------------------------------------------------
 import qiime2
 import pandas as pd
-from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution,
-                         _get_paired_differences, test_paired_differences,
-                         _multiple_group_difference, per_method_pairwise_tests,
-                         boxplot_from_dict, _stats_and_visuals)
+                         _get_paired_differences, _stats_and_visuals)
 
 
 def paired_differences(output_dir: str, table: pd.DataFrame,

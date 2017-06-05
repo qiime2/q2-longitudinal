@@ -69,8 +69,7 @@ plugin.visualizers.register_function(
     function=paired_differences,
     inputs={'table': FeatureTable[Frequency]},
     parameters={**base_parameters,
-                'metric': Str,
-    },
+                'metric': Str},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
@@ -97,8 +96,7 @@ plugin.visualizers.register_function(
     function=pairwise_distance,
     inputs={'distance_matrix': DistanceMatrix},
     parameters={**base_parameters,
-                'between_group_distance': Bool,
-    },
+                'between_group_distance': Bool},
     input_descriptions={'distance_matrix': (
         'Matrix of distances between pairs of samples.')},
     parameter_descriptions={
