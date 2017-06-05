@@ -51,18 +51,6 @@ qiime intervention paired-differences \
 	--p-individual-id-category studyid \
 	--o-visualization ecam-delivery \
 	--p-no-drop-duplicates
-qiime intervention paired-differences \
-	--i-table ecam-table-taxa.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric 'k__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Lachnospiraceae;g__;s__' \
-	--p-group-category diet_3 \
-	--p-state-category month \
-	--p-state-pre 0 \
-	--p-state-post 12 \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-diet \
-	--p-no-drop-duplicates \
-	--verbose
 ```
 
 ### Paired pairwise distance testing
