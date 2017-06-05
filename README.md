@@ -22,7 +22,17 @@ Here we use `paired-differences` to assess whether alpha diversity (sequence var
 ```
 cd ~/Desktop/projects/q2-intervention/q2_intervention/test_data
 
-qiime intervention paired-differences --i-table ecam-table-taxa.qza --m-metadata-file ecam_map_maturity.txt --p-metric observed_otus --p-group-category delivery --p-state-category month --p-state-pre 0 --p-state-post 12 --p-individual-id-category studyid --o-visualization ecam-delivery-alpha --p-no-drop-duplicates
+qiime intervention paired-differences \
+	--i-table ecam-table-taxa.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-metric observed_otus \
+	--p-group-category delivery \
+	--p-state-category month \
+	--p-state-pre 0 \
+	--p-state-post 12 \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-delivery-alpha \
+	--p-no-drop-duplicates
 ```
 
 #### Paired differences in feature table
@@ -30,8 +40,29 @@ qiime intervention paired-differences --i-table ecam-table-taxa.qza --m-metadata
 We can also use this method to measure changes in the abundances of specific features of interest. In this example, we test whether the abundance of genus Bacteroides changed significantly between 6 and 18 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that `paired-differences` currently requires a feature table as input whether or not those data are actually used in the analysis.
 
 ```
-qiime intervention paired-differences --i-table ecam-table-taxa.qza --m-metadata-file ecam_map_maturity.txt --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' --p-group-category delivery --p-state-category month --p-state-pre 6 --p-state-post 18 --p-individual-id-category studyid --o-visualization ecam-delivery --p-no-drop-duplicates
-qiime intervention paired-differences --i-table ecam-table-taxa.qza --m-metadata-file ecam_map_maturity.txt --p-metric 'k__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Lachnospiraceae;g__;s__' --p-group-category diet_3 --p-state-category month --p-state-pre 0 --p-state-post 12 --p-individual-id-category studyid --o-visualization ecam-diet --p-no-drop-duplicates --verbose
+qiime intervention paired-differences \
+	--i-table ecam-table-taxa.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
+	--p-group-category delivery \
+	--p-state-category month \
+	--p-state-pre 6 \
+	--p-state-post 18 \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-delivery \
+	--p-no-drop-duplicates
+qiime intervention paired-differences \
+	--i-table ecam-table-taxa.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-metric 'k__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Lachnospiraceae;g__;s__' \
+	--p-group-category diet_3 \
+	--p-state-category month \
+	--p-state-pre 0 \
+	--p-state-post 12 \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-diet \
+	--p-no-drop-duplicates \
+	--verbose
 ```
 
 ### Paired pairwise distance testing
@@ -40,10 +71,29 @@ The `pairwise-distance` visualizer also assesses changes between paired samples 
 
 In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the within- and between-subject distances differed between these groups. 
 ```
-qiime intervention pairwise-distance --i-distance-matrix ecam-unweighted-distance-matrix.qza --m-metadata-file ecam_map_maturity.txt --p-group-category delivery --p-state-category month --p-state-pre 0 --p-state-post 12 --p-individual-id-category studyid --o-visualization ecam-delivery-distance --p-no-drop-duplicates
+qiime intervention pairwise-distance \
+	--i-distance-matrix ecam-unweighted-distance-matrix.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-group-category delivery \
+	--p-state-category month \
+	--p-state-pre 0 \
+	--p-state-post 12 \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-delivery-distance \
+	--p-no-drop-duplicates
 ```
 
 If between-subject distances are not important, the same visualization can be performed excluding these distances with the following command:
 ```
-qiime intervention pairwise-distance --i-distance-matrix ecam-unweighted-distance-matrix.qza --m-metadata-file ecam_map_maturity.txt --p-group-category delivery --p-state-category month --p-state-pre 0 --p-state-post 12 --p-individual-id-category studyid --o-visualization ecam-delivery-distance-no-between --p-no-drop-duplicates --p-no-between-group-distance
+qiime intervention pairwise-distance \
+	--i-distance-matrix ecam-unweighted-distance-matrix.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-group-category delivery \
+	--p-state-category month \
+	--p-state-pre 0 \
+	--p-state-post 12 \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-delivery-distance-no-between \
+	--p-no-drop-duplicates \
+	--p-no-between-group-distance
 ```
