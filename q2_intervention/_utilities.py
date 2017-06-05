@@ -70,8 +70,8 @@ def _between_subject_distance_distribution(
         distance_matrix: DistanceMatrix, pairs, metadata=None,
         group_category=None, group_values=None):
     '''Extract distance distribution between all sample pairs in distance
-    matrix, if samples are not listed in pairs; optionally, also if neither
-    sample is a not member of group_category's group_values in metadata
+    matrix, if samples are not listed in pairs; optionally, also if both
+    samples are members of group_category's group_values in metadata
     pd.DataFrame.
     pairs: list of tuples
         paired samples to exclude from "between" distribution
@@ -80,18 +80,18 @@ def _between_subject_distance_distribution(
     group_category: str
         dataframe category to search
     group_values: list
-        groups to exclude
+        groups to include
     '''
     results = dict()
     for i in distance_matrix.ids:
         # ignore sample if belongs to group
         if group_category and group_values:
-            if metadata.loc[i][group_category] in group_values:
+            if metadata.loc[i][group_category] not in group_values:
                 continue
         for j in distance_matrix.ids:
             # ignore sample if belongs to group
             if group_category and group_values:
-                if metadata.loc[j][group_category] in group_values:
+                if metadata.loc[j][group_category] not in group_values:
                     continue
             if ((i, j) not in pairs and
                     (j, i) not in pairs and
@@ -209,35 +209,35 @@ def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
     return ax
 
 
-def _visualize(output_dir, multiple_group_test=None, pairwise_tests=None,
-               paired_difference_tests=None, plot=None, summary=None):
+def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
+               paired_difference_tests=False, plot=False, summary=False):
 
     pd.set_option('display.max_colwidth', -1)
 
-    if summary is not None:
+    if summary is not False:
         summary = summary.to_frame().to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
-    if multiple_group_test is not None:
+    if multiple_group_test is not False:
         multiple_group_test = multiple_group_test.to_frame().to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
-    if pairwise_tests is not None:
+    if pairwise_tests is not False:
         pairwise_tests.to_csv(join(output_dir, 'pairwise_tests.tsv'), sep='\t')
         pairwise_tests = pairwise_tests.to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
-    if paired_difference_tests is not None:
+    if paired_difference_tests is not False:
         paired_difference_tests.to_csv(join(
             output_dir, 'paired_difference_tests.tsv'), sep='\t')
         paired_difference_tests = paired_difference_tests.to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
-    if plot is not None:
+    if plot is not False:
         plot.savefig(join(output_dir, 'plot.png'), bbox_inches='tight')
         plot.savefig(join(output_dir, 'plot.pdf'), bbox_inches='tight')
         plt.close('all')
@@ -250,3 +250,42 @@ def _visualize(output_dir, multiple_group_test=None, pairwise_tests=None,
         'paired_difference_tests': paired_difference_tests,
         'plot': plot,
     })
+
+
+def _stats_and_visuals(output_dir, pairs, metric, group_category,
+                       state_category, state_pre, state_post,
+                       individual_id_category, parametric, pallette,
+                       drop_duplicates,
+                       multiple_group_test=True, pairwise_tests=True,
+                       paired_difference_tests=True, boxplot=True):
+    # kruskal test or ANOVA between groups
+    if multiple_group_test:
+        multiple_group_test = _multiple_group_difference(
+            pairs.values(), parametric=parametric)
+
+    # pairwise testing
+    if pairwise_tests:
+        pairwise_tests = per_method_pairwise_tests(
+            pairs, paired=False, parametric=parametric)
+
+    # paired difference tests
+    if paired_difference_tests:
+        paired_difference_tests = test_paired_differences(
+            pairs, parametric=parametric)
+
+    # boxplots
+    if boxplot:
+        boxplot = boxplot_from_dict(
+            pairs, pallette=pallette, y_label=metric, x_label=group_category)
+    boxplot = boxplot.get_figure()
+
+    summary = pd.Series(
+        [metric, group_category, state_category, state_pre, state_post,
+         individual_id_category, parametric, drop_duplicates],
+        index=['Metric', 'Group category', 'State category', 'State pre',
+               'State post', 'Individual ID category', 'Parametric',
+               'Drop duplicates'],
+        name='Paired difference tests')
+
+    _visualize(output_dir, multiple_group_test, pairwise_tests,
+               paired_difference_tests, boxplot, summary=summary)

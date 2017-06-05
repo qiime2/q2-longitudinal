@@ -14,9 +14,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution,
                          _get_paired_differences, test_paired_differences,
                          _multiple_group_difference, per_method_pairwise_tests,
-                         boxplot_from_dict, _visualize)
-
-
+                         boxplot_from_dict, _stats_and_visuals)
 
 
 def paired_differences(output_dir: str, table: pd.DataFrame,
@@ -49,29 +47,44 @@ def paired_differences(output_dir: str, table: pd.DataFrame,
             drop_duplicates=drop_duplicates)
         pairs[group] = _get_paired_differences(metadata, group_pairs, metric)
 
-    # kruskal test or ANOVA between groups
-    multiple_group_test = _multiple_group_difference(
-        pairs.values(), parametric=parametric)
+    # Calculate test statistics and generate boxplots
+    _stats_and_visuals(
+        output_dir, pairs, metric, group_category, state_category, state_pre,
+        state_post, individual_id_category, parametric, pallette,
+        drop_duplicates, multiple_group_test=True, pairwise_tests=True,
+        paired_difference_tests=True, boxplot=True)
 
-    # pairwise testing
-    pairwise_tests = per_method_pairwise_tests(
-        pairs, paired=False, parametric=parametric)
 
-    # paired difference tests
-    paired_difference_tests = test_paired_differences(
-        pairs, parametric=parametric)
+def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
+                      metadata: qiime2.Metadata,
+                      group_category: str, state_category: str='Time',
+                      state_pre: str='Pre', state_post: str='post',
+                      individual_id_category: str='SubjectID',
+                      parametric: bool=True, pallette: str='Set1',
+                      drop_duplicates: bool=True, between_group_distance=True):
 
-    # boxplots
-    ax = boxplot_from_dict(
-        pairs, pallette=pallette, y_label=metric, x_label=group_category)
+    metadata = metadata.to_dataframe()
 
-    summary = pd.Series(
-        [metric, group_category, state_category, state_pre, state_post,
-         individual_id_category, parametric, drop_duplicates],
-        index=['Metric', 'Group category', 'State category', 'State pre',
-               'State post', 'Individual ID category', 'Parametric',
-               'Drop duplicates'],
-        name='Paired difference tests')
+    # calculate pairwise distance distributions
+    pairs = {}
+    group_names = metadata[group_category].unique()
+    for group in group_names:
+        group_pairs = _get_group_pairs(
+            metadata, group_value=group,
+            individual_id_category=individual_id_category,
+            group_category=group_category, state_category=state_category,
+            state_values=[state_pre, state_post],
+            drop_duplicates=drop_duplicates)
+        pairs[group] = _extract_distance_distribution(
+            distance_matrix, group_pairs)
+        if between_group_distance:
+            between = group + '_between_subject'
+            pairs[between] = _between_subject_distance_distribution(
+                distance_matrix, group_pairs, metadata, group_category, group)
 
-    _visualize(output_dir, multiple_group_test, pairwise_tests,
-               paired_difference_tests, ax.get_figure(), summary=summary)
+    # Calculate test statistics and generate boxplots
+    _stats_and_visuals(
+        output_dir, pairs, 'distance', group_category,
+        state_category, state_pre, state_post, individual_id_category,
+        parametric, pallette, drop_duplicates, multiple_group_test=True,
+        pairwise_tests=True, paired_difference_tests=False, boxplot=True)
