@@ -40,7 +40,7 @@ def _get_group_pairs(df, group_value, individual_id_category='SubjectID',
             if len(individual_at_state_idx) > 1:
                 print("Multiple values for {0} {1} at {2} {3} ({4})".format(
                     individual_id_category, individual_id, state_category,
-                    state_value, ' '.join(individual_at_state_idx)))
+                    state_value, ' '.join(map(str, individual_at_state_idx))))
                 if drop_duplicates:
                     break
                 else:
@@ -93,6 +93,9 @@ def _between_subject_distance_distribution(
             if group_category and group_values:
                 if metadata.loc[j][group_category] not in group_values:
                     continue
+            # ignore sample if i = j (self match)
+            if i == j:
+                continue
             if ((i, j) not in pairs and
                     (j, i) not in pairs and
                     (j, i) not in results):
@@ -114,7 +117,7 @@ def _get_paired_differences(df, pairs, category):
     return result
 
 
-def test_paired_differences(groups, parametric=True):
+def compare_paired_differences(groups, parametric=True):
     pvals = []
     for name, values in groups.items():
         try:
@@ -145,7 +148,7 @@ def _multiple_group_difference(groups, parametric=True):
     return multiple_group_test
 
 
-def per_method_pairwise_tests(groups, paired=False, parametric=True):
+def per_method_pairwise_stats(groups, paired=False, parametric=True):
     '''Perform mann whitney U tests between group distance distributions,
     followed by FDR correction. Returns pandas dataframe of p-values.
     groups: dict
@@ -265,12 +268,12 @@ def _stats_and_visuals(output_dir, pairs, metric, group_category,
 
     # pairwise testing
     if pairwise_tests:
-        pairwise_tests = per_method_pairwise_tests(
+        pairwise_tests = per_method_pairwise_stats(
             pairs, paired=False, parametric=parametric)
 
     # paired difference tests
     if paired_difference_tests:
-        paired_difference_tests = test_paired_differences(
+        paired_difference_tests = compare_paired_differences(
             pairs, parametric=parametric)
 
     # boxplots
