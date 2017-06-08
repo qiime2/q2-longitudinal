@@ -93,9 +93,6 @@ def linear_mixed_effects(output_dir: str, table: pd.DataFrame,
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
-    metadata = metadata[[metric, state_category, individual_id_category,
-                         *group_categories]]
-    metadata = metadata.dropna(axis=0, how='any')
 
     # Generate LME model summary
     formula = "{0} ~ {1} * {2}".format(

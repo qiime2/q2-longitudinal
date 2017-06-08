@@ -16,7 +16,7 @@ from q2_intervention._utilities import (
     _between_subject_distance_distribution, compare_paired_differences,
     _multiple_group_difference, per_method_pairwise_stats)
 from q2_intervention._intervention import (
-    paired_differences, pairwise_distance)
+    paired_differences, pairwise_distance, linear_mixed_effects)
 
 from . import InterventionTestPluginBase
 
@@ -133,6 +133,12 @@ class InterventionTests(InterventionTestPluginBase):
         pairwise_distance(
             self.temp_dir.name, self.md_ecam_dm, self.md_ecam_fp,
             'delivery', 'month', 0, 3, 'studyid')
+
+    def test_linear_mixed_effects(self):
+        linear_mixed_effects(
+            self.temp_dir.name, self.table_ecam_fp, self.md_ecam_fp,
+            'observed_otus', 'delivery,diet,antiexposedall', 'month',
+            'studyid')
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
