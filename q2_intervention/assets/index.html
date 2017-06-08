@@ -15,6 +15,28 @@
       </a>
     </div>
     {% endif %}
+    {% if model_summary %}
+    <h2>Model summary</h1>
+    <div class="text-center">
+      <div class="col-lg-12">
+        {{ model_summary }}
+        <a href="model_summary.tsv">
+          <p>Download summary as tsv</p>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+    {% if model_results %}
+    <h2>Model results</h1>
+    <div class="text-center">
+      <div class="col-lg-12">
+        {{ model_results }}
+        <a href="model_results.tsv">
+          <p>Download results as tsv</p>
+        </a>
+      </div>
+    </div>
+    {% endif %}
     {% if paired_difference_tests %}
     <h2>Paired difference tests</h1>
     <div class="col-lg-12">

@@ -7,9 +7,10 @@
 # ----------------------------------------------------------------------------
 
 
-from qiime2.plugin import Str, Bool, Plugin, Metadata, Choices
+from qiime2.plugin import Str, Bool, Plugin, Metadata, Choices, Range, Float
 from q2_types.feature_table import FeatureTable, Frequency
-from ._intervention import paired_differences, pairwise_distance
+from ._intervention import (paired_differences, pairwise_distance,
+                            linear_mixed_effects)
 import q2_intervention
 from q2_types.distance_matrix import DistanceMatrix
 
@@ -24,16 +25,20 @@ plugin = Plugin(
 
 base_parameters = {
     'metadata': Metadata,
-    'group_category': Str,
     'state_category': Str,
-    'state_pre': Str,
-    'state_post': Str,
     'individual_id_category': Str,
-    'parametric': Bool,
-    'pallette': Str % Choices([
+    'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
         'Dark2', 'tab10', 'tab20', 'tab20b', 'tab20c', 'viridis', 'plasma',
         'inferno', 'magma', 'terrain', 'rainbow']),
+}
+
+paired_params = {
+    **base_parameters,
+    'group_category': Str,
+    'state_pre': Str,
+    'state_post': Str,
+    'parametric': Bool,
     'drop_duplicates': Bool,
 }
 
@@ -41,12 +46,8 @@ base_parameter_descriptions = {
         'metadata': (
             'Sample metadata containing group_category,  state_category, '
             'individual_id_category, and optionally metric values.'),
-        'group_category': (
-            'Metadata category on which to separate groups for comparison'),
         'state_category': ('Metadata category containing state (e.g., Time) '
                            'across which samples are paired.'),
-        'state_pre': 'Baseline state category value.',
-        'state_post': 'State category value to pair with baseline.',
         'individual_id_category': (
             'Metadata category containing subject IDs  to use for pairing '
             'samples. WARNING: if duplicates exist for an individual ID at '
@@ -54,10 +55,18 @@ base_parameter_descriptions = {
             'reported in standard output by default. Set duplicates="ignore" '
             'to instead randomly select one member, and use --verbose to list '
             'conflicts.'),
+        'palette': 'Color palette to use for generating boxplots.',
+}
+
+paired_parameter_descriptions = {
+        **base_parameter_descriptions,
+        'group_category': (
+            'Metadata category on which to separate groups for comparison'),
+        'state_pre': 'Baseline state category value.',
+        'state_post': 'State category value to pair with baseline.',
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
                        'parametric (Kruskal-Wallis, Wilcoxon, and Mann-'
                        'Whitney U tests) statistical tests.'),
-        'pallette': 'Color palette to use for generating boxplots.',
         'drop_duplicates': (
             'If True, will discard all subject IDs with duplicate samples '
             'at either state_pre or state_post. If False, will instead '
@@ -68,12 +77,12 @@ base_parameter_descriptions = {
 plugin.visualizers.register_function(
     function=paired_differences,
     inputs={'table': FeatureTable[Frequency]},
-    parameters={**base_parameters,
+    parameters={**paired_params,
                 'metric': Str},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
-        **base_parameter_descriptions,
+        **paired_parameter_descriptions,
         'metric': 'Numerical metadata or artifact category to test.',
     },
     name='Paired difference testing and boxplots',
@@ -95,12 +104,12 @@ plugin.visualizers.register_function(
 plugin.visualizers.register_function(
     function=pairwise_distance,
     inputs={'distance_matrix': DistanceMatrix},
-    parameters={**base_parameters,
+    parameters={**paired_params,
                 'between_group_distance': Bool},
     input_descriptions={'distance_matrix': (
         'Matrix of distances between pairs of samples.')},
     parameter_descriptions={
-        **base_parameter_descriptions,
+        **paired_parameter_descriptions,
         'between_group_distance': (
             'Whether to compare within-subject distances to distances between '
             'all subjects that share the same metadata group_category.')
@@ -119,4 +128,36 @@ plugin.visualizers.register_function(
         'distances between subjects that share the same metadata '
         'group_category. Finally, produces boxplots of paired distance '
         'distributions for each group.')
+)
+
+
+plugin.visualizers.register_function(
+    function=linear_mixed_effects,
+    inputs={'table': FeatureTable[Frequency]},
+    parameters={**base_parameters,
+                'metric': Str,
+                'group_categories': Str,
+                'lowess': Bool,
+                'ci': Float % Range(0, 100)},
+    input_descriptions={'table': (
+        'Feature table to optionally use for paired comparisons.')},
+    parameter_descriptions={
+        **base_parameter_descriptions,
+        'metric': ('Dependent variable category name. Must be a category '
+                   '(column) name located in the metadata or table files.'),
+        'group_categories': (
+            'Comma-separated list (without spaces) of metadata categories to '
+            'use as independent covariates used to determine mean structure '
+            'of "metric".'),
+        'lowess': ('Estimate locally weighted scatterplot smoothing. Note '
+                   'that this will eliminate confidence interval plotting.'),
+        'ci': 'Size of the confidence interval for the regression estimate.',
+    },
+    name='Linear mixed effects modeling',
+    description=(
+        'Linear mixed effects models evaluate the contribution of exogenous '
+        'covariates "group_categories" to a single dependent variable, '
+        '"metric". Perform LME and plot line plots of each group category. A '
+        'feature table artifact is required input, though whether "metric" is '
+        'derived from the feature table or metadata is optional.')
 )

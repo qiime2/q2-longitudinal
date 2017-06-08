@@ -194,7 +194,7 @@ def per_method_pairwise_stats(groups, paired=False, parametric=True):
 
 
 def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
-                      y_max=None, pallette=None, label_rotation=45):
+                      y_max=None, palette=None, label_rotation=45):
     """Generate boxplot of metric (y) by groups (x), input as dict of lists of
     values.
 
@@ -204,7 +204,7 @@ def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
     x_tick_labels = [k for k, v in sorted(groups.items())]
     vals = [v for k, v in sorted(groups.items())]
 
-    ax = sns.boxplot(data=vals, hue=hue, palette=pallette)
+    ax = sns.boxplot(data=vals, hue=hue, palette=palette)
     ax.set_ylim(bottom=y_min, top=y_max)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
@@ -212,8 +212,52 @@ def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
     return ax
 
 
+def lmplot_from_dataframe(state_category, metric, metadata, group_by,
+                          lowess=False, ci=95, palette='Set1'):
+    g = sns.lmplot(state_category, metric, data=metadata, hue=group_by,
+                   fit_reg=True, scatter_kws={"marker": ".", "s": 100},
+                   legend=False, lowess=lowess, ci=ci, palette=palette)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    return g
+
+
+def regplot_subplots_from_dataframe(state_category, metric, metadata, group_by,
+                                    lowess=False, ci=95, palette='Set1'):
+    '''plot a single regplot for each group in group_by.'''
+    f, axes = plt.subplots(len(group_by), figsize=(6, 18))
+    for num in range(len(group_by)):
+        sns.set_palette(palette)
+        for group in metadata[group_by[num]].unique():
+            subset = metadata[metadata[group_by[num]] == group]
+            sns.regplot(state_category, metric, data=subset, fit_reg=True,
+                        scatter_kws={"marker": ".", "s": 100}, label=group,
+                        ax=axes[num], lowess=lowess, ci=ci)
+        axes[num].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    return f
+
+
+def _load_metadata(metadata):
+    metadata = metadata.to_dataframe()
+    metadata = metadata.apply(lambda x: pd.to_numeric(x, errors='ignore'))
+    return metadata
+
+
+def _add_metric_to_metadata(table, metadata, metric):
+    '''find metric in metadata or derive from table and merge into metadata.'''
+    metadata = _load_metadata(metadata)
+    if metric not in metadata.columns:
+        if metric in table.columns:
+            metadata = pd.concat(
+                [metadata, pd.DataFrame(table[metric])], axis=1, join='inner')
+        else:
+            raise ValueError(
+                'metric must be a valid metadata or feature table category.')
+    return metadata
+
+
 def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
-               paired_difference_tests=False, plot=False, summary=False):
+               paired_difference_tests=False, plot=False, summary=False,
+               model_summary=False, model_results=False):
 
     pd.set_option('display.max_colwidth', -1)
 
@@ -240,6 +284,18 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
+    if model_summary is not False:
+        model_summary.to_csv(join(output_dir, 'model_summary.tsv'), sep='\t')
+        model_summary = model_summary.to_html(classes=(
+            "table table-striped table-hover")).replace(
+                'border="1"', 'border="0"')
+
+    if model_results is not False:
+        model_results.to_csv(join(output_dir, 'model_results.tsv'), sep='\t')
+        model_results = model_results.to_html(classes=(
+            "table table-striped table-hover")).replace(
+                'border="1"', 'border="0"')
+
     if plot is not False:
         plot.savefig(join(output_dir, 'plot.png'), bbox_inches='tight')
         plot.savefig(join(output_dir, 'plot.pdf'), bbox_inches='tight')
@@ -248,6 +304,8 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
     index = join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
         'summary': summary,
+        'model_summary': model_summary,
+        'model_results': model_results,
         'multiple_group_test': multiple_group_test,
         'pairwise_tests': pairwise_tests,
         'paired_difference_tests': paired_difference_tests,
@@ -257,7 +315,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
 
 def _stats_and_visuals(output_dir, pairs, metric, group_category,
                        state_category, state_pre, state_post,
-                       individual_id_category, parametric, pallette,
+                       individual_id_category, parametric, palette,
                        drop_duplicates,
                        multiple_group_test=True, pairwise_tests=True,
                        paired_difference_tests=True, boxplot=True):
@@ -279,7 +337,7 @@ def _stats_and_visuals(output_dir, pairs, metric, group_category,
     # boxplots
     if boxplot:
         boxplot = boxplot_from_dict(
-            pairs, pallette=pallette, y_label=metric, x_label=group_category)
+            pairs, palette=palette, y_label=metric, x_label=group_category)
     boxplot = boxplot.get_figure()
 
     summary = pd.Series(

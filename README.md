@@ -85,3 +85,15 @@ qiime intervention pairwise-distance \
 	--p-no-drop-duplicates \
 	--p-no-between-group-distance
 ```
+### Linear mixed effects models
+
+```
+qiime intervention linear-mixed-effects \
+	--i-table ecam-table-taxa.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-metric observed_otus \
+	--p-group-categories delivery,diet,sex,antiexposedall \
+	--p-state-category month \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-lme
+```
