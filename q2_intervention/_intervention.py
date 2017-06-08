@@ -8,12 +8,11 @@
 import qiime2
 import pandas as pd
 from skbio import DistanceMatrix
-from statsmodels.formula.api import mixedlm
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution, _visualize,
                          _get_paired_differences, _stats_and_visuals,
-                         _add_metric_to_metadata,
+                         _add_metric_to_metadata, linear_effects,
                          regplot_subplots_from_dataframe)
 
 
@@ -95,15 +94,9 @@ def linear_mixed_effects(output_dir: str, table: pd.DataFrame,
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
     # Generate LME model summary
-    formula = "{0} ~ {1} * {2}".format(
-        metric, state_category, " * ".join(group_categories))
-    mlm = mixedlm(formula, metadata, groups=metadata[individual_id_category])
-    model_fit = mlm.fit()
-    model_summary, model_results = model_fit.summary().tables
-    model_summary = pd.Series(
-        data = list(model_summary[1].values) + list(model_summary[3].values),
-        index = list(model_summary[0].values) + list(model_summary[2].values),
-        name = 'model summary').to_frame()
+    model_summary, model_results = linear_effects(
+        metadata, metric, state_category, group_categories,
+        individual_id_category)
 
     # Plot dependent variable as function of independent variables
     g = regplot_subplots_from_dataframe(

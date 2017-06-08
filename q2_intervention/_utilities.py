@@ -14,6 +14,8 @@ from itertools import combinations
 import pkg_resources
 import q2templates
 from random import choice
+from statsmodels.formula.api import mixedlm
+from patsy import PatsyError
 
 import numpy as np
 from skbio.stats.distance import MissingIDError
@@ -191,6 +193,38 @@ def per_method_pairwise_stats(groups, paired=False, parametric=True):
     result.sort_index(inplace=True)
 
     return result
+
+
+def linear_effects(metadata, metric, state_category, group_categories,
+                   individual_id_category):
+    # format formula
+    formula = "{0} ~ {1} * {2}".format(
+        metric, state_category, " * ".join(group_categories))
+
+    # generate model
+    try:
+        mlm = mixedlm(
+            formula, metadata, groups=metadata[individual_id_category])
+
+    # semicolon-delimited taxonomies cause an error; rename and run
+    except (SyntaxError, PatsyError):
+        new_metric = metric.split(';')[-1]
+        metadata[new_metric] = metadata[metric]
+        formula = "{0} ~ {1} * {2}".format(
+            new_metric, state_category, " * ".join(group_categories))
+        mlm = mixedlm(
+            formula, metadata, groups=metadata[individual_id_category])
+
+    model_fit = mlm.fit()
+
+    # summarize model and format prettily
+    model_summary, model_results = model_fit.summary().tables
+    model_summary = pd.Series(
+        data=list(model_summary[1].values) + list(model_summary[3].values),
+        index=list(model_summary[0].values) + list(model_summary[2].values),
+        name='model summary').to_frame()
+
+    return model_summary, model_results
 
 
 def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,

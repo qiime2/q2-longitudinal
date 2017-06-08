@@ -85,15 +85,32 @@ qiime intervention pairwise-distance \
 	--p-no-drop-duplicates \
 	--p-no-between-group-distance
 ```
+
 ### Linear mixed effects models
+
+Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_category" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group category. The response variable may either be a sample metadata mapping file category or a feature ID in the feature table. Note that this visualization currently requires a feature table as input whether or not those data are actually used in the analysis.
+
+In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `observed_otus`, age, delivery mode, diet, and sex.
 
 ```
 qiime intervention linear-mixed-effects \
 	--i-table ecam-table-taxa.qza \
 	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric observed_otus \
-	--p-group-categories delivery,diet,sex,antiexposedall \
+	--p-metric observed_otus
+	--p-group-categories delivery,diet,sex \
 	--p-state-category month \
 	--p-individual-id-category studyid \
 	--o-visualization ecam-lme
+```
+Second, we demonstrate the use of `linear-mixed-effects` to test the relationship between `Bacteroides`, age, delivery mode, diet, and sex.
+
+```
+qiime intervention linear-mixed-effects \
+	--i-table ecam-table-taxa.qza \
+	--m-metadata-file ecam_map_maturity.txt \
+	--p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
+	--p-group-categories delivery,diet,sex \
+	--p-state-category month \
+	--p-individual-id-category studyid \
+	--o-visualization ecam-bacteroides-lme
 ```
