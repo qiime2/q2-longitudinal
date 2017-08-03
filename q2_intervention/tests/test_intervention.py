@@ -13,8 +13,8 @@ from io import StringIO
 from warnings import filterwarnings
 from q2_intervention._utilities import (
     _get_group_pairs, _extract_distance_distribution, _get_paired_differences,
-    _between_subject_distance_distribution, compare_paired_differences,
-    _multiple_group_difference, per_method_pairwise_stats)
+    _between_subject_distance_distribution, _compare_paired_differences,
+    _multiple_group_difference, _per_method_pairwise_stats)
 from q2_intervention._intervention import (
     paired_differences, pairwise_distance, linear_mixed_effects)
 
@@ -60,12 +60,12 @@ class UtilitiesTests(InterventionTestPluginBase):
         self.assertEqual(res, [0.08, 0.06, 0.07999999999999999])
 
     def test_compare_paired_differences_parametric(self):
-        res = compare_paired_differences(groups, parametric=True)
+        res = _compare_paired_differences(groups, parametric=True)
         self.assertAlmostEqual(res['FDR P']['a'], 9.4882148564067405e-07)
         self.assertAlmostEqual(res['FDR P']['b'], 4.8474685173462082e-09)
 
     def test_compare_paired_differences_nonparametric(self):
-        res = compare_paired_differences(groups, parametric=False)
+        res = _compare_paired_differences(groups, parametric=False)
         self.assertAlmostEqual(res['FDR P']['a'], 0.0021830447373622506)
         self.assertAlmostEqual(res['FDR P']['b'], 0.0021830447373622506)
 
@@ -78,19 +78,20 @@ class UtilitiesTests(InterventionTestPluginBase):
         self.assertAlmostEqual(res['P value'], 6.0957929139040073e-05)
 
     def test_per_method_pairwise_stats_unpaired_parametric(self):
-        res = per_method_pairwise_stats(groups, paired=False, parametric=True)
+        res = _per_method_pairwise_stats(groups, paired=False, parametric=True)
         self.assertAlmostEqual(res['FDR P'][0], 7.693610699436966e-06)
 
     def test_per_method_pairwise_stats_unpaired_nonparametric(self):
-        res = per_method_pairwise_stats(groups, paired=False, parametric=False)
+        res = _per_method_pairwise_stats(
+            groups, paired=False, parametric=False)
         self.assertAlmostEqual(res['FDR P'][0], 6.890936276106502e-05)
 
     def test_per_method_pairwise_stats_paired_parametric(self):
-        res = per_method_pairwise_stats(groups, paired=True, parametric=True)
+        res = _per_method_pairwise_stats(groups, paired=True, parametric=True)
         self.assertAlmostEqual(res['FDR P'][0], 3.085284368834677e-06)
 
     def test_per_method_pairwise_stats_paired_nonparametric(self):
-        res = per_method_pairwise_stats(groups, paired=True, parametric=False)
+        res = _per_method_pairwise_stats(groups, paired=True, parametric=False)
         self.assertAlmostEqual(res['FDR P'][0], 0.0021830447373622506)
 
 
@@ -126,19 +127,40 @@ class InterventionTests(InterventionTestPluginBase):
 
     def test_paired_differences(self):
         paired_differences(
-            self.temp_dir.name, self.table_ecam_fp, self.md_ecam_fp,
-            'observed_otus', 'delivery', 'month', 0, 3, 'studyid')
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, group_category='delivery',
+            state_category='month', state_pre=0, state_post=3,
+            individual_id_category='studyid', metric='observed_otus')
+
+    def test_paired_differences_taxa(self):
+        paired_differences(
+            output_dir=self.temp_dir.name, table=self.table_ecam_fp,
+            metadata=self.md_ecam_fp, group_category='delivery',
+            state_category='month', state_pre=0, state_post=3,
+            individual_id_category='studyid',
+            metric='e2c3ff4f647112723741aa72087f1bfa')
 
     def test_pairwise_distance(self):
         pairwise_distance(
-            self.temp_dir.name, self.md_ecam_dm, self.md_ecam_fp,
-            'delivery', 'month', 0, 3, 'studyid')
+            output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
+            metadata=self.md_ecam_fp, group_category='delivery',
+            state_category='month', state_pre=0, state_post=3,
+            individual_id_category='studyid')
 
     def test_linear_mixed_effects(self):
         linear_mixed_effects(
-            self.temp_dir.name, self.table_ecam_fp, self.md_ecam_fp,
-            'observed_otus', 'delivery,diet,antiexposedall', 'month',
-            'studyid')
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_category='month',
+            group_categories='delivery,diet,antiexposedall',
+            individual_id_category='studyid', metric='observed_otus')
+
+    def test_linear_mixed_effects_taxa(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=self.table_ecam_fp,
+            metadata=self.md_ecam_fp, state_category='month',
+            group_categories='delivery,diet,antiexposedall',
+            individual_id_category='studyid',
+            metric='e2c3ff4f647112723741aa72087f1bfa')
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
