@@ -1,0 +1,26 @@
+sudo: false
+language: python
+python:
+  - "3.5"
+before_install:
+  - export MPLBACKEND='Agg'
+  - wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - export MINICONDA_PREFIX="$HOME/miniconda"
+  - bash miniconda.sh -b -p $MINICONDA_PREFIX
+  - export PATH="$MINICONDA_PREFIX/bin:$PATH"
+  - conda config --set always_yes yes
+  - conda update -q conda
+  - conda info -a
+install:
+  - conda create -q -n test-env --file https://raw.githubusercontent.com/qiime2/environment-files/master/latest/staging/qiime2-latest-conda-linux-64.txt
+  - source activate test-env
+  - conda install -q pytest-cov
+  - pip install .
+  - pip install flake8 coveralls
+script:
+  - python q2_intervention/tests/test_intervention.py
+  - flake8 q2_intervention
+  - py.test --cov=q2_intervention
+after_success:
+  - coveralls
+

@@ -1,4 +1,7 @@
 # q2-intervention
+
+[![Build Status](https://travis-ci.org/nbokulich/q2-intervention.svg?branch=master)](https://travis-ci.org/nbokulich/q2-intervention.svg) [![Coverage Status](https://coveralls.io/repos/github/nbokulich/q2-intervention/badge.svg?branch=master)](https://coveralls.io/github/nbokulich/q2-intervention?branch=master)
+
 QIIME2 plugin for paired sample comparisons.
 
 q2-intervention's actions support statistical and visual comparisons of paired samples, to determine if/how samples change between observational "states". "States" will most commonly be related to time, and the sample pairs should typically consist of the same individual subject  observed at two different time points. For example, patients in a clinical study whose stool samples are collected before and after receiving treatment.
