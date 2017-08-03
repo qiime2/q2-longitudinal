@@ -20,6 +20,10 @@ plugin = Plugin(
     version=q2_intervention.__version__,
     website="https://github.com/nbokulich/q2-intervention",
     package='q2_intervention',
+    description=(
+        'This QIIME 2 plugin supports methods for analysis of time series '
+        'analysis, involving either paired sample comparisons or longitudinal '
+        'study designs.'),
     short_description='Plugin for paired sample and time series analyses.'
 )
 
