@@ -13,44 +13,41 @@ In the examples below, we use data from a longitudinal study of infants' and mot
 
 Paired difference tests determine whether the value of a specific metric changed significantly between pairs of paired samples (e.g., pre- and post-treatment).
 
-This visualizer currently supports comparison of feature abundance (e.g., microbial sequence variants or taxa) in a feature table, or of metadata values in a sample metadata file. Alpha diversity values (e.g., observed sequence variants) and beta diversity values (e.g., principal coordinates) are useful metrics for comparison with these tests, but those data must currently be added to a metadata file before analysis.
+This visualizer currently supports comparison of feature abundance (e.g., microbial sequence variants or taxa) in a feature table, or of metadata values in a sample metadata file. Alpha diversity values (e.g., observed sequence variants) and beta diversity values (e.g., principal coordinates) are useful metrics for comparison with these tests, and should be contained in one of the metadata files given as input.
 
 #### Paired differences in metadata
 
-Here we use `paired-differences` to assess whether alpha diversity (sequence variants, here called `observed_otus`) changed significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups.
+Here we use `paired-differences` to assess whether alpha diversity (sequence variants, here called `observed_otus`) changed significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that the alpha diversity data in this case has already been merged into the sample metadata file; alternatively, alpha diversity data (or other qiime artifacts that can be input as metadata files) can be input as an additional metadata file by adding a second ``--m-metadata-file`` input.
 
 ```
-cd ~/Desktop/projects/q2-intervention/q2_intervention/test_data
-
 qiime intervention paired-differences \
-	--i-table ecam-table-taxa.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric observed_otus \
-	--p-group-category delivery \
-	--p-state-category month \
-	--p-state-pre 0 \
-	--p-state-post 12 \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-delivery-alpha \
-	--p-no-drop-duplicates
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-metric observed_otus \
+    --p-group-category delivery \
+    --p-state-category month \
+    --p-state-pre 0 \
+    --p-state-post 12 \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-delivery-alpha \
+    --p-no-drop-duplicates
 ```
 
 #### Paired differences in feature table
 
-We can also use this method to measure changes in the abundances of specific features of interest. In this example, we test whether the abundance of genus Bacteroides changed significantly between 6 and 18 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that `paired-differences` currently requires a feature table as input whether or not those data are actually used in the analysis.
+We can also use this method to measure changes in the abundances of specific features of interest. In this example, we test whether the abundance of genus Bacteroides changed significantly between 6 and 18 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that `paired-differences` accepts a feature table as optional input to extract taxon abundance data.
 
 ```
 qiime intervention paired-differences \
-	--i-table ecam-table-taxa.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
-	--p-group-category delivery \
-	--p-state-category month \
-	--p-state-pre 6 \
-	--p-state-post 18 \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-delivery \
-	--p-no-drop-duplicates
+    --i-table ecam-table-taxa.qza \
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
+    --p-group-category delivery \
+    --p-state-category month \
+    --p-state-pre 6 \
+    --p-state-post 18 \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-delivery \
+    --p-no-drop-duplicates
 ```
 
 ### Paired pairwise distance testing
@@ -60,57 +57,56 @@ The `pairwise-distance` visualizer also assesses changes between paired samples 
 In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the within- and between-subject distances differed between these groups. 
 ```
 qiime intervention pairwise-distance \
-	--i-distance-matrix ecam-unweighted-distance-matrix.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-group-category delivery \
-	--p-state-category month \
-	--p-state-pre 0 \
-	--p-state-post 12 \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-delivery-distance \
-	--p-no-drop-duplicates
+    --i-distance-matrix ecam-unweighted-distance-matrix.qza \
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-group-category delivery \
+    --p-state-category month \
+    --p-state-pre 0 \
+    --p-state-post 12 \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-delivery-distance \
+    --p-no-drop-duplicates
 ```
 
 If between-subject distances are not important, the same visualization can be performed excluding these distances with the following command:
 ```
 qiime intervention pairwise-distance \
-	--i-distance-matrix ecam-unweighted-distance-matrix.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-group-category delivery \
-	--p-state-category month \
-	--p-state-pre 0 \
-	--p-state-post 12 \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-delivery-distance-no-between \
-	--p-no-drop-duplicates \
-	--p-no-between-group-distance
+    --i-distance-matrix ecam-unweighted-distance-matrix.qza \
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-group-category delivery \
+    --p-state-category month \
+    --p-state-pre 0 \
+    --p-state-post 12 \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-delivery-distance-no-between \
+    --p-no-drop-duplicates \
+    --p-no-between-group-distance
 ```
 
 ### Linear mixed effects models
 
-Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_category" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group category. The response variable may either be a sample metadata mapping file category or a feature ID in the feature table. Note that this visualization currently requires a feature table as input whether or not those data are actually used in the analysis.
+Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_category" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group category. The response variable may either be a sample metadata mapping file category or a feature ID in the feature table.
 
 In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `observed_otus`, age, delivery mode, diet, and sex.
 
 ```
 qiime intervention linear-mixed-effects \
-	--i-table ecam-table-taxa.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric observed_otus
-	--p-group-categories delivery,diet,sex \
-	--p-state-category month \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-lme
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-metric observed_otus \
+    --p-group-categories delivery,diet,sex \
+    --p-state-category month \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-lme
 ```
 Second, we demonstrate the use of `linear-mixed-effects` to test the relationship between `Bacteroides`, age, delivery mode, diet, and sex.
 
 ```
 qiime intervention linear-mixed-effects \
-	--i-table ecam-table-taxa.qza \
-	--m-metadata-file ecam_map_maturity.txt \
-	--p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
-	--p-group-categories delivery,diet,sex \
-	--p-state-category month \
-	--p-individual-id-category studyid \
-	--o-visualization ecam-bacteroides-lme
+    --i-table ecam-table-taxa.qza \
+    --m-metadata-file ecam_map_maturity.txt \
+    --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
+    --p-group-categories delivery,diet,sex \
+    --p-state-category month \
+    --p-individual-id-category studyid \
+    --o-visualization ecam-bacteroides-lme
 ```
