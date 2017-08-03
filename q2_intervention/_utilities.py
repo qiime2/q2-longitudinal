@@ -36,6 +36,9 @@ def _get_group_pairs(df, group_value, individual_id_category='SubjectID',
     for individual_id in set(group_md[individual_id_category]):
         result = []
         for state_value in state_values:
+            state_value = df[state_category].dtype.type(state_value)
+            individual_id = \
+                df[individual_id_category].dtype.type(individual_id)
             _state = df[state_category] == state_value
             _ind = df[individual_id_category] == individual_id
             individual_at_state_idx = group_md[_state & _ind].index
@@ -119,7 +122,7 @@ def _get_paired_differences(df, pairs, category):
     return result
 
 
-def compare_paired_differences(groups, parametric=True):
+def _compare_paired_differences(groups, parametric=True):
     pvals = []
     for name, values in groups.items():
         try:
@@ -150,7 +153,7 @@ def _multiple_group_difference(groups, parametric=True):
     return multiple_group_test
 
 
-def per_method_pairwise_stats(groups, paired=False, parametric=True):
+def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     '''Perform mann whitney U tests between group distance distributions,
     followed by FDR correction. Returns pandas dataframe of p-values.
     groups: dict
@@ -195,8 +198,8 @@ def per_method_pairwise_stats(groups, paired=False, parametric=True):
     return result
 
 
-def linear_effects(metadata, metric, state_category, group_categories,
-                   individual_id_category):
+def _linear_effects(metadata, metric, state_category, group_categories,
+                    individual_id_category):
     # format formula
     formula = "{0} ~ {1} * {2}".format(
         metric, state_category, " * ".join(group_categories))
@@ -227,8 +230,9 @@ def linear_effects(metadata, metric, state_category, group_categories,
     return model_summary, model_results
 
 
-def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
-                      y_max=None, palette=None, label_rotation=45):
+def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
+                       y_min=None, y_max=None, palette=None,
+                       label_rotation=45):
     """Generate boxplot of metric (y) by groups (x), input as dict of lists of
     values.
 
@@ -246,8 +250,8 @@ def boxplot_from_dict(groups, hue=None, y_label=None, x_label=None, y_min=None,
     return ax
 
 
-def lmplot_from_dataframe(state_category, metric, metadata, group_by,
-                          lowess=False, ci=95, palette='Set1'):
+def _lmplot_from_dataframe(state_category, metric, metadata, group_by,
+                           lowess=False, ci=95, palette='Set1'):
     g = sns.lmplot(state_category, metric, data=metadata, hue=group_by,
                    fit_reg=True, scatter_kws={"marker": ".", "s": 100},
                    legend=False, lowess=lowess, ci=ci, palette=palette)
@@ -255,8 +259,9 @@ def lmplot_from_dataframe(state_category, metric, metadata, group_by,
     return g
 
 
-def regplot_subplots_from_dataframe(state_category, metric, metadata, group_by,
-                                    lowess=False, ci=95, palette='Set1'):
+def _regplot_subplots_from_dataframe(state_category, metric, metadata,
+                                     group_by, lowess=False, ci=95,
+                                     palette='Set1'):
     '''plot a single regplot for each group in group_by.'''
     f, axes = plt.subplots(len(group_by), figsize=(6, 18))
     for num in range(len(group_by)):
@@ -280,7 +285,7 @@ def _add_metric_to_metadata(table, metadata, metric):
     '''find metric in metadata or derive from table and merge into metadata.'''
     metadata = _load_metadata(metadata)
     if metric not in metadata.columns:
-        if metric in table.columns:
+        if table is not None and metric in table.columns:
             metadata = pd.concat(
                 [metadata, pd.DataFrame(table[metric])], axis=1, join='inner')
         else:
@@ -360,17 +365,17 @@ def _stats_and_visuals(output_dir, pairs, metric, group_category,
 
     # pairwise testing
     if pairwise_tests:
-        pairwise_tests = per_method_pairwise_stats(
+        pairwise_tests = _per_method_pairwise_stats(
             pairs, paired=False, parametric=parametric)
 
     # paired difference tests
     if paired_difference_tests:
-        paired_difference_tests = compare_paired_differences(
+        paired_difference_tests = _compare_paired_differences(
             pairs, parametric=parametric)
 
     # boxplots
     if boxplot:
-        boxplot = boxplot_from_dict(
+        boxplot = _boxplot_from_dict(
             pairs, palette=palette, y_label=metric, x_label=group_category)
     boxplot = boxplot.get_figure()
 

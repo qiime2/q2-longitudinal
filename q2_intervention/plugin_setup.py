@@ -19,7 +19,8 @@ plugin = Plugin(
     name='intervention',
     version=q2_intervention.__version__,
     website="https://github.com/nbokulich/q2-intervention",
-    package='q2_intervention'
+    package='q2_intervention',
+    short_description='Plugin for paired sample and time series analyses.'
 )
 
 

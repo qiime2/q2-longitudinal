@@ -12,17 +12,18 @@ from skbio import DistanceMatrix
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution, _visualize,
                          _get_paired_differences, _stats_and_visuals,
-                         _add_metric_to_metadata, linear_effects,
-                         regplot_subplots_from_dataframe)
+                         _add_metric_to_metadata, _linear_effects,
+                         _regplot_subplots_from_dataframe, _load_metadata)
 
 
-def paired_differences(output_dir: str, table: pd.DataFrame,
-                       metadata: qiime2.Metadata, metric: str,
-                       group_category: str, state_category: str='Time',
+def paired_differences(output_dir: str, metadata: qiime2.Metadata,
+                       group_category: str, metric: str,
+                       table: pd.DataFrame=None,
+                       state_category: str='Time',
                        state_pre: str='Pre', state_post: str='post',
                        individual_id_category: str='SubjectID',
                        parametric: bool=True, palette: str='Set1',
-                       drop_duplicates: bool=True):
+                       drop_duplicates: bool=True) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -53,9 +54,10 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
                       state_pre: str='Pre', state_post: str='post',
                       individual_id_category: str='SubjectID',
                       parametric: bool=True, palette: str='Set1',
-                      drop_duplicates: bool=True, between_group_distance=True):
+                      drop_duplicates: bool=True,
+                      between_group_distance=True) -> None:
 
-    metadata = metadata.to_dataframe()
+    metadata = _load_metadata(metadata)
 
     # calculate pairwise distance distributions
     pairs = {}
@@ -82,11 +84,11 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
         pairwise_tests=True, paired_difference_tests=False, boxplot=True)
 
 
-def linear_mixed_effects(output_dir: str, table: pd.DataFrame,
-                         metadata: qiime2.Metadata, metric: str,
-                         group_categories: str, state_category: str='Time',
+def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
+                         group_categories: str, metric: str,
+                         table: pd.DataFrame=None, state_category: str='Time',
                          individual_id_category: str='SubjectID',
-                         palette: str='Set1', lowess=False, ci=95):
+                         palette: str='Set1', lowess=False, ci=95) -> None:
     # split group_categories into list of categories
     group_categories = group_categories.split(",")
 
@@ -94,12 +96,12 @@ def linear_mixed_effects(output_dir: str, table: pd.DataFrame,
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
     # Generate LME model summary
-    model_summary, model_results = linear_effects(
+    model_summary, model_results = _linear_effects(
         metadata, metric, state_category, group_categories,
         individual_id_category)
 
     # Plot dependent variable as function of independent variables
-    g = regplot_subplots_from_dataframe(
+    g = _regplot_subplots_from_dataframe(
         state_category, metric, metadata, group_categories, lowess=lowess,
         ci=ci, palette=palette)
 
