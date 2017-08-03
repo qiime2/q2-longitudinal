@@ -17,11 +17,27 @@ from q2_intervention._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats)
 from q2_intervention._intervention import (
     paired_differences, pairwise_distance, linear_mixed_effects)
-
-from . import InterventionTestPluginBase
+import tempfile
+import pkg_resources
+from qiime2.plugin.testing import TestPluginBase
 
 
 filterwarnings("ignore", category=UserWarning)
+
+
+class InterventionTestPluginBase(TestPluginBase):
+    package = 'q2_intervention'
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory(
+            prefix='q2-intervention-test-temp-')
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def get_data_path(self, filename):
+        return pkg_resources.resource_filename(self.package,
+                                               'test_data/%s' % filename)
 
 
 class UtilitiesTests(InterventionTestPluginBase):
@@ -30,7 +46,7 @@ class UtilitiesTests(InterventionTestPluginBase):
         res = _get_group_pairs(
             md, 'a', individual_id_category='ind', group_category='Group',
             state_category='Time', state_values=[1, 2])
-        self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
+        self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5000')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_category='ind', group_category='Group',
             state_category='Time', state_values=[1, 2])
