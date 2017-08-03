@@ -8,4 +8,12 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-__version__ = "0.0.0-dev"
+from ._version import get_versions
+
+
+__version__ = get_versions()['version']
+del get_versions
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions

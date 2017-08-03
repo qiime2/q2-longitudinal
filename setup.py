@@ -10,7 +10,8 @@ from setuptools import find_packages, setup
 
 setup(
     name='q2-intervention',
-    version='0.0.0-dev',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
     packages=find_packages(),
     install_requires=['biom-format', 'pandas', 'scipy',
