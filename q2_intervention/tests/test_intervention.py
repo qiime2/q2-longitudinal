@@ -46,7 +46,7 @@ class UtilitiesTests(InterventionTestPluginBase):
         res = _get_group_pairs(
             md, 'a', individual_id_category='ind', group_category='Group',
             state_category='Time', state_values=[1, 2])
-        self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5000')])
+        self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_category='ind', group_category='Group',
             state_category='Time', state_values=[1, 2])
