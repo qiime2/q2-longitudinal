@@ -1,6 +1,6 @@
 # q2-intervention
 
-[![Build Status](https://travis-ci.org/nbokulich/q2-intervention.svg?branch=master)](https://travis-ci.org/nbokulich/q2-intervention.svg) [![Coverage Status](https://coveralls.io/repos/github/nbokulich/q2-intervention/badge.svg?branch=master)](https://coveralls.io/github/nbokulich/q2-intervention?branch=master)
+[![Build Status](https://travis-ci.org/nbokulich/q2-intervention.svg?branch=master)](https://travis-ci.org/nbokulich/q2-intervention) [![Coverage Status](https://coveralls.io/repos/github/nbokulich/q2-intervention/badge.svg?branch=master)](https://coveralls.io/github/nbokulich/q2-intervention?branch=master)
 
 QIIME2 plugin for paired sample comparisons.
 
