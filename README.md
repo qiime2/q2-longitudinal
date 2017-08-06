@@ -26,11 +26,11 @@ Here we use `paired-differences` to assess whether alpha diversity (sequence var
 qiime intervention paired-differences \
     --m-metadata-file ecam_map_maturity.txt \
     --p-metric observed_otus \
-    --p-group-category delivery \
-    --p-state-category month \
-    --p-state-pre 0 \
-    --p-state-post 12 \
-    --p-individual-id-category studyid \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-state-1 0 \
+    --p-state-2 12 \
+    --p-individual-id-column studyid \
     --o-visualization ecam-delivery-alpha \
     --p-no-drop-duplicates
 ```
@@ -44,29 +44,29 @@ qiime intervention paired-differences \
     --i-table ecam-table-taxa.qza \
     --m-metadata-file ecam_map_maturity.txt \
     --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
-    --p-group-category delivery \
-    --p-state-category month \
-    --p-state-pre 6 \
-    --p-state-post 18 \
-    --p-individual-id-category studyid \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-state-1 6 \
+    --p-state-2 18 \
+    --p-individual-id-column studyid \
     --o-visualization ecam-delivery \
     --p-no-drop-duplicates
 ```
 
 ### Paired pairwise distance testing
 
-The `pairwise-distance` visualizer also assesses changes between paired samples from two different "states", but instead of taking a metadata category or feature ID as input, it operates on a distance matrix to assess the distance between "pre" and "post" sample pairs. The "within-subject" distance between paired samples from an individual are always calculated for each group in the metadata `group_category`; by default, "between-subject" distances between all individuals in a given `group_category` are also calculated and compared. Between-subject distances include all samples sharing the same `group_category` that are not pairs of "within-subject" samples from `state_pre` and `state_post`, but otherwise ignore the `state_category` and `individual_id_category` parameters, so will pair all samples from all time points (or whatever the comparison "state" is) in the distance matrix. Hence, users should carefully consider what type of comparison they wish to perform and, if appropriate, filter the distance matrix prior to using this visualizer. Filtering can be performed with `filter-distance-matrix` as described [here](https://docs.qiime2.org/2017.5/tutorials/filtering/#filtering-distance-matrices).
+The `pairwise-distance` visualizer also assesses changes between paired samples from two different "states", but instead of taking a metadata column or feature ID as input, it operates on a distance matrix to assess the distance between "pre" and "post" sample pairs. The "within-subject" distance between paired samples from an individual are always calculated for each group in the metadata `group_column`; by default, "between-subject" distances between all individuals in a given `group_column` are also calculated and compared. Between-subject distances include all samples sharing the same `group_column` that are not pairs of "within-subject" samples from `state_1` and `state_2`, but otherwise ignore the `state_column` and `individual_id_column` parameters, so will pair all samples from all time points (or whatever the comparison "state" is) in the distance matrix. Hence, users should carefully consider what type of comparison they wish to perform and, if appropriate, filter the distance matrix prior to using this visualizer. Filtering can be performed with `filter-distance-matrix` as described [here](https://docs.qiime2.org/2017.5/tutorials/filtering/#filtering-distance-matrices).
 
 In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the within- and between-subject distances differed between these groups. 
 ```
 qiime intervention pairwise-distance \
     --i-distance-matrix ecam-unweighted-distance-matrix.qza \
     --m-metadata-file ecam_map_maturity.txt \
-    --p-group-category delivery \
-    --p-state-category month \
-    --p-state-pre 0 \
-    --p-state-post 12 \
-    --p-individual-id-category studyid \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-state-1 0 \
+    --p-state-2 12 \
+    --p-individual-id-column studyid \
     --o-visualization ecam-delivery-distance \
     --p-no-drop-duplicates
 ```
@@ -76,11 +76,11 @@ If between-subject distances are not important, the same visualization can be pe
 qiime intervention pairwise-distance \
     --i-distance-matrix ecam-unweighted-distance-matrix.qza \
     --m-metadata-file ecam_map_maturity.txt \
-    --p-group-category delivery \
-    --p-state-category month \
-    --p-state-pre 0 \
-    --p-state-post 12 \
-    --p-individual-id-category studyid \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-state-1 0 \
+    --p-state-2 12 \
+    --p-individual-id-column studyid \
     --o-visualization ecam-delivery-distance-no-between \
     --p-no-drop-duplicates \
     --p-no-between-group-distance
@@ -88,7 +88,7 @@ qiime intervention pairwise-distance \
 
 ### Linear mixed effects models
 
-Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_category" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group category. The response variable may either be a sample metadata mapping file category or a feature ID in the feature table.
+Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_column" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group column. The response variable may either be a sample metadata mapping file column or a feature ID in the feature table.
 
 In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `observed_otus`, age, delivery mode, diet, and sex.
 
@@ -97,8 +97,8 @@ qiime intervention linear-mixed-effects \
     --m-metadata-file ecam_map_maturity.txt \
     --p-metric observed_otus \
     --p-group-categories delivery,diet,sex \
-    --p-state-category month \
-    --p-individual-id-category studyid \
+    --p-state-column month \
+    --p-individual-id-column studyid \
     --o-visualization ecam-lme
 ```
 Second, we demonstrate the use of `linear-mixed-effects` to test the relationship between `Bacteroides`, age, delivery mode, diet, and sex.
@@ -109,7 +109,7 @@ qiime intervention linear-mixed-effects \
     --m-metadata-file ecam_map_maturity.txt \
     --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
     --p-group-categories delivery,diet,sex \
-    --p-state-category month \
-    --p-individual-id-category studyid \
+    --p-state-column month \
+    --p-individual-id-column studyid \
     --o-visualization ecam-bacteroides-lme
 ```

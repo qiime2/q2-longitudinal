@@ -52,7 +52,7 @@ base_parameter_descriptions = {
             'Sample metadata containing group_column,  state_column, '
             'individual_id_column, and optionally metric values.'),
         'state_column': ('Metadata column containing state (e.g., Time) '
-                           'across which samples are paired.'),
+                         'across which samples are paired.'),
         'individual_id_column': (
             'Metadata column containing subject IDs  to use for pairing '
             'samples. WARNING: if duplicates exist for an individual ID at '
