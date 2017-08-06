@@ -27,24 +27,24 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 TEMPLATES = pkg_resources.resource_filename('q2_intervention', 'assets')
 
 
-def _get_group_pairs(df, group_value, individual_id_category='SubjectID',
-                     group_category='Group', state_category='time_point',
-                     state_values=['pre', 'post'], drop_duplicates=True):
+def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
+                     group_column='Group', state_column='time_point',
+                     state_values=['1', '2'], drop_duplicates=True):
     results = []
-    group_members = df[group_category] == group_value
+    group_members = df[group_column] == group_value
     group_md = df[group_members]
-    for individual_id in set(group_md[individual_id_category]):
+    for individual_id in set(group_md[individual_id_column]):
         result = []
         for state_value in state_values:
-            state_value = df[state_category].dtype.type(state_value)
+            state_value = df[state_column].dtype.type(state_value)
             individual_id = \
-                df[individual_id_category].dtype.type(individual_id)
-            _state = df[state_category] == state_value
-            _ind = df[individual_id_category] == individual_id
+                df[individual_id_column].dtype.type(individual_id)
+            _state = df[state_column] == state_value
+            _ind = df[individual_id_column] == individual_id
             individual_at_state_idx = group_md[_state & _ind].index
             if len(individual_at_state_idx) > 1:
                 print("Multiple values for {0} {1} at {2} {3} ({4})".format(
-                    individual_id_category, individual_id, state_category,
+                    individual_id_column, individual_id, state_column,
                     state_value, ' '.join(map(str, individual_at_state_idx))))
                 if drop_duplicates:
                     break
@@ -52,7 +52,7 @@ def _get_group_pairs(df, group_value, individual_id_category='SubjectID',
                     individual_at_state_idx = [choice(individual_at_state_idx)]
             elif len(individual_at_state_idx) == 0:
                 print("No values for {0} {1} at {2} {3}".format(
-                    individual_id_category, individual_id, state_category,
+                    individual_id_column, individual_id, state_column,
                     state_value))
                 break
             result.append(individual_at_state_idx[0])
@@ -73,30 +73,30 @@ def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs):
 
 def _between_subject_distance_distribution(
         distance_matrix: DistanceMatrix, pairs, metadata=None,
-        group_category=None, group_values=None):
+        group_column=None, group_values=None):
     '''Extract distance distribution between all sample pairs in distance
     matrix, if samples are not listed in pairs; optionally, also if both
-    samples are members of group_category's group_values in metadata
+    samples are members of group_column's group_values in metadata
     pd.DataFrame.
     pairs: list of tuples
         paired samples to exclude from "between" distribution
     metadata: pd.DataFrame
         sample metadata
-    group_category: str
-        dataframe category to search
+    group_column: str
+        dataframe column to search
     group_values: list
         groups to include
     '''
     results = dict()
     for i in distance_matrix.ids:
         # ignore sample if belongs to group
-        if group_category and group_values:
-            if metadata.loc[i][group_category] not in group_values:
+        if group_column and group_values:
+            if metadata.loc[i][group_column] not in group_values:
                 continue
         for j in distance_matrix.ids:
             # ignore sample if belongs to group
-            if group_category and group_values:
-                if metadata.loc[j][group_category] not in group_values:
+            if group_column and group_values:
+                if metadata.loc[j][group_column] not in group_values:
                     continue
             # ignore sample if i = j (self match)
             if i == j:
@@ -198,25 +198,25 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     return result
 
 
-def _linear_effects(metadata, metric, state_category, group_categories,
-                    individual_id_category):
+def _linear_effects(metadata, metric, state_column, group_categories,
+                    individual_id_column):
     # format formula
     formula = "{0} ~ {1} * {2}".format(
-        metric, state_category, " * ".join(group_categories))
+        metric, state_column, " * ".join(group_categories))
 
     # generate model
     try:
         mlm = mixedlm(
-            formula, metadata, groups=metadata[individual_id_category])
+            formula, metadata, groups=metadata[individual_id_column])
 
     # semicolon-delimited taxonomies cause an error; rename and run
     except (SyntaxError, PatsyError):
         new_metric = metric.split(';')[-1]
         metadata[new_metric] = metadata[metric]
         formula = "{0} ~ {1} * {2}".format(
-            new_metric, state_category, " * ".join(group_categories))
+            new_metric, state_column, " * ".join(group_categories))
         mlm = mixedlm(
-            formula, metadata, groups=metadata[individual_id_category])
+            formula, metadata, groups=metadata[individual_id_column])
 
     model_fit = mlm.fit()
 
@@ -250,16 +250,16 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     return ax
 
 
-def _lmplot_from_dataframe(state_category, metric, metadata, group_by,
+def _lmplot_from_dataframe(state_column, metric, metadata, group_by,
                            lowess=False, ci=95, palette='Set1'):
-    g = sns.lmplot(state_category, metric, data=metadata, hue=group_by,
+    g = sns.lmplot(state_column, metric, data=metadata, hue=group_by,
                    fit_reg=True, scatter_kws={"marker": ".", "s": 100},
                    legend=False, lowess=lowess, ci=ci, palette=palette)
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return g
 
 
-def _regplot_subplots_from_dataframe(state_category, metric, metadata,
+def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
     '''plot a single regplot for each group in group_by.'''
@@ -268,7 +268,7 @@ def _regplot_subplots_from_dataframe(state_category, metric, metadata,
         sns.set_palette(palette)
         for group in metadata[group_by[num]].unique():
             subset = metadata[metadata[group_by[num]] == group]
-            sns.regplot(state_category, metric, data=subset, fit_reg=True,
+            sns.regplot(state_column, metric, data=subset, fit_reg=True,
                         scatter_kws={"marker": ".", "s": 100}, label=group,
                         ax=axes[num], lowess=lowess, ci=ci)
         axes[num].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -290,7 +290,7 @@ def _add_metric_to_metadata(table, metadata, metric):
                 [metadata, pd.DataFrame(table[metric])], axis=1, join='inner')
         else:
             raise ValueError(
-                'metric must be a valid metadata or feature table category.')
+                'metric must be a valid metadata or feature table column.')
     return metadata
 
 
@@ -352,9 +352,9 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
     })
 
 
-def _stats_and_visuals(output_dir, pairs, metric, group_category,
-                       state_category, state_pre, state_post,
-                       individual_id_category, parametric, palette,
+def _stats_and_visuals(output_dir, pairs, metric, group_column,
+                       state_column, state_1, state_2,
+                       individual_id_column, parametric, palette,
                        drop_duplicates,
                        multiple_group_test=True, pairwise_tests=True,
                        paired_difference_tests=True, boxplot=True):
@@ -376,14 +376,14 @@ def _stats_and_visuals(output_dir, pairs, metric, group_category,
     # boxplots
     if boxplot:
         boxplot = _boxplot_from_dict(
-            pairs, palette=palette, y_label=metric, x_label=group_category)
+            pairs, palette=palette, y_label=metric, x_label=group_column)
     boxplot = boxplot.get_figure()
 
     summary = pd.Series(
-        [metric, group_category, state_category, state_pre, state_post,
-         individual_id_category, parametric, drop_duplicates],
-        index=['Metric', 'Group category', 'State category', 'State pre',
-               'State post', 'Individual ID category', 'Parametric',
+        [metric, group_column, state_column, state_1, state_2,
+         individual_id_column, parametric, drop_duplicates],
+        index=['Metric', 'Group column', 'State column', 'State 1',
+               'State 2', 'Individual ID column', 'Parametric',
                'Drop duplicates'],
         name='Paired difference tests')
 

@@ -30,8 +30,8 @@ plugin = Plugin(
 
 base_parameters = {
     'metadata': Metadata,
-    'state_category': Str,
-    'individual_id_category': Str,
+    'state_column': Str,
+    'individual_id_column': Str,
     'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
         'Dark2', 'tab10', 'tab20', 'tab20b', 'tab20c', 'viridis', 'plasma',
@@ -40,23 +40,23 @@ base_parameters = {
 
 paired_params = {
     **base_parameters,
-    'group_category': Str,
-    'state_pre': Str,
-    'state_post': Str,
+    'group_column': Str,
+    'state_1': Str,
+    'state_2': Str,
     'parametric': Bool,
     'drop_duplicates': Bool,
 }
 
 base_parameter_descriptions = {
         'metadata': (
-            'Sample metadata containing group_category,  state_category, '
-            'individual_id_category, and optionally metric values.'),
-        'state_category': ('Metadata category containing state (e.g., Time) '
+            'Sample metadata containing group_column,  state_column, '
+            'individual_id_column, and optionally metric values.'),
+        'state_column': ('Metadata column containing state (e.g., Time) '
                            'across which samples are paired.'),
-        'individual_id_category': (
-            'Metadata category containing subject IDs  to use for pairing '
+        'individual_id_column': (
+            'Metadata column containing subject IDs  to use for pairing '
             'samples. WARNING: if duplicates exist for an individual ID at '
-            'either state_pre or state_post, that subject will be dropped and '
+            'either state_1 or state_2, that subject will be dropped and '
             'reported in standard output by default. Set duplicates="ignore" '
             'to instead randomly select one member, and use --verbose to list '
             'conflicts.'),
@@ -65,16 +65,16 @@ base_parameter_descriptions = {
 
 paired_parameter_descriptions = {
         **base_parameter_descriptions,
-        'group_category': (
-            'Metadata category on which to separate groups for comparison'),
-        'state_pre': 'Baseline state category value.',
-        'state_post': 'State category value to pair with baseline.',
+        'group_column': (
+            'Metadata column on which to separate groups for comparison'),
+        'state_1': 'Baseline state column value.',
+        'state_2': 'State column value to pair with baseline.',
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
                        'parametric (Kruskal-Wallis, Wilcoxon, and Mann-'
                        'Whitney U tests) statistical tests.'),
         'drop_duplicates': (
             'If True, will discard all subject IDs with duplicate samples '
-            'at either state_pre or state_post. If False, will instead '
+            'at either state_1 or state_2. If False, will instead '
             'choose one representative at random from among duplicates.')
 }
 
@@ -88,7 +88,7 @@ plugin.visualizers.register_function(
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
         **paired_parameter_descriptions,
-        'metric': 'Numerical metadata or artifact category to test.',
+        'metric': 'Numerical metadata or artifact column to test.',
     },
     name='Paired difference testing and boxplots',
     description=(
@@ -117,7 +117,7 @@ plugin.visualizers.register_function(
         **paired_parameter_descriptions,
         'between_group_distance': (
             'Whether to compare within-subject distances to distances between '
-            'all subjects that share the same metadata group_category.')
+            'all subjects that share the same metadata group_column.')
     },
     name='Paired pairwise distance testing and boxplots',
     description=(
@@ -131,7 +131,7 @@ plugin.visualizers.register_function(
         'different treatments) and optionally (if between_group_distance is '
         'True) whether these within-subject distances are different from '
         'distances between subjects that share the same metadata '
-        'group_category. Finally, produces boxplots of paired distance '
+        'group_column. Finally, produces boxplots of paired distance '
         'distributions for each group.')
 )
 
@@ -148,8 +148,8 @@ plugin.visualizers.register_function(
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
         **base_parameter_descriptions,
-        'metric': ('Dependent variable category name. Must be a category '
-                   '(column) name located in the metadata or table files.'),
+        'metric': ('Dependent variable column name. Must be a column '
+                   'name located in the metadata or feature table files.'),
         'group_categories': (
             'Comma-separated list (without spaces) of metadata categories to '
             'use as independent covariates used to determine mean structure '
@@ -162,7 +162,7 @@ plugin.visualizers.register_function(
     description=(
         'Linear mixed effects models evaluate the contribution of exogenous '
         'covariates "group_categories" to a single dependent variable, '
-        '"metric". Perform LME and plot line plots of each group category. A '
+        '"metric". Perform LME and plot line plots of each group column. A '
         'feature table artifact is required input, though whether "metric" is '
         'derived from the feature table or metadata is optional.')
 )
