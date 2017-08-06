@@ -25,8 +25,8 @@ Here we use `paired-differences` to assess whether alpha diversity (sequence var
 ```
 qiime intervention paired-differences \
     --m-metadata-file ecam_map_maturity.txt \
-    --m-metadata-file ecam_observed_otus.qza \
-    --p-metric observed_otus \
+    --m-metadata-file ecam_shannon.qza \
+    --p-metric shannon \
     --p-group-category delivery \
     --p-state-category month \
     --p-state-pre 0 \
