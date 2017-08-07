@@ -26,7 +26,7 @@ filterwarnings("ignore", category=UserWarning)
 
 
 class InterventionTestPluginBase(TestPluginBase):
-    package = 'q2_intervention'
+    package = 'q2_intervention.tests'
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory(
@@ -37,7 +37,7 @@ class InterventionTestPluginBase(TestPluginBase):
 
     def get_data_path(self, filename):
         return pkg_resources.resource_filename(self.package,
-                                               'test_data/%s' % filename)
+                                               'data/%s' % filename)
 
 
 class UtilitiesTests(InterventionTestPluginBase):
