@@ -29,6 +29,7 @@ setup(
     },
     package_data={
         'q2_intervention.tests': ['test_data/*'],
+        'q2_intervention': ['assets/index.html'],
     },
     zip_safe=False,
 )
