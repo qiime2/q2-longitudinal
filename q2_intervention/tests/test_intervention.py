@@ -44,16 +44,16 @@ class UtilitiesTests(InterventionTestPluginBase):
 
     def test_get_group_pairs(self):
         res = _get_group_pairs(
-            md, 'a', individual_id_category='ind', group_category='Group',
-            state_category='Time', state_values=[1, 2])
+            md, 'a', individual_id_column='ind', group_column='Group',
+            state_column='Time', state_values=[1, 2])
         self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
         res = _get_group_pairs(
-            md_dup, 'a', individual_id_category='ind', group_category='Group',
-            state_category='Time', state_values=[1, 2])
+            md_dup, 'a', individual_id_column='ind', group_column='Group',
+            state_column='Time', state_values=[1, 2])
         self.assertEqual(res, [('0', '3')])
         res = _get_group_pairs(
-            md_dup, 'a', individual_id_category='ind', group_category='Group',
-            state_category='Time', state_values=[1, 2], drop_duplicates=False)
+            md_dup, 'a', individual_id_column='ind', group_column='Group',
+            state_column='Time', state_values=[1, 2], drop_duplicates=False)
         self.assertEqual(res[0], ('0', '3'))
         self.assertIn(res[1], [('1', '4'), ('2', '4')])
 
@@ -144,38 +144,38 @@ class InterventionTests(InterventionTestPluginBase):
     def test_paired_differences(self):
         paired_differences(
             output_dir=self.temp_dir.name, table=None,
-            metadata=self.md_ecam_fp, group_category='delivery',
-            state_category='month', state_pre=0, state_post=3,
-            individual_id_category='studyid', metric='observed_otus')
+            metadata=self.md_ecam_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid', metric='observed_otus')
 
     def test_paired_differences_taxa(self):
         paired_differences(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
-            metadata=self.md_ecam_fp, group_category='delivery',
-            state_category='month', state_pre=0, state_post=3,
-            individual_id_category='studyid',
+            metadata=self.md_ecam_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
 
     def test_pairwise_distance(self):
         pairwise_distance(
             output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
-            metadata=self.md_ecam_fp, group_category='delivery',
-            state_category='month', state_pre=0, state_post=3,
-            individual_id_category='studyid')
+            metadata=self.md_ecam_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid')
 
     def test_linear_mixed_effects(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
-            metadata=self.md_ecam_fp, state_category='month',
+            metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery,diet,antiexposedall',
-            individual_id_category='studyid', metric='observed_otus')
+            individual_id_column='studyid', metric='observed_otus')
 
     def test_linear_mixed_effects_taxa(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
-            metadata=self.md_ecam_fp, state_category='month',
+            metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery,diet,antiexposedall',
-            individual_id_category='studyid',
+            individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
 
 
