@@ -1,6 +1,6 @@
 # q2-intervention
 
-[![Build Status](https://travis-ci.org/nbokulich/q2-intervention.svg?branch=master)](https://travis-ci.org/nbokulich/q2-intervention) [![Coverage Status](https://coveralls.io/repos/github/nbokulich/q2-intervention/badge.svg?branch=master)](https://coveralls.io/github/nbokulich/q2-intervention?branch=master)
+[![Build Status](https://travis-ci.org/qiime2/q2-intervention.svg?branch=master)](https://travis-ci.org/qiime2/q2-intervention) [![Coverage Status](https://coveralls.io/repos/github/qiime2/q2-intervention/badge.svg?branch=master)](https://coveralls.io/github/qiime2/q2-intervention?branch=master)
 
 QIIME2 plugin for paired sample comparisons.
 
@@ -27,11 +27,11 @@ qiime intervention paired-differences \
     --m-metadata-file ecam_map_maturity.txt \
     --m-metadata-file ecam_shannon.qza \
     --p-metric shannon \
-    --p-group-category delivery \
-    --p-state-category month \
-    --p-state-pre 0 \
-    --p-state-post 12 \
-    --p-individual-id-category studyid \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-state-1 0 \
+    --p-state-2 12 \
+    --p-individual-id-column studyid \
     --o-visualization ecam-delivery-alpha \
     --p-no-drop-duplicates
 ```
