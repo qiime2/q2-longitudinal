@@ -91,17 +91,20 @@ qiime intervention pairwise-distance \
 
 Linear mixed effects models test the relationship between a single response variable and one or more independent variables. This implementation takes at least one numeric "state_column" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group column. The response variable may either be a sample metadata mapping file column or a feature ID in the feature table.
 
-In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `observed_otus`, age, delivery mode, diet, and sex.
+In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `shannon` (alpha diversity), age, delivery mode, diet, and sex.
 
 ```
 qiime intervention linear-mixed-effects \
     --m-metadata-file ecam_map_maturity.txt \
-    --p-metric observed_otus \
+    --p-metric shannon \
+    --m-metadata-file ecam_shannon.qza \
     --p-group-categories delivery,diet,sex \
     --p-state-column month \
     --p-individual-id-column studyid \
     --o-visualization ecam-lme
 ```
+
+
 Second, we demonstrate the use of `linear-mixed-effects` to test the relationship between `Bacteroides`, age, delivery mode, diet, and sex.
 
 ```
