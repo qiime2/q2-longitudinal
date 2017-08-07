@@ -20,7 +20,7 @@ This visualizer currently supports comparison of feature abundance (e.g., microb
 
 #### Paired differences in metadata
 
-Here we use `paired-differences` to assess whether alpha diversity (sequence variants, here called `observed_otus`) changed significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that the alpha diversity data in this case is contained in a separate artifact, which is the typical (and preferred) approach; alternatively, alpha diversity data (or other data) contained in a sample metadata file can be used as the input `metric`, in which case the second `--m-metadata-file` input is unnecessary.
+Here we use `paired-differences` to assess whether alpha diversity (here, Shannon's diversity index) changed significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that the alpha diversity data in this case is contained in a separate artifact, which is the typical (and preferred) approach; alternatively, alpha diversity data (or other data) contained in a sample metadata file can be used as the input `metric`, in which case the second `--m-metadata-file` input is unnecessary.
 
 ```
 qiime intervention paired-differences \
