@@ -8,7 +8,7 @@ q2-intervention's actions support statistical and visual comparisons of paired s
 
 "States" can also commonly be methodological, in which case sample pairs will usually be the same individual at the same time with two different methods. For example, q2-feature-classifier could compare the effects of different collection methods, storage methods, DNA extraction methods, or any bioinformatic processing steps on the feature composition of individual samples.
 
-In the examples below, we use data from a longitudinal study of infants' and mothers' microbiota from birth through 2 years of life ([doi: 10.1126/scitranslmed.aad7121](http://stm.sciencemag.org/content/8/343/343ra82)). These data are located in the directory `q2_intervention/tutorial_data/`.
+In the examples below, we use data from a longitudinal study of infants' and mothers' microbiota from birth through 2 years of life ([doi: 10.1126/scitranslmed.aad7121](http://stm.sciencemag.org/content/8/343/343ra82)). These data are located in the directory [`q2_intervention/tutorial_data/`](https://github.com/qiime2/q2-intervention/tree/master/q2_intervention/tutorial_data).
 
 ## Examples
 
