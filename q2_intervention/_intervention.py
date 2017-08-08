@@ -13,7 +13,8 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution, _visualize,
                          _get_paired_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
-                         _regplot_subplots_from_dataframe, _load_metadata)
+                         _regplot_subplots_from_dataframe, _load_metadata,
+                         _check_inputs)
 
 
 def paired_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -22,6 +23,8 @@ def paired_differences(output_dir: str, metadata: qiime2.Metadata,
                        parametric: bool=False, palette: str='Set1',
                        drop_replicates: str='error', table: pd.DataFrame=None
                        ) -> None:
+
+    _check_inputs(state_1, state_2)
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -52,6 +55,8 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
                       individual_id_column: str, parametric: bool=False,
                       palette: str='Set1', drop_replicates: str='error',
                       between_group_distance: bool=False) -> None:
+
+    _check_inputs(state_1, state_2)
 
     metadata = _load_metadata(metadata)
 

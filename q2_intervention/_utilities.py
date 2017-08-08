@@ -27,6 +27,13 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 TEMPLATES = pkg_resources.resource_filename('q2_intervention', 'assets')
 
 
+def _check_inputs(state_1, state_2):
+    if state_1 == state_2:
+        raise ValueError((
+            'You have chosen the same value for state_1 and state_2. These '
+            'parameters must be given different values.'))
+
+
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                      group_column='Group', state_column='time_point',
                      state_values=['1', '2'], drop_replicates='error'):
