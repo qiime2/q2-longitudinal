@@ -20,7 +20,7 @@ def paired_differences(output_dir: str, metadata: qiime2.Metadata,
                        group_column: str, metric: str, state_column: str,
                        state_1: str, state_2: str, individual_id_column: str,
                        parametric: bool=False, palette: str='Set1',
-                       drop_duplicates: bool=True, table: pd.DataFrame=None
+                       drop_replicates: str='error', table: pd.DataFrame=None
                        ) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
@@ -35,14 +35,14 @@ def paired_differences(output_dir: str, metadata: qiime2.Metadata,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
             state_values=[state_1, state_2],
-            drop_duplicates=drop_duplicates)
+            drop_replicates=drop_replicates)
         pairs[group] = _get_paired_differences(metadata, group_pairs, metric)
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
         output_dir, pairs, metric, group_column, state_column, state_1,
         state_2, individual_id_column, parametric, palette,
-        drop_duplicates, multiple_group_test=True, pairwise_tests=True,
+        drop_replicates, multiple_group_test=True, pairwise_tests=True,
         paired_difference_tests=True, boxplot=True)
 
 
@@ -50,7 +50,7 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
                       metadata: qiime2.Metadata, group_column: str,
                       state_column: str, state_1: str, state_2: str,
                       individual_id_column: str, parametric: bool=False,
-                      palette: str='Set1', drop_duplicates: bool=True,
+                      palette: str='Set1', drop_replicates: str='error',
                       between_group_distance: bool=False) -> None:
 
     metadata = _load_metadata(metadata)
@@ -64,7 +64,7 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
             state_values=[state_1, state_2],
-            drop_duplicates=drop_duplicates)
+            drop_replicates=drop_replicates)
         pairs[group] = _extract_distance_distribution(
             distance_matrix, group_pairs)
         if between_group_distance:
@@ -76,7 +76,7 @@ def pairwise_distance(output_dir: str, distance_matrix: DistanceMatrix,
     _stats_and_visuals(
         output_dir, pairs, 'distance', group_column,
         state_column, state_1, state_2, individual_id_column,
-        parametric, palette, drop_duplicates, multiple_group_test=True,
+        parametric, palette, drop_replicates, multiple_group_test=True,
         pairwise_tests=True, paired_difference_tests=False, boxplot=True)
 
 

@@ -45,15 +45,15 @@ class UtilitiesTests(InterventionTestPluginBase):
     def test_get_group_pairs(self):
         res = _get_group_pairs(
             md, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2])
+            state_column='Time', state_values=[1, 2], drop_replicates='drop')
         self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2])
+            state_column='Time', state_values=[1, 2], drop_replicates='drop')
         self.assertEqual(res, [('0', '3')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2], drop_duplicates=False)
+            state_column='Time', state_values=[1, 2], drop_replicates='random')
         self.assertEqual(res[0], ('0', '3'))
         self.assertIn(res[1], [('1', '4'), ('2', '4')])
 
@@ -146,7 +146,8 @@ class InterventionTests(InterventionTestPluginBase):
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
-            individual_id_column='studyid', metric='observed_otus')
+            individual_id_column='studyid', metric='observed_otus',
+            drop_replicates='drop')
 
     def test_paired_differences_taxa(self):
         paired_differences(
@@ -154,14 +155,14 @@ class InterventionTests(InterventionTestPluginBase):
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
             individual_id_column='studyid',
-            metric='e2c3ff4f647112723741aa72087f1bfa')
+            metric='e2c3ff4f647112723741aa72087f1bfa', drop_replicates='drop')
 
     def test_pairwise_distance(self):
         pairwise_distance(
             output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
-            individual_id_column='studyid')
+            individual_id_column='studyid', drop_replicates='drop')
 
     def test_linear_mixed_effects(self):
         linear_mixed_effects(
