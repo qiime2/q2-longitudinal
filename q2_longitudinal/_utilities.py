@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017-, q2-intervention development team.
+# Copyright (c) 2017-, q2-longitudinal development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -24,7 +24,7 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
                          ttest_1samp, f_oneway)
 
 
-TEMPLATES = pkg_resources.resource_filename('q2_intervention', 'assets')
+TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',

@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017--, q2-intervention development team.
+# Copyright (c) 2017--, q2-longitudinal development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
