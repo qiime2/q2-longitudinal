@@ -27,7 +27,7 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
-def _check_inputs(state_1, state_2):
+def _validate_input_values(state_1, state_2):
     if state_1 == state_2:
         raise ValueError((
             'You have chosen the same value for state_1 and state_2. These '
@@ -36,7 +36,7 @@ def _check_inputs(state_1, state_2):
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                      group_column='Group', state_column='time_point',
-                     state_values=['1', '2'], drop_replicates='error'):
+                     state_values=['1', '2'], replicate_handling='error'):
     results = []
     group_members = df[group_column] == group_value
     group_md = df[group_members]
@@ -52,15 +52,15 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                 print("Multiple values for {0} {1} at {2} {3} ({4})".format(
                     individual_id_column, individual_id, state_column,
                     state_value, ' '.join(map(str, individual_at_state_idx))))
-                if drop_replicates == 'error':
+                if replicate_handling == 'error':
                     raise ValueError((
                         'Replicate values for individual {0} at state {1}. '
                         'Remove replicate values from input files or set '
-                        'drop_replicates parameter to select how replicates '
-                        'are handled.'))
-                elif drop_replicates == 'drop':
+                        'replicate_handling parameter to select how '
+                        'replicates are handled.'))
+                elif replicate_handling == 'drop':
                     break
-                elif drop_replicates == 'random':
+                elif replicate_handling == 'random':
                     individual_at_state_idx = [choice(individual_at_state_idx)]
             elif len(individual_at_state_idx) == 0:
                 print("No values for {0} {1} at {2} {3}".format(
@@ -367,7 +367,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
 def _stats_and_visuals(output_dir, pairs, metric, group_column,
                        state_column, state_1, state_2,
                        individual_id_column, parametric, palette,
-                       drop_replicates,
+                       replicate_handling,
                        multiple_group_test=True, pairwise_tests=True,
                        paired_difference_tests=True, boxplot=True):
     # kruskal test or ANOVA between groups
@@ -393,7 +393,7 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
 
     summary = pd.Series(
         [metric, group_column, state_column, state_1, state_2,
-         individual_id_column, parametric, drop_replicates],
+         individual_id_column, parametric, replicate_handling],
         index=['Metric', 'Group column', 'State column', 'State 1',
                'State 2', 'Individual ID column', 'Parametric',
                'Drop replicates'],

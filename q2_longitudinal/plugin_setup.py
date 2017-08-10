@@ -44,8 +44,8 @@ paired_params = {
     'state_1': Str,
     'state_2': Str,
     'parametric': Bool,
-    'drop_replicates': Str % Choices(
-        ['error', 'random', 'drop', 'mean', 'median']),
+    'replicate_handling': Str % Choices(
+        ['error', 'random', 'drop']),
 }
 
 base_parameter_descriptions = {
@@ -58,9 +58,9 @@ base_parameter_descriptions = {
             'Metadata column containing subject IDs  to use for pairing '
             'samples. WARNING: if replicates exist for an individual ID at '
             'either state_1 or state_2, that subject will be dropped and '
-            'reported in standard output by default. Set replicates="ignore" '
-            'to instead randomly select one member, and use --verbose to list '
-            'conflicts.'),
+            'reported in standard output by default. Set '
+            'replicate_handling="random" to instead randomly select one '
+            'member, and use --verbose to list conflicts.'),
         'palette': 'Color palette to use for generating boxplots.',
 }
 
@@ -73,7 +73,7 @@ paired_parameter_descriptions = {
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
                        'parametric (Kruskal-Wallis, Wilcoxon, and Mann-'
                        'Whitney U tests) statistical tests.'),
-        'drop_replicates': (
+        'replicate_handling': (
             'Choose how replicate samples are handled. If replicates are '
             'detected, "error" causes method to fail; "drop" will discard all '
             'subject IDs with replicate samples at either state_1 or state_2; '
