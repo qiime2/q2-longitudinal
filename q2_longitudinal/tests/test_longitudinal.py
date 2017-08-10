@@ -16,7 +16,7 @@ from q2_longitudinal._utilities import (
     _get_pairwise_differences,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats)
-from q2_longitudinal._intervention import (
+from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects)
 import tempfile
 import pkg_resources
