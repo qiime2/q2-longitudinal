@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017--, q2-sample-classifier development team.
+# Copyright (c) 2017--, q2-longitudinal development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -11,12 +11,12 @@ import pandas as pd
 from skbio import DistanceMatrix
 from io import StringIO
 from warnings import filterwarnings
-from q2_intervention._utilities import (
+from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
     _get_pairwise_differences,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats)
-from q2_intervention._intervention import (
+from q2_longitudinal._intervention import (
     pairwise_differences, pairwise_distances, linear_mixed_effects)
 import tempfile
 import pkg_resources
@@ -26,12 +26,12 @@ from qiime2.plugin.testing import TestPluginBase
 filterwarnings("ignore", category=UserWarning)
 
 
-class InterventionTestPluginBase(TestPluginBase):
-    package = 'q2_intervention.tests'
+class longitudinalTestPluginBase(TestPluginBase):
+    package = 'q2_longitudinal.tests'
 
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory(
-            prefix='q2-intervention-test-temp-')
+            prefix='q2-longitudinal-test-temp-')
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -41,7 +41,7 @@ class InterventionTestPluginBase(TestPluginBase):
                                                'data/%s' % filename)
 
 
-class UtilitiesTests(InterventionTestPluginBase):
+class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_get_group_pairs(self):
         res = _get_group_pairs(
@@ -115,7 +115,7 @@ class UtilitiesTests(InterventionTestPluginBase):
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.
-class InterventionTests(InterventionTestPluginBase):
+class longitudinalTests(longitudinalTestPluginBase):
 
     def setUp(self):
         super().setUp()
