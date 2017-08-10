@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017-, q2-intervention development team.
+# Copyright (c) 2017-, q2-longitudinal development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -9,17 +9,17 @@
 
 from qiime2.plugin import Str, Bool, Plugin, Metadata, Choices, Range, Float
 from q2_types.feature_table import FeatureTable, RelativeFrequency
-from ._intervention import (paired_differences, pairwise_distance,
+from ._longitudinal import (paired_differences, pairwise_distance,
                             linear_mixed_effects)
-import q2_intervention
+import q2_longitudinal
 from q2_types.distance_matrix import DistanceMatrix
 
 
 plugin = Plugin(
-    name='intervention',
-    version=q2_intervention.__version__,
-    website="https://github.com/nbokulich/q2-intervention",
-    package='q2_intervention',
+    name='longitudinal',
+    version=q2_longitudinal.__version__,
+    website="https://github.com/qiime2/q2-longitudinal",
+    package='q2_longitudinal',
     description=(
         'This QIIME 2 plugin supports methods for analysis of time series '
         'analysis, involving either paired sample comparisons or longitudinal '

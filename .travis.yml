@@ -18,8 +18,8 @@ install:
   - pip install .
   - pip install flake8 coveralls
 script:
-  - flake8 q2_intervention
-  - py.test --cov=q2_intervention
+  - flake8 q2_longitudinal
+  - py.test --cov=q2_longitudinal
 after_success:
   - coveralls
 

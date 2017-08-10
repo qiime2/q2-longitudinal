@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017--, q2-intervention development team.
+# Copyright (c) 2017--, q2-longitudinal development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -11,7 +11,7 @@ import versioneer
 
 
 setup(
-    name='q2-intervention',
+    name='q2-longitudinal',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
@@ -21,15 +21,15 @@ setup(
     author="Nicholas Bokulich",
     author_email="nbokulich@gmail.com",
     description=(
-        "QIIME2 plugin for intervention studies and paired comparisons."),
-    url="https://github.com/nbokulich/q2-intervention",
+        "QIIME2 plugin for longitudinal studies and paired comparisons."),
+    url="https://github.com/qiime2/q2-longitudinal",
     entry_points={
         'qiime2.plugins':
-        ['q2-intervention=q2_intervention.plugin_setup:plugin']
+        ['q2-longitudinal=q2_longitudinal.plugin_setup:plugin']
     },
     package_data={
-        'q2_intervention.tests': ['test_data/*'],
-        'q2_intervention': ['assets/index.html'],
+        'q2_longitudinal.tests': ['tests/data/*'],
+        'q2_longitudinal': ['assets/index.html'],
     },
     zip_safe=False,
 )

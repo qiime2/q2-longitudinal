@@ -1,2 +1,2 @@
 include versioneer.py
-include q2_intervention/_version.py
+include q2_longitudinal/_version.py
