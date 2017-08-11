@@ -46,15 +46,18 @@ class UtilitiesTests(longitudinalTestPluginBase):
     def test_get_group_pairs(self):
         res = _get_group_pairs(
             md, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2])
+            state_column='Time', state_values=[1, 2],
+            replicate_handling='drop')
         self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2])
+            state_column='Time', state_values=[1, 2],
+            replicate_handling='drop')
         self.assertEqual(res, [('0', '3')])
         res = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
-            state_column='Time', state_values=[1, 2], drop_duplicates=False)
+            state_column='Time', state_values=[1, 2],
+            replicate_handling='random')
         self.assertEqual(res[0], ('0', '3'))
         self.assertIn(res[1], [('1', '4'), ('2', '4')])
 
@@ -142,12 +145,22 @@ class longitudinalTests(longitudinalTestPluginBase):
         self.md_ecam_fp = _load_md('ecam_map_maturity.txt')
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
+    def test_validate_input_values(self):
+        with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
+            pairwise_differences(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, group_column='delivery',
+                state_column='month', state_1=0, state_2=0,
+                individual_id_column='studyid', metric='observed_otus',
+                replicate_handling='drop')
+
     def test_pairwise_differences(self):
         pairwise_differences(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
-            individual_id_column='studyid', metric='observed_otus')
+            individual_id_column='studyid', metric='observed_otus',
+            replicate_handling='drop')
 
     def test_pairwise_differences_taxa(self):
         pairwise_differences(
@@ -155,14 +168,15 @@ class longitudinalTests(longitudinalTestPluginBase):
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
             individual_id_column='studyid',
-            metric='e2c3ff4f647112723741aa72087f1bfa')
+            metric='e2c3ff4f647112723741aa72087f1bfa',
+            replicate_handling='drop')
 
     def test_pairwise_distances(self):
         pairwise_distances(
             output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
             metadata=self.md_ecam_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
-            individual_id_column='studyid')
+            individual_id_column='studyid', replicate_handling='drop')
 
     def test_linear_mixed_effects(self):
         linear_mixed_effects(
