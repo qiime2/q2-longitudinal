@@ -124,7 +124,7 @@ def _between_subject_distance_distribution(
     return list(results.values())
 
 
-def _get_paired_differences(df, pairs, category):
+def _get_pairwise_differences(df, pairs, category):
     result = []
     for pre_idx, post_idx in pairs:
         pre_value = float(df[category][pre_idx])
@@ -135,7 +135,7 @@ def _get_paired_differences(df, pairs, category):
     return result
 
 
-def _compare_paired_differences(groups, parametric=True):
+def _compare_pairwise_differences(groups, parametric=True):
     pvals = []
     for name, values in groups.items():
         try:
@@ -383,7 +383,7 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
 
     # paired difference tests
     if paired_difference_tests:
-        paired_difference_tests = _compare_paired_differences(
+        paired_difference_tests = _compare_pairwise_differences(
             pairs, parametric=parametric)
 
     # boxplots
