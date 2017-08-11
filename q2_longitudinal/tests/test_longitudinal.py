@@ -147,7 +147,7 @@ class longitudinalTests(longitudinalTestPluginBase):
 
     def test_validate_input_values(self):
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
-            paired_differences(
+            pairwise_differences(
                 output_dir=self.temp_dir.name, table=None,
                 metadata=self.md_ecam_fp, group_column='delivery',
                 state_column='month', state_1=0, state_2=0,

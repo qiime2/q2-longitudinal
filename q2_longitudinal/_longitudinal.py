@@ -18,11 +18,11 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
-                       group_column: str, metric: str, state_column: str,
-                       state_1: str, state_2: str, individual_id_column: str,
-                       parametric: bool=False, palette: str='Set1',
-                       replicate_handling: str='error',
-                       table: pd.DataFrame=None) -> None:
+                         group_column: str, metric: str, state_column: str,
+                         state_1: str, state_2: str, individual_id_column: str,
+                         parametric: bool=False, palette: str='Set1',
+                         replicate_handling: str='error',
+                         table: pd.DataFrame=None) -> None:
 
     _validate_input_values(state_1, state_2)
 
