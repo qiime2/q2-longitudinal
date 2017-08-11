@@ -41,6 +41,7 @@ def _validate_input_values(df, individual_id_column, group_column,
     # group_column. Both checks are performed to give specific error messages.
     if state_1 is not None:
         for state in [state_1, state_2]:
+            state = df[state_column].dtype.type(state)
             if state not in df[state_column].values:
                 raise ValueError((
                     'State {0} not present in column {1} of metadata'.format(
@@ -285,7 +286,8 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     hue, color variables all pass directly to equivalently named
         variables in seaborn.boxplot().
     """
-    x_tick_labels = [k for k, v in sorted(groups.items())]
+    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
+                     for k, v in sorted(groups.items())]
     vals = [v for k, v in sorted(groups.items())]
 
     ax = sns.boxplot(data=vals, hue=hue, palette=palette)
