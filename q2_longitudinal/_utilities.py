@@ -27,11 +27,44 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
-def _validate_input_values(state_1, state_2):
-    if state_1 == state_2:
+def _validate_input_values(df, individual_id_column, group_column,
+                           state_column, state_1, state_2):
+    # confirm that different state values are input
+    if state_1 is not None and state_1 == state_2:
         raise ValueError((
             'You have chosen the same value for state_1 and state_2. These '
             'parameters must be given different values.'))
+    # confirm that individual, group, and state columns are in metadata
+    _validate_input_columns(
+        df, individual_id_column, group_column, state_column)
+    # confirm that state_1 and state_2 exist in metadata and in each group in
+    # group_column. Both checks are performed to give specific error messages.
+    if state_1 is not None:
+        for state in [state_1, state_2]:
+            if state not in df[state_column].values:
+                raise ValueError((
+                    'State {0} not present in column {1} of metadata'.format(
+                        state, state_column)))
+            for group in df[group_column].unique():
+                df1 = df[df[group_column] == group]
+                if state not in df1[state_column].values:
+                    raise ValueError((
+                        'State {0} is not represented by any members of group '
+                        '{1} in metadata. Consider using a different '
+                        'group_column or state value.'.format(state, group)))
+
+
+def _validate_input_columns(df, individual_id_column, group_column,
+                            state_column):
+    # confirm that individual, group, and state columns are in metadata
+    if isinstance(group_column, list):
+        cols = [individual_id_column, state_column] + group_column
+    else:
+        cols = [individual_id_column, group_column, state_column]
+    for column in cols:
+        if column is not None and column not in df.columns:
+            raise ValueError('{0} is not a column in your metadata'.format(
+                             column))
 
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
