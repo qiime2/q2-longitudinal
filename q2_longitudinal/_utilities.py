@@ -58,16 +58,17 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                         'Remove replicate values from input files or set '
                         'replicate_handling parameter to select how '
                         'replicates are handled.'))
-                elif replicate_handling == 'drop':
-                    break
                 elif replicate_handling == 'random':
-                    individual_at_state_idx = [choice(individual_at_state_idx)]
+                    result.append(choice(individual_at_state_idx))
+                elif replicate_handling == 'drop':
+                    pass
             elif len(individual_at_state_idx) == 0:
                 print("No values for {0} {1} at {2} {3}".format(
                     individual_id_column, individual_id, state_column,
                     state_value))
-                break
-            result.append(individual_at_state_idx[0])
+                pass
+            else:
+                result.append(individual_at_state_idx[0])
         if len(result) == len(state_values):
             results.append(tuple(result))
     return results

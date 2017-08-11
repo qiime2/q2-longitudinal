@@ -78,7 +78,6 @@ paired_parameter_descriptions = {
             'detected, "error" causes method to fail; "drop" will discard all '
             'subject IDs with replicate samples at either state_1 or state_2; '
             '"random" chooses one representative at random from among '
-            'replicates; "mean" and "median" compute average values across '
             'replicates.')
 }
 
