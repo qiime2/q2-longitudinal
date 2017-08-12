@@ -81,13 +81,13 @@ class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_compare_pairwise_differences_parametric(self):
         res = _compare_pairwise_differences(groups, parametric=True)
-        self.assertAlmostEqual(res['FDR P']['a'], 9.4882148564067405e-07)
-        self.assertAlmostEqual(res['FDR P']['b'], 4.8474685173462082e-09)
+        self.assertAlmostEqual(res['FDR P-value']['a'], 9.4882148564067405e-07)
+        self.assertAlmostEqual(res['FDR P-value']['b'], 4.8474685173462082e-09)
 
     def test_compare_pairwise_differences_nonparametric(self):
         res = _compare_pairwise_differences(groups, parametric=False)
-        self.assertAlmostEqual(res['FDR P']['a'], 0.0021830447373622506)
-        self.assertAlmostEqual(res['FDR P']['b'], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value']['a'], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value']['b'], 0.0021830447373622506)
 
     def test_multiple_group_difference_parametric(self):
         res = _multiple_group_difference(groups.values(), parametric=True)
@@ -99,20 +99,20 @@ class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_per_method_pairwise_stats_unpaired_parametric(self):
         res = _per_method_pairwise_stats(groups, paired=False, parametric=True)
-        self.assertAlmostEqual(res['FDR P'][0], 7.693610699436966e-06)
+        self.assertAlmostEqual(res['FDR P-value'][0], 7.693610699436966e-06)
 
     def test_per_method_pairwise_stats_unpaired_nonparametric(self):
         res = _per_method_pairwise_stats(
             groups, paired=False, parametric=False)
-        self.assertAlmostEqual(res['FDR P'][0], 6.890936276106502e-05)
+        self.assertAlmostEqual(res['FDR P-value'][0], 6.890936276106502e-05)
 
     def test_per_method_pairwise_stats_paired_parametric(self):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=True)
-        self.assertAlmostEqual(res['FDR P'][0], 3.085284368834677e-06)
+        self.assertAlmostEqual(res['FDR P-value'][0], 3.085284368834677e-06)
 
     def test_per_method_pairwise_stats_paired_nonparametric(self):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=False)
-        self.assertAlmostEqual(res['FDR P'][0], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value'][0], 0.0021830447373622506)
 
 
 # This test class really just makes sure that each plugin runs without error.

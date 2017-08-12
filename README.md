@@ -36,6 +36,8 @@ qiime longitudinal paired-differences \
     --p-no-drop-duplicates
 ```
 
+The visualization contains boxplots comparing the distributions of pairwise differences in `metric` for each individual in each group between `state-1` and `state-2`. "Multiple group tests" lists the results of a Kruskal Wallis test or one-way ANOVA test (depending on whether the `parametric` parameter is set) comparing all groups. "Pairwise group comparison tests" lists the results of a series of two-group Mann-Whitney U tests or t-tests (depending on whether the `parametric` parameter is set) between each pair of groups. "Multiple group tests" and "pairwise group comparison tests" are both calculated whether two or more groups are actually compared.
+
 #### Pairwise differences in feature table
 
 We can also use this method to measure changes in the abundances of specific features of interest. In this example, we test whether the abundance of genus Bacteroides changed significantly between 6 and 18 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that `pairwise-differences` accepts a feature table as optional input to extract taxon abundance data.
@@ -58,7 +60,7 @@ qiime longitudinal paired-differences \
 
 The `pairwise-distances` visualizer also assesses changes between paired samples from two different "states", but instead of taking a metadata column or feature ID as input, it operates on a distance matrix to assess the distance between "pre" and "post" sample pairs. The "within-subject" distance between paired samples from an individual are always calculated for each group in the metadata `group_column`; by default, "between-subject" distances between all individuals in a given `group_column` are also calculated and compared. Between-subject distances include all samples sharing the same `group_column` that are not pairs of "within-subject" samples from `state_1` and `state_2`, but otherwise ignore the `state_column` and `individual_id_column` parameters, so will pair all samples from all time points (or whatever the comparison "state" is) in the distance matrix. Hence, users should carefully consider what type of comparison they wish to perform and, if appropriate, filter the distance matrix prior to using this visualizer. Filtering can be performed with `filter-distance-matrix` as described [here](https://docs.qiime2.org/2017.5/tutorials/filtering/#filtering-distance-matrices).
 
-In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the within- and between-subject distances differed between these groups. 
+In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants. 
 ```
 qiime longitudinal pairwise-distance \
     --i-distance-matrix ecam-unweighted-distance-matrix.qza \
@@ -86,6 +88,8 @@ qiime longitudinal pairwise-distance \
     --p-no-drop-duplicates \
     --p-no-between-group-distance
 ```
+
+The visualization contains boxplots comparing the pairwise distance distributions for each individual in each group between `state-1` and `state-2`. "Multiple group tests" lists the results of a Kruskal Wallis test or one-way ANOVA test (depending on whether the `parametric` parameter is set) comparing all groups. "Pairwise group comparison tests" lists the results of a series of two-group Mann-Whitney U tests or t-tests (depending on whether the `parametric` parameter is set) between each pair of groups. "Multiple group tests" and "pairwise group comparison tests" are both calculated whether two or more groups are actually compared.
 
 ### Linear mixed effects models
 

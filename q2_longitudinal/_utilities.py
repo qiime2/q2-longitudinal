@@ -135,34 +135,40 @@ def _get_pairwise_differences(df, pairs, category):
     return result
 
 
-def _compare_pairwise_differences(groups, parametric=True):
+def _compare_pairwise_differences(groups, parametric=False):
     pvals = []
+    stat = 'W (wilcoxon signed-rank test)'
     for name, values in groups.items():
         try:
             if parametric:
                 t, p = ttest_1samp(values, 0.0)
+                stat = 't (one-sample t-test)'
             else:
                 t, p = wilcoxon(values)
         except ValueError:
             # if test fails (e.g., because of zero variance), just skip
             pass
         pvals.append((name, t, p))
-    result = pd.DataFrame(pvals, columns=["Group", "stat", "P"])
+    result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
-    result['FDR P'] = multipletests(result['P'], method='fdr_bh')[1]
+    result['FDR P-value'] = multipletests(
+        result['P-value'], method='fdr_bh')[1]
     result.sort_index(inplace=True)
     return result
 
 
-def _multiple_group_difference(groups, parametric=True):
+def _multiple_group_difference(groups, parametric=False):
     '''groups: list of lists of values.'''
     if parametric:
         stat, p_val = f_oneway(*groups)
+        stat_name = 'F'
+        test_name = 'One-way ANOVA'
     else:
         stat, p_val = kruskal(*groups, nan_policy='omit')
+        stat_name = 'H'
+        test_name = 'Kruskal Wallis test'
     multiple_group_test = pd.Series(
-        [stat, p_val], index=['test statistic', 'P value'],
-        name='Multiple group test')
+        [stat, p_val], index=[stat_name, 'P value'], name=test_name)
     return multiple_group_test
 
 
@@ -181,17 +187,21 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     for a in combos:
         try:
             if not paired and not parametric:
+                stat_name = 'Mann-Whitney U'
                 u, p = mannwhitneyu(
                     groups[a[0]], groups[a[1]], alternative='two-sided')
 
             elif not paired and parametric:
+                stat_name = 't (two-sample t-test)'
                 u, p = ttest_ind(
                     groups[a[0]], groups[a[1]], nan_policy='raise')
 
             elif paired and not parametric:
+                stat_name = 'W (wilcoxon signed-rank test)'
                 u, p = wilcoxon(groups[a[0]], groups[a[1]])
 
             else:
+                stat_name = 't (paired t-test)'
                 u, p = ttest_rel(
                     groups[a[0]], groups[a[1]], nan_policy='raise')
 
@@ -200,10 +210,12 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
             # if test fails (e.g., because of zero variance), just skip
             pass
 
-    result = pd.DataFrame(pvals, columns=["Group A", "Group B", "stat", "P"])
+    result = pd.DataFrame(
+        pvals, columns=["Group A", "Group B", stat_name, "P-value"])
     result.set_index(['Group A', 'Group B'], inplace=True)
     try:
-        result['FDR P'] = multipletests(result['P'], method='fdr_bh')[1]
+        result['FDR P-value'] = multipletests(
+            result['P-value'], method='fdr_bh')[1]
     except ZeroDivisionError:
         pass
     result.sort_index(inplace=True)
@@ -319,7 +331,8 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                 'border="1"', 'border="0"')
 
     if multiple_group_test is not False:
-        multiple_group_test = multiple_group_test.to_frame().to_html(classes=(
+        multiple_group_test = multiple_group_test.to_frame().transpose()
+        multiple_group_test = multiple_group_test.to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
