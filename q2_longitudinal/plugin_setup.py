@@ -112,16 +112,10 @@ plugin.visualizers.register_function(
 plugin.visualizers.register_function(
     function=pairwise_distances,
     inputs={'distance_matrix': DistanceMatrix},
-    parameters={**paired_params,
-                'between_group_distance': Bool},
+    parameters={**paired_params},
     input_descriptions={'distance_matrix': (
         'Matrix of distances between pairs of samples.')},
-    parameter_descriptions={
-        **paired_parameter_descriptions,
-        'between_group_distance': (
-            'Whether to compare within-subject distances to distances between '
-            'all subjects that share the same metadata group_column.')
-    },
+    parameter_descriptions={**paired_parameter_descriptions},
     name='Paired pairwise distance testing and boxplots',
     description=(
         'Performs pairwise distance testing between sample pairs from each '
@@ -131,10 +125,7 @@ plugin.visualizers.register_function(
         'identical samples receiving different two different treatments. '
         'This action tests whether the pairwise distance between each subject '
         'pair differs between groups (e.g., groups of subjects receiving '
-        'different treatments) and optionally (if between_group_distance is '
-        'True) whether these within-subject distances are different from '
-        'distances between subjects that share the same metadata '
-        'group_column. Finally, produces boxplots of paired distance '
+        'different treatments) and produces boxplots of paired distance '
         'distributions for each group.')
 )
 

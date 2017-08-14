@@ -10,7 +10,7 @@ import pandas as pd
 from skbio import DistanceMatrix
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _between_subject_distance_distribution, _visualize,
+                         _visualize,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
@@ -54,7 +54,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
                        state_column: str, state_1: str, state_2: str,
                        individual_id_column: str, parametric: bool=False,
                        palette: str='Set1', replicate_handling: str='error',
-                       between_group_distance: bool=False) -> None:
+                       ) -> None:
 
     _validate_input_values(state_1, state_2)
 
@@ -72,10 +72,6 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             replicate_handling=replicate_handling)
         pairs[group] = _extract_distance_distribution(
             distance_matrix, group_pairs)
-        if between_group_distance:
-            between = group + '_between_subject'
-            pairs[between] = _between_subject_distance_distribution(
-                distance_matrix, group_pairs, metadata, group_column, group)
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
