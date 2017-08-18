@@ -23,7 +23,7 @@ This visualizer currently supports comparison of feature abundance (e.g., microb
 Here we use `pairwise-differences` to assess whether alpha diversity (here, Shannon's diversity index) changed significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that the alpha diversity data in this case is contained in a separate artifact, which is the typical (and preferred) approach; alternatively, alpha diversity data (or other data) contained in a sample metadata file can be used as the input `metric`, in which case the second `--m-metadata-file` input is unnecessary.
 
 ```
-qiime longitudinal paired-differences \
+qiime longitudinal pairwise-differences \
     --m-metadata-file ecam_map_maturity.txt \
     --m-metadata-file ecam_shannon.qza \
     --p-metric shannon \
@@ -33,7 +33,7 @@ qiime longitudinal paired-differences \
     --p-state-2 12 \
     --p-individual-id-column studyid \
     --o-visualization ecam-delivery-alpha \
-    --p-no-drop-duplicates
+    --p-replicate-handling random
 ```
 
 #### Pairwise differences in feature table
@@ -41,7 +41,7 @@ qiime longitudinal paired-differences \
 We can also use this method to measure changes in the abundances of specific features of interest. In this example, we test whether the abundance of genus Bacteroides changed significantly between 6 and 18 months of life in vaginally born and Cesarean-delivered infants, and whether the magnitude of change differed between these groups. Note that `pairwise-differences` accepts a feature table as optional input to extract taxon abundance data.
 
 ```
-qiime longitudinal paired-differences \
+qiime longitudinal pairwise-differences \
     --i-table ecam-table-taxa.qza \
     --m-metadata-file ecam_map_maturity.txt \
     --p-metric 'k__Bacteria;p__Bacteroidetes;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae;g__Bacteroides;s__' \
@@ -51,16 +51,16 @@ qiime longitudinal paired-differences \
     --p-state-2 18 \
     --p-individual-id-column studyid \
     --o-visualization ecam-delivery \
-    --p-no-drop-duplicates
+    --p-replicate-handling random
 ```
 
 ### Pairwise distance testing
 
-The `pairwise-distances` visualizer also assesses changes between paired samples from two different "states", but instead of taking a metadata column or feature ID as input, it operates on a distance matrix to assess the distance between "pre" and "post" sample pairs. The "within-subject" distance between paired samples from an individual are always calculated for each group in the metadata `group_column`; by default, "between-subject" distances between all individuals in a given `group_column` are also calculated and compared. Between-subject distances include all samples sharing the same `group_column` that are not pairs of "within-subject" samples from `state_1` and `state_2`, but otherwise ignore the `state_column` and `individual_id_column` parameters, so will pair all samples from all time points (or whatever the comparison "state" is) in the distance matrix. Hence, users should carefully consider what type of comparison they wish to perform and, if appropriate, filter the distance matrix prior to using this visualizer. Filtering can be performed with `filter-distance-matrix` as described [here](https://docs.qiime2.org/2017.5/tutorials/filtering/#filtering-distance-matrices).
+The `pairwise-distancess` visualizer also assesses changes between paired samples from two different "states", but instead of taking a metadata column or feature ID as input, it operates on a distance matrix to assess the distance between "pre" and "post" sample pairs. The "within-subject" distance between paired samples from an individual are always calculated for each group in the metadata `group_column`; by default, "between-subject" distances between all individuals in a given `group_column` are also calculated and compared. Between-subject distances include all samples sharing the same `group_column` that are not pairs of "within-subject" samples from `state_1` and `state_2`, but otherwise ignore the `state_column` and `individual_id_column` parameters, so will pair all samples from all time points (or whatever the comparison "state" is) in the distance matrix. Hence, users should carefully consider what type of comparison they wish to perform and, if appropriate, filter the distance matrix prior to using this visualizer. Filtering can be performed with `filter-distance-matrix` as described [here](https://docs.qiime2.org/2017.5/tutorials/filtering/#filtering-distance-matrices).
 
 In this example, we test whether an individual's stool microbiota (as assessed by unweighted UniFrac distance) differs significantly between 0 and 12 months of life in vaginally born and Cesarean-delivered infants, and whether the within- and between-subject distances differed between these groups. 
 ```
-qiime longitudinal pairwise-distance \
+qiime longitudinal pairwise-distances \
     --i-distance-matrix ecam-unweighted-distance-matrix.qza \
     --m-metadata-file ecam_map_maturity.txt \
     --p-group-column delivery \
@@ -69,23 +69,7 @@ qiime longitudinal pairwise-distance \
     --p-state-2 12 \
     --p-individual-id-column studyid \
     --o-visualization ecam-delivery-distance \
-    --p-no-drop-duplicates
-```
-
-If between-subject distances are not important, the same visualization can be performed excluding these distances with the following command:
-```
-qiime longitudinal pairwise-distance \
-    --i-distance-matrix ecam-unweighted-distance-matrix.qza \
-    --m-metadata-file ecam_map_maturity.txt \
-    --p-group-column delivery \
-    --p-state-column month \
-    --p-state-1 0 \
-    --p-state-2 12 \
-    --p-individual-id-column studyid \
-    --o-visualization ecam-delivery-distance-no-between \
-    --p-no-drop-duplicates \
-    --p-no-between-group-distance
-```
+    --p-replicate-handling random
 
 ### Linear mixed effects models
 

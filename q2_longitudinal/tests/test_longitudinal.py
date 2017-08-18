@@ -62,7 +62,8 @@ class UtilitiesTests(longitudinalTestPluginBase):
         self.assertIn(res[1], [('1', '4'), ('2', '4')])
 
     def test_extract_distance_distribution(self):
-        res = _extract_distance_distribution(dm, [('0', '3'), ('2', '5')])
+        res, pairs = _extract_distance_distribution(
+            dm, [('0', '3'), ('2', '5')], md, 'ind', 'Group')
         self.assertAlmostEqual(res[0], 0.1)
         self.assertAlmostEqual(res[1], 0.3)
 
@@ -75,8 +76,8 @@ class UtilitiesTests(longitudinalTestPluginBase):
         self.assertAlmostEqual(sorted(res)[11], 1.0)
 
     def test_get_pairwise_differences(self):
-        res = _get_pairwise_differences(
-            md, [('0', '3'), ('1', '4'), ('2', '5')], 'Value')
+        res, pairs = _get_pairwise_differences(
+            md, [('0', '3'), ('1', '4'), ('2', '5')], 'Value', 'ind', 'Group')
         self.assertEqual(res, [0.08, 0.06, 0.07999999999999999])
 
     def test_compare_pairwise_differences_parametric(self):
