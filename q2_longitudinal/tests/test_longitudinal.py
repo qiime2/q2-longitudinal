@@ -13,7 +13,7 @@ from io import StringIO
 from warnings import filterwarnings
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
-    _get_pairwise_differences,
+    _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats)
 from q2_longitudinal._longitudinal import (
@@ -147,6 +147,17 @@ class longitudinalTests(longitudinalTestPluginBase):
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
     def test_validate_input_values(self):
+        with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
+            _validate_input_values(md, "ind", "Group", "Time", 1, 1)
+        with self.assertRaisesRegex(ValueError, "not present"):
+            _validate_input_values(md, "ind", "Group", "Time", 1, 3)
+        with self.assertRaisesRegex(ValueError, "not a column"):
+            _validate_input_values(md, "ind", "Group", "Days", 1, 2)
+        with self.assertRaisesRegex(ValueError, "not a column"):
+            _validate_input_columns(md, "ind", ["Group", "More stuff"], "Time")
+        dropped = md.drop(['9', '10', '11'])
+        with self.assertRaisesRegex(ValueError, "not represented"):
+            _validate_input_values(dropped, "ind", "Group", "Time", 1, 2)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             pairwise_differences(
                 output_dir=self.temp_dir.name, table=None,

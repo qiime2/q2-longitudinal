@@ -15,7 +15,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
-                         _validate_input_values)
+                         _validate_input_values, _validate_input_columns)
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -25,10 +25,11 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
                          replicate_handling: str='error',
                          table: pd.DataFrame=None) -> None:
 
-    _validate_input_values(state_1, state_2)
-
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
+
+    _validate_input_values(metadata, individual_id_column, group_column,
+                           state_column, state_1, state_2)
 
     # calculate paired difference distributions
     pairs = {}
@@ -65,9 +66,10 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
                        palette: str='Set1', replicate_handling: str='error',
                        between_group_distance: bool=False) -> None:
 
-    _validate_input_values(state_1, state_2)
-
     metadata = _load_metadata(metadata)
+
+    _validate_input_values(metadata, individual_id_column, group_column,
+                           state_column, state_1, state_2)
 
     # calculate pairwise distance distributions
     pairs = {}
@@ -104,11 +106,15 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                          individual_id_column: str, table: pd.DataFrame=None,
                          palette: str='Set1', lowess: bool=False, ci: int=95
                          ) -> None:
+
     # split group_categories into list of categories
     group_categories = group_categories.split(",")
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
+
+    _validate_input_columns(metadata, individual_id_column, group_categories,
+                            state_column)
 
     # Generate LME model summary
     model_summary, model_results = _linear_effects(
