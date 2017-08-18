@@ -72,6 +72,7 @@ qiime longitudinal pairwise-distances \
     --p-individual-id-column studyid \
     --o-visualization ecam-delivery-distance \
     --p-replicate-handling random
+```
 
 The visualization contains boxplots comparing the pairwise distance distributions for each individual in each group between `state-1` and `state-2`. "Multiple group tests" lists the results of a Kruskal Wallis test or one-way ANOVA test (depending on whether the `parametric` parameter is set) comparing all groups. "Pairwise group comparison tests" lists the results of a series of two-group Mann-Whitney U tests or t-tests (depending on whether the `parametric` parameter is set) between each pair of groups. "Multiple group tests" and "pairwise group comparison tests" are both calculated whether two or more groups are actually compared.
 
