@@ -48,8 +48,11 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
+    y_label = 'Difference in {0} ({1} {2} - {1} {3})'.format(
+        metric, state_column, state_2, state_1)
+
     _stats_and_visuals(
-        output_dir, pairs, metric, group_column, state_column, state_1,
+        output_dir, pairs, y_label, group_column, state_column, state_1,
         state_2, individual_id_column, parametric, palette,
         replicate_handling, multiple_group_test=True, pairwise_tests=True,
         paired_difference_tests=True, boxplot=True)
