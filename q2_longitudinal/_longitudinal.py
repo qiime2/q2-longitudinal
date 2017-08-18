@@ -8,6 +8,7 @@
 import qiime2
 import pandas as pd
 from skbio import DistanceMatrix
+from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _between_subject_distance_distribution, _visualize,
@@ -32,6 +33,8 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
 
     # calculate paired difference distributions
     pairs = {}
+    pairs_summaries = {}
+    pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
         group_pairs = _get_group_pairs(
@@ -40,7 +43,10 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
             group_column=group_column, state_column=state_column,
             state_values=[state_1, state_2],
             replicate_handling=replicate_handling)
-        pairs[group] = _get_pairwise_differences(metadata, group_pairs, metric)
+        pairs[group], pairs_summaries[group] = _get_pairwise_differences(
+            metadata, group_pairs, metric, individual_id_column, group_column)
+        pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
+    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
@@ -64,6 +70,8 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
 
     # calculate pairwise distance distributions
     pairs = {}
+    pairs_summaries = {}
+    pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
         group_pairs = _get_group_pairs(
@@ -72,12 +80,15 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             group_column=group_column, state_column=state_column,
             state_values=[state_1, state_2],
             replicate_handling=replicate_handling)
-        pairs[group] = _extract_distance_distribution(
-            distance_matrix, group_pairs)
+        pairs[group], pairs_summaries[group] = _extract_distance_distribution(
+            distance_matrix, group_pairs, metadata, individual_id_column,
+            group_column)
+        pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
         if between_group_distance:
             between = group + '_between_subject'
             pairs[between] = _between_subject_distance_distribution(
                 distance_matrix, group_pairs, metadata, group_column, group)
+    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(

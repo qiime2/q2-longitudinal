@@ -108,14 +108,23 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
     return results
 
 
-def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs):
+def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs,
+                                   df, individual_id_column, group_column):
     result = []
+    pairs_summary = []
     for p in pairs:
         try:
-            result.append(distance_matrix[p])
+            dist = distance_matrix[p]
+            result.append(dist)
+            individual_id = df[individual_id_column][p[0]]
+            group = df[group_column][p[0]]
+            pairs_summary.append((individual_id, dist, group))
         except MissingIDError:
             pass
-    return result
+    pairs_summary = pd.DataFrame(
+        pairs_summary, columns=['SubjectID', 'Distance', 'Group'])
+    pairs_summary.set_index('SubjectID', inplace=True)
+    return result, pairs_summary
 
 
 def _between_subject_distance_distribution(
@@ -158,15 +167,23 @@ def _between_subject_distance_distribution(
     return list(results.values())
 
 
-def _get_pairwise_differences(df, pairs, category):
+def _get_pairwise_differences(df, pairs, category, individual_id_column,
+                              group_column):
     result = []
+    pairs_summary = []
     for pre_idx, post_idx in pairs:
+        individual_id = df[individual_id_column][pre_idx]
+        group = df[group_column][pre_idx]
         pre_value = float(df[category][pre_idx])
         post_value = float(df[category][post_idx])
         paired_difference = post_value - pre_value
         if not np.isnan(paired_difference):
             result.append(paired_difference)
-    return result
+            pairs_summary.append((individual_id, paired_difference, group))
+    pairs_summary = pd.DataFrame(
+        pairs_summary, columns=['SubjectID', 'Difference', 'Group'])
+    pairs_summary.set_index('SubjectID', inplace=True)
+    return result, pairs_summary
 
 
 def _compare_pairwise_differences(groups, parametric=True):
@@ -432,7 +449,7 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
          individual_id_column, parametric, replicate_handling],
         index=['Metric', 'Group column', 'State column', 'State 1',
                'State 2', 'Individual ID column', 'Parametric',
-               'Drop replicates'],
+               'Replicates handling'],
         name='Paired difference tests')
 
     _visualize(output_dir, multiple_group_test, pairwise_tests,

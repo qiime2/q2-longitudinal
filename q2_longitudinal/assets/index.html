@@ -13,6 +13,11 @@
         <br>
         <p>Download as PDF</p>
       </a>
+      {% if pairwise_tests %}
+      <a href="pairs.tsv">
+        <p>Download within-subject pairwise comparison data as tsv</p>
+      </a>
+      {% endif %}
     </div>
     {% endif %}
     {% if model_summary %}
