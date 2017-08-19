@@ -6,13 +6,18 @@
   <div class="col-lg-12">
     {{ summary }}
     {% if plot %}
-    <h2>Paired difference boxplot</h1>
+    <h2>Pairwise difference boxplot</h1>
     <div class="text-center">
       <a href="plot.pdf">
         <img src="plot.png">
         <br>
         <p>Download as PDF</p>
       </a>
+      {% if pairwise_tests %}
+      <a href="pairs.tsv">
+        <p>Download within-subject pairwise comparison data as tsv</p>
+      </a>
+      {% endif %}
     </div>
     {% endif %}
     {% if model_summary %}
@@ -38,7 +43,7 @@
     </div>
     {% endif %}
     {% if paired_difference_tests %}
-    <h2>Paired difference tests</h1>
+    <h2>Pairwise difference tests</h1>
     <div class="col-lg-12">
       {{ paired_difference_tests }}
       <a href="paired_difference_tests.tsv">
@@ -53,7 +58,7 @@
     </div>
     {% endif %}
     {% if pairwise_tests %}
-    <h2>Pairwise comparison tests</h1>
+    <h2>Pairwise group comparison tests</h1>
     <div class="col-lg-12">
       {{ pairwise_tests }}
       <a href="pairwise_tests.tsv">

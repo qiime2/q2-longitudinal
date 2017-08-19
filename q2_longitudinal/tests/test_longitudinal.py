@@ -13,7 +13,7 @@ from io import StringIO
 from warnings import filterwarnings
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
-    _get_pairwise_differences,
+    _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats)
 from q2_longitudinal._longitudinal import (
@@ -62,7 +62,8 @@ class UtilitiesTests(longitudinalTestPluginBase):
         self.assertIn(res[1], [('1', '4'), ('2', '4')])
 
     def test_extract_distance_distribution(self):
-        res = _extract_distance_distribution(dm, [('0', '3'), ('2', '5')])
+        res, pairs = _extract_distance_distribution(
+            dm, [('0', '3'), ('2', '5')], md, 'ind', 'Group')
         self.assertAlmostEqual(res[0], 0.1)
         self.assertAlmostEqual(res[1], 0.3)
 
@@ -75,19 +76,19 @@ class UtilitiesTests(longitudinalTestPluginBase):
         self.assertAlmostEqual(sorted(res)[11], 1.0)
 
     def test_get_pairwise_differences(self):
-        res = _get_pairwise_differences(
-            md, [('0', '3'), ('1', '4'), ('2', '5')], 'Value')
+        res, pairs = _get_pairwise_differences(
+            md, [('0', '3'), ('1', '4'), ('2', '5')], 'Value', 'ind', 'Group')
         self.assertEqual(res, [0.08, 0.06, 0.07999999999999999])
 
     def test_compare_pairwise_differences_parametric(self):
         res = _compare_pairwise_differences(groups, parametric=True)
-        self.assertAlmostEqual(res['FDR P']['a'], 9.4882148564067405e-07)
-        self.assertAlmostEqual(res['FDR P']['b'], 4.8474685173462082e-09)
+        self.assertAlmostEqual(res['FDR P-value']['a'], 9.4882148564067405e-07)
+        self.assertAlmostEqual(res['FDR P-value']['b'], 4.8474685173462082e-09)
 
     def test_compare_pairwise_differences_nonparametric(self):
         res = _compare_pairwise_differences(groups, parametric=False)
-        self.assertAlmostEqual(res['FDR P']['a'], 0.0021830447373622506)
-        self.assertAlmostEqual(res['FDR P']['b'], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value']['a'], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value']['b'], 0.0021830447373622506)
 
     def test_multiple_group_difference_parametric(self):
         res = _multiple_group_difference(groups.values(), parametric=True)
@@ -99,20 +100,20 @@ class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_per_method_pairwise_stats_unpaired_parametric(self):
         res = _per_method_pairwise_stats(groups, paired=False, parametric=True)
-        self.assertAlmostEqual(res['FDR P'][0], 7.693610699436966e-06)
+        self.assertAlmostEqual(res['FDR P-value'][0], 7.693610699436966e-06)
 
     def test_per_method_pairwise_stats_unpaired_nonparametric(self):
         res = _per_method_pairwise_stats(
             groups, paired=False, parametric=False)
-        self.assertAlmostEqual(res['FDR P'][0], 6.890936276106502e-05)
+        self.assertAlmostEqual(res['FDR P-value'][0], 6.890936276106502e-05)
 
     def test_per_method_pairwise_stats_paired_parametric(self):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=True)
-        self.assertAlmostEqual(res['FDR P'][0], 3.085284368834677e-06)
+        self.assertAlmostEqual(res['FDR P-value'][0], 3.085284368834677e-06)
 
     def test_per_method_pairwise_stats_paired_nonparametric(self):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=False)
-        self.assertAlmostEqual(res['FDR P'][0], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value'][0], 0.0021830447373622506)
 
 
 # This test class really just makes sure that each plugin runs without error.
@@ -146,6 +147,17 @@ class longitudinalTests(longitudinalTestPluginBase):
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
     def test_validate_input_values(self):
+        with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
+            _validate_input_values(md, "ind", "Group", "Time", 1, 1)
+        with self.assertRaisesRegex(ValueError, "not present"):
+            _validate_input_values(md, "ind", "Group", "Time", 1, 3)
+        with self.assertRaisesRegex(ValueError, "not a column"):
+            _validate_input_values(md, "ind", "Group", "Days", 1, 2)
+        with self.assertRaisesRegex(ValueError, "not a column"):
+            _validate_input_columns(md, "ind", ["Group", "More stuff"], "Time")
+        dropped = md.drop(['9', '10', '11'])
+        with self.assertRaisesRegex(ValueError, "not represented"):
+            _validate_input_values(dropped, "ind", "Group", "Time", 1, 2)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             pairwise_differences(
                 output_dir=self.temp_dir.name, table=None,

@@ -27,11 +27,45 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
-def _validate_input_values(state_1, state_2):
-    if state_1 == state_2:
+def _validate_input_values(df, individual_id_column, group_column,
+                           state_column, state_1, state_2):
+    # confirm that different state values are input
+    if state_1 is not None and state_1 == state_2:
         raise ValueError((
             'You have chosen the same value for state_1 and state_2. These '
             'parameters must be given different values.'))
+    # confirm that individual, group, and state columns are in metadata
+    _validate_input_columns(
+        df, individual_id_column, group_column, state_column)
+    # confirm that state_1 and state_2 exist in metadata and in each group in
+    # group_column. Both checks are performed to give specific error messages.
+    if state_1 is not None:
+        for state in [state_1, state_2]:
+            state = df[state_column].dtype.type(state)
+            if state not in df[state_column].values:
+                raise ValueError((
+                    'State {0} not present in column {1} of metadata'.format(
+                        state, state_column)))
+            for group in df[group_column].unique():
+                df1 = df[df[group_column] == group]
+                if state not in df1[state_column].values:
+                    raise ValueError((
+                        'State {0} is not represented by any members of group '
+                        '{1} in metadata. Consider using a different '
+                        'group_column or state value.'.format(state, group)))
+
+
+def _validate_input_columns(df, individual_id_column, group_column,
+                            state_column):
+    # confirm that individual, group, and state columns are in metadata
+    if isinstance(group_column, list):
+        cols = [individual_id_column, state_column] + group_column
+    else:
+        cols = [individual_id_column, group_column, state_column]
+    for column in cols:
+        if column is not None and column not in df.columns:
+            raise ValueError('{0} is not a column in your metadata'.format(
+                             column))
 
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
@@ -74,14 +108,23 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
     return results
 
 
-def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs):
+def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs,
+                                   df, individual_id_column, group_column):
     result = []
+    pairs_summary = []
     for p in pairs:
         try:
-            result.append(distance_matrix[p])
+            dist = distance_matrix[p]
+            result.append(dist)
+            individual_id = df[individual_id_column][p[0]]
+            group = df[group_column][p[0]]
+            pairs_summary.append((individual_id, dist, group))
         except MissingIDError:
             pass
-    return result
+    pairs_summary = pd.DataFrame(
+        pairs_summary, columns=['SubjectID', 'Distance', 'Group'])
+    pairs_summary.set_index('SubjectID', inplace=True)
+    return result, pairs_summary
 
 
 def _between_subject_distance_distribution(
@@ -124,45 +167,59 @@ def _between_subject_distance_distribution(
     return list(results.values())
 
 
-def _get_pairwise_differences(df, pairs, category):
+def _get_pairwise_differences(df, pairs, category, individual_id_column,
+                              group_column):
     result = []
+    pairs_summary = []
     for pre_idx, post_idx in pairs:
+        individual_id = df[individual_id_column][pre_idx]
+        group = df[group_column][pre_idx]
         pre_value = float(df[category][pre_idx])
         post_value = float(df[category][post_idx])
         paired_difference = post_value - pre_value
         if not np.isnan(paired_difference):
             result.append(paired_difference)
-    return result
+            pairs_summary.append((individual_id, paired_difference, group))
+    pairs_summary = pd.DataFrame(
+        pairs_summary, columns=['SubjectID', 'Difference', 'Group'])
+    pairs_summary.set_index('SubjectID', inplace=True)
+    return result, pairs_summary
 
 
-def _compare_pairwise_differences(groups, parametric=True):
+def _compare_pairwise_differences(groups, parametric=False):
     pvals = []
+    stat = 'W (wilcoxon signed-rank test)'
     for name, values in groups.items():
         try:
             if parametric:
                 t, p = ttest_1samp(values, 0.0)
+                stat = 't (one-sample t-test)'
             else:
                 t, p = wilcoxon(values)
         except ValueError:
             # if test fails (e.g., because of zero variance), just skip
             pass
         pvals.append((name, t, p))
-    result = pd.DataFrame(pvals, columns=["Group", "stat", "P"])
+    result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
-    result['FDR P'] = multipletests(result['P'], method='fdr_bh')[1]
+    result['FDR P-value'] = multipletests(
+        result['P-value'], method='fdr_bh')[1]
     result.sort_index(inplace=True)
     return result
 
 
-def _multiple_group_difference(groups, parametric=True):
+def _multiple_group_difference(groups, parametric=False):
     '''groups: list of lists of values.'''
     if parametric:
         stat, p_val = f_oneway(*groups)
+        stat_name = 'F'
+        test_name = 'One-way ANOVA'
     else:
         stat, p_val = kruskal(*groups, nan_policy='omit')
+        stat_name = 'H'
+        test_name = 'Kruskal Wallis test'
     multiple_group_test = pd.Series(
-        [stat, p_val], index=['test statistic', 'P value'],
-        name='Multiple group test')
+        [stat, p_val], index=[stat_name, 'P value'], name=test_name)
     return multiple_group_test
 
 
@@ -181,17 +238,21 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     for a in combos:
         try:
             if not paired and not parametric:
+                stat_name = 'Mann-Whitney U'
                 u, p = mannwhitneyu(
                     groups[a[0]], groups[a[1]], alternative='two-sided')
 
             elif not paired and parametric:
+                stat_name = 't (two-sample t-test)'
                 u, p = ttest_ind(
                     groups[a[0]], groups[a[1]], nan_policy='raise')
 
             elif paired and not parametric:
+                stat_name = 'W (wilcoxon signed-rank test)'
                 u, p = wilcoxon(groups[a[0]], groups[a[1]])
 
             else:
+                stat_name = 't (paired t-test)'
                 u, p = ttest_rel(
                     groups[a[0]], groups[a[1]], nan_policy='raise')
 
@@ -200,10 +261,12 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
             # if test fails (e.g., because of zero variance), just skip
             pass
 
-    result = pd.DataFrame(pvals, columns=["Group A", "Group B", "stat", "P"])
+    result = pd.DataFrame(
+        pvals, columns=["Group A", "Group B", stat_name, "P-value"])
     result.set_index(['Group A', 'Group B'], inplace=True)
     try:
-        result['FDR P'] = multipletests(result['P'], method='fdr_bh')[1]
+        result['FDR P-value'] = multipletests(
+            result['P-value'], method='fdr_bh')[1]
     except ZeroDivisionError:
         pass
     result.sort_index(inplace=True)
@@ -252,7 +315,8 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     hue, color variables all pass directly to equivalently named
         variables in seaborn.boxplot().
     """
-    x_tick_labels = [k for k, v in sorted(groups.items())]
+    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
+                     for k, v in sorted(groups.items())]
     vals = [v for k, v in sorted(groups.items())]
 
     ax = sns.boxplot(data=vals, hue=hue, palette=palette)
@@ -319,7 +383,8 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                 'border="1"', 'border="0"')
 
     if multiple_group_test is not False:
-        multiple_group_test = multiple_group_test.to_frame().to_html(classes=(
+        multiple_group_test = multiple_group_test.to_frame().transpose()
+        multiple_group_test = multiple_group_test.to_html(classes=(
             "table table-striped table-hover")).replace(
                 'border="1"', 'border="0"')
 
@@ -397,7 +462,7 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
          individual_id_column, parametric, replicate_handling],
         index=['Metric', 'Group column', 'State column', 'State 1',
                'State 2', 'Individual ID column', 'Parametric',
-               'Drop replicates'],
+               'Replicates handling'],
         name='Paired difference tests')
 
     _visualize(output_dir, multiple_group_test, pairwise_tests,
