@@ -11,7 +11,7 @@ from skbio import DistanceMatrix
 from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _between_subject_distance_distribution, _visualize,
+                         _visualize,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
@@ -64,7 +64,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
                        state_column: str, state_1: str, state_2: str,
                        individual_id_column: str, parametric: bool=False,
                        palette: str='Set1', replicate_handling: str='error',
-                       between_group_distance: bool=False) -> None:
+                       ) -> None:
 
     metadata = _load_metadata(metadata)
 
@@ -87,10 +87,6 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             distance_matrix, group_pairs, metadata, individual_id_column,
             group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
-        if between_group_distance:
-            between = group + '_between_subject'
-            pairs[between] = _between_subject_distance_distribution(
-                distance_matrix, group_pairs, metadata, group_column, group)
     pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
