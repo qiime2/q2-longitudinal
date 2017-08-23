@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017--, q2-longitudinal development team.
+# Copyright (c) 2017, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #

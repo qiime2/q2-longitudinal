@@ -1,10 +1,11 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017-, q2-longitudinal development team.
+# Copyright (c) 2017, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
+
 from os.path import join
 import pandas as pd
 import seaborn as sns

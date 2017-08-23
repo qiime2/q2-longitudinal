@@ -1,7 +1,6 @@
+dist: trusty
 sudo: false
 language: python
-python:
-  - "3.5"
 before_install:
   - export MPLBACKEND='Agg'
   - wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -15,11 +14,11 @@ install:
   - conda create -q -n test-env --file https://raw.githubusercontent.com/qiime2/environment-files/master/latest/staging/qiime2-latest-conda-linux-64.txt
   - source activate test-env
   - conda install -q pytest-cov
-  - pip install .
   - pip install flake8 coveralls
+  - pip install -q https://github.com/qiime2/q2lint/archive/master.zip
+  - make install
 script:
-  - flake8 q2_longitudinal
-  - py.test --cov=q2_longitudinal
+  - make lint
+  - make test-cov
 after_success:
   - coveralls
-
