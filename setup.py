@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017--, q2-longitudinal development team.
+# Copyright (c) 2017, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
@@ -16,8 +16,6 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     license='BSD-3-Clause',
     packages=find_packages(),
-    install_requires=['biom-format', 'pandas', 'scipy',
-                      'scikit-bio', 'seaborn', 'statsmodels'],
     author="Nicholas Bokulich",
     author_email="nbokulich@gmail.com",
     description=(

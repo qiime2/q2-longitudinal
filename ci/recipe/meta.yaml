@@ -1,0 +1,42 @@
+{% set data = load_setup_py_data() %}
+{% set version = data.get('version') or 'placehold' %}
+{% set release = '.'.join(version.split('.')[:2]) %}
+
+package:
+  name: q2-longitudinal
+  version: {{ version }}
+
+source:
+  path: ../..
+
+build:
+  script: make install
+
+requirements:
+  build:
+    - python 3.5*
+    - setuptools
+
+  run:
+    - python 3.5*
+    - setuptools
+    - numpy
+    - pandas
+    - scipy
+    - statsmodels
+    - patsy
+    - scikit-bio
+    - seaborn
+    - qiime2 {{ release }}.*
+    - q2-types {{ release }}.*
+    - q2templates {{ release }}.*
+
+test:
+  imports:
+    - q2_longitudinal
+    - qiime2.plugins.longitudinal
+
+about:
+  home: https://qiime2.org
+  license: BSD-3-Clause
+  license_family: BSD
