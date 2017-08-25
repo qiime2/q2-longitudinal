@@ -26,7 +26,7 @@ setup(
         ['q2-longitudinal=q2_longitudinal.plugin_setup:plugin']
     },
     package_data={
-        'q2_longitudinal.tests': ['tests/data/*'],
+        'q2_longitudinal.tests': ['data/*'],
         'q2_longitudinal': ['assets/index.html'],
     },
     zip_safe=False,
