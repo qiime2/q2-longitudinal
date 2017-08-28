@@ -379,40 +379,29 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
     pd.set_option('display.max_colwidth', -1)
 
     if summary is not False:
-        summary = summary.to_frame().to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        summary = q2templates.df_to_html(summary.to_frame())
 
     if multiple_group_test is not False:
         multiple_group_test = multiple_group_test.to_frame().transpose()
-        multiple_group_test = multiple_group_test.to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        multiple_group_test = q2templates.df_to_html(multiple_group_test)
 
     if pairwise_tests is not False:
         pairwise_tests.to_csv(join(output_dir, 'pairwise_tests.tsv'), sep='\t')
-        pairwise_tests = pairwise_tests.to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        pairwise_tests = q2templates.df_to_html(pairwise_tests)
 
     if paired_difference_tests is not False:
         paired_difference_tests.to_csv(join(
             output_dir, 'paired_difference_tests.tsv'), sep='\t')
-        paired_difference_tests = paired_difference_tests.to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        paired_difference_tests = q2templates.df_to_html(
+            paired_difference_tests)
 
     if model_summary is not False:
         model_summary.to_csv(join(output_dir, 'model_summary.tsv'), sep='\t')
-        model_summary = model_summary.to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        model_summary = q2templates.df_to_html(model_summary)
 
     if model_results is not False:
         model_results.to_csv(join(output_dir, 'model_results.tsv'), sep='\t')
-        model_results = model_results.to_html(classes=(
-            "table table-striped table-hover")).replace(
-                'border="1"', 'border="0"')
+        model_results = q2templates.df_to_html(model_results)
 
     if plot is not False:
         plot.savefig(join(output_dir, 'plot.png'), bbox_inches='tight')
