@@ -411,9 +411,6 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         plot.savefig(join(output_dir, 'plot.pdf'), bbox_inches='tight')
         plt.close('all')
 
-    if errors is not False:
-        errors = '<br>'.join(errors)
-
     index = join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
         'errors': errors,
