@@ -44,17 +44,17 @@ class longitudinalTestPluginBase(TestPluginBase):
 class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_get_group_pairs(self):
-        res = _get_group_pairs(
+        res, err = _get_group_pairs(
             md, 'a', individual_id_column='ind', group_column='Group',
             state_column='Time', state_values=[1, 2],
             replicate_handling='drop')
         self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
-        res = _get_group_pairs(
+        res, err = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
             state_column='Time', state_values=[1, 2],
             replicate_handling='drop')
         self.assertEqual(res, [('0', '3')])
-        res = _get_group_pairs(
+        res, err = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
             state_column='Time', state_values=[1, 2],
             replicate_handling='random')
