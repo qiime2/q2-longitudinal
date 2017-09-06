@@ -38,7 +38,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs = _get_group_pairs(
+        group_pairs, errors = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -55,7 +55,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
 
     _stats_and_visuals(
         output_dir, pairs, y_label, group_column, state_column, state_1,
-        state_2, individual_id_column, parametric, palette,
+        state_2, individual_id_column, errors, parametric, palette,
         replicate_handling, multiple_group_test=True, pairwise_tests=True,
         paired_difference_tests=True, boxplot=True)
 
@@ -78,7 +78,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs = _get_group_pairs(
+        group_pairs, errors = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -93,7 +93,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
         output_dir, pairs, 'distance', group_column,
-        state_column, state_1, state_2, individual_id_column,
+        state_column, state_1, state_2, individual_id_column, errors,
         parametric, palette, replicate_handling, multiple_group_test=True,
         pairwise_tests=True, paired_difference_tests=False, boxplot=True)
 

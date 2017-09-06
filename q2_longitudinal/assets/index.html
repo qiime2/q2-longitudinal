@@ -2,6 +2,25 @@
 
 {% block content %}
 
+{% if errors %}
+<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="accordion-heading">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#table" aria-expanded="true" aria-controls="table">
+          WARNINGS (click here to collapse):
+        </a>
+      </h4>
+    </div>
+    <div id="table" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="accordion-heading">
+      <div class="alert alert-warning col-md-12">
+        <strong>{{ errors }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="row">
   <div class="col-lg-12">
     {{ summary }}
