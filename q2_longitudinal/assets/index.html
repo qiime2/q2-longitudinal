@@ -2,6 +2,27 @@
 
 {% block content %}
 
+{% if errors %}
+<div class="panel-group" id="warnings" role="tablist" aria-multiselectable="true">
+  <div class="panel panel-warning">
+    <div class="panel-heading" role="tab" id="warnings-heading">
+      <h4 class="panel-title">
+        <a role="button" data-toggle="collapse" data-parent="#warnings" href="#warnings-list" aria-expanded="true" aria-controls="warnings-list">
+          Warnings (click here to collapse/expand):
+        </a>
+      </h4>
+    </div>
+    <div id="warnings-list" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="warnings-heading">
+      <div class="alert alert-warning col-md-12">
+        {% for error in errors %}
+        <p><strong>{{ error }}</strong></p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="row">
   <div class="col-lg-12">
     {{ summary }}

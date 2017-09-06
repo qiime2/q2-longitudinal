@@ -73,6 +73,7 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                      group_column='Group', state_column='time_point',
                      state_values=['1', '2'], replicate_handling='error'):
     results = []
+    errors = []
     group_members = df[group_column] == group_value
     group_md = df[group_members]
     for individual_id in set(group_md[individual_id_column]):
@@ -84,9 +85,11 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
             _ind = df[individual_id_column] == individual_id
             individual_at_state_idx = group_md[_state & _ind].index
             if len(individual_at_state_idx) > 1:
-                print("Multiple values for {0} {1} at {2} {3} ({4})".format(
-                    individual_id_column, individual_id, state_column,
-                    state_value, ' '.join(map(str, individual_at_state_idx))))
+                errors.append(
+                    "Multiple values for {0} {1} at {2} {3} ({4})".format(
+                        individual_id_column, individual_id, state_column,
+                        state_value,
+                        ' '.join(map(str, individual_at_state_idx))))
                 if replicate_handling == 'error':
                     raise ValueError((
                         'Replicate values for individual {0} at state {1}. '
@@ -98,7 +101,7 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                 elif replicate_handling == 'drop':
                     pass
             elif len(individual_at_state_idx) == 0:
-                print("No values for {0} {1} at {2} {3}".format(
+                errors.append("No values for {0} {1} at {2} {3}".format(
                     individual_id_column, individual_id, state_column,
                     state_value))
                 pass
@@ -106,7 +109,7 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                 result.append(individual_at_state_idx[0])
         if len(result) == len(state_values):
             results.append(tuple(result))
-    return results
+    return results, errors
 
 
 def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs,
@@ -374,7 +377,7 @@ def _add_metric_to_metadata(table, metadata, metric):
 
 def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                paired_difference_tests=False, plot=False, summary=False,
-               model_summary=False, model_results=False):
+               errors=False, model_summary=False, model_results=False):
 
     pd.set_option('display.max_colwidth', -1)
 
@@ -410,6 +413,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
 
     index = join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
+        'errors': errors,
         'summary': summary,
         'model_summary': model_summary,
         'model_results': model_results,
@@ -422,7 +426,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
 
 def _stats_and_visuals(output_dir, pairs, metric, group_column,
                        state_column, state_1, state_2,
-                       individual_id_column, parametric, palette,
+                       individual_id_column, errors, parametric, palette,
                        replicate_handling,
                        multiple_group_test=True, pairwise_tests=True,
                        paired_difference_tests=True, boxplot=True):
@@ -456,4 +460,5 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
         name='Paired difference tests')
 
     _visualize(output_dir, multiple_group_test, pairwise_tests,
-               paired_difference_tests, boxplot, summary=summary)
+               paired_difference_tests, boxplot, summary=summary,
+               errors=errors)
