@@ -350,7 +350,7 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
 
 
 def _control_chart_subplots(state_column, metric, metadata, group_column,
-                             ci=95, palette='Set1', plot_control_limits=True):
+                            ci=95, palette='Set1', plot_control_limits=True):
 
     groups = metadata[group_column].unique()
     chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))

@@ -139,8 +139,8 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits=True
-               ) -> None:
+               plot_control_limits=True, method='fligner', center='median',
+               baseline=None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -155,8 +155,8 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
     # compare variances
     variance_results = _per_group_variance_comparison(
-        metadata, metric, state_column, group_column, method='fligner',
-        center='median', baseline=None)
+        metadata, metric, state_column, group_column, method=method,
+        center=center, baseline=baseline)
 
     # summarize parameters and visualize
     summary = pd.Series(
