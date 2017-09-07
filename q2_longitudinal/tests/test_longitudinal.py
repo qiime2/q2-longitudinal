@@ -16,7 +16,7 @@ from q2_longitudinal._utilities import (
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats,
-    _calculate_variability)
+    _calculate_variability, compare_variances)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility)
 import tempfile
@@ -121,6 +121,19 @@ class UtilitiesTests(longitudinalTestPluginBase):
         for obs, exp in zip(res, [0.1808333, 0.0634548, 0.3711978, -0.0095311,
                                   0.30774299, 0.05392367]):
             self.assertAlmostEqual(obs, exp)
+
+    def test_compare_variances_equal_variance(self):
+        for method, exp in zip(['fligner', 'levene', 'bartlett'], [1, 1, 1]):
+            groups = [[1, 2, 3], [4, 5, 6]]
+            s, p = compare_variances(*groups, method=method)
+            self.assertAlmostEqual(p, exp)
+
+    def test_compare_variances_unequal_variance(self):
+        for method, exp in zip(['fligner', 'levene', 'bartlett'],
+                               [0.2984133, 0.3024691, 0.00131798]):
+            groups = [[1, 2, 3], [4, 15, 96]]
+            s, p = compare_variances(*groups, method=method)
+            self.assertAlmostEqual(p, exp)
 
 
 # This test class really just makes sure that each plugin runs without error.
