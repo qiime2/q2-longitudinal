@@ -312,8 +312,7 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     hue, color variables all pass directly to equivalently named
         variables in seaborn.boxplot().
     """
-    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
-                     for k, v in sorted(groups.items())]
+    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
     vals = [v for k, v in sorted(groups.items())]
 
     ax = sns.boxplot(data=vals, hue=hue, palette=palette)
@@ -322,6 +321,13 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     ax.set_xlabel(x_label)
     ax.set_xticklabels(x_tick_labels, rotation=label_rotation)
     return ax
+
+
+def _add_sample_size_to_xtick_labels(groups):
+    '''groups is a dict of lists of values.'''
+    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
+                     for k, v in sorted(groups.items())]
+    return x_tick_labels
 
 
 def _lmplot_from_dataframe(state_column, metric, metadata, group_by,
@@ -371,6 +377,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
             color=next(colors), plot_control_limits=True, ax=axes[num + 1],
             palette=None)
         c.set_title('{0}: {1}'.format(group_column, group))
+    plt.tight_layout()
 
     return chart, global_mean, global_std
 
@@ -378,8 +385,19 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
                               ci=95, palette='Set1', ax=None, legend=True,
                               color=None):
+
     g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
                       ci=ci, palette=palette, color=color, ax=ax)
+
+    # relabel x axis with sample sizes
+    groups = {state: metadata[metadata[state_column] == state]
+              for state in metadata[state_column].unique()}
+    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
+    x_tick_labels = ['{0} (n={1})'.format(
+        state, len(metadata[metadata[state_column] == state]))
+        for state in metadata[state_column].unique()]
+    g.set_xticklabels(x_tick_labels, rotation=90)
+
     # place legend to right side of plot
     if legend:
         if ax is not None:
@@ -422,7 +440,7 @@ def _per_group_variance_comparison(metadata, metric, state_column,
                      for group in unique_groups]
     stat, pval = compare_variances(
         *global_groups, method=method, center=center)
-    results.append(('All States', stat, pval))
+    results.append(('All states: compare groups', stat, pval))
 
     # find baseline samples; assume baseline is first entry in unique states if
     # not provided by user.
@@ -439,7 +457,8 @@ def _per_group_variance_comparison(metadata, metric, state_column,
         # compare to each other
         stat, pval = compare_variances(
             *groups[state].values(), method=method, center=center)
-        results.append((state, stat, pval))
+        comp_name = 'State {0}: compare groups'.format(state)
+        results.append((comp_name, stat, pval))
 
         # compare to baseline for that group
         if state != baseline:
@@ -451,7 +470,8 @@ def _per_group_variance_comparison(metadata, metric, state_column,
                 results.append((comp_name, stat, pval))
 
     # compile results and correct P values
-    result = pd.DataFrame(results, columns=["Comparison", method, "P-value"])
+    result = pd.DataFrame(results, columns=[
+        "Comparison", '{0} test statistic'.format(method), "P-value"])
     result.set_index(['Comparison'], inplace=True)
     result = _multiple_tests_correction(result, method='fdr_bh', sort=False)
 
