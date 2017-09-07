@@ -10,7 +10,7 @@
 from qiime2.plugin import Str, Bool, Plugin, Metadata, Choices, Range, Float
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects)
+                            linear_mixed_effects, volatility)
 import q2_longitudinal
 from q2_types.distance_matrix import DistanceMatrix
 
@@ -159,4 +159,31 @@ plugin.visualizers.register_function(
         '"metric". Perform LME and plot line plots of each group column. A '
         'feature table artifact is required input, though whether "metric" is '
         'derived from the feature table or metadata is optional.')
+)
+
+
+plugin.visualizers.register_function(
+    function=volatility,
+    inputs={'table': FeatureTable[RelativeFrequency]},
+    parameters={**base_parameters,
+                'metric': Str,
+                'group_column': Str,
+                'ci': Float % Range(0, 100),
+                'plot_control_limits': Bool},
+    input_descriptions={'table': (
+        'Feature table to optionally use for paired comparisons.')},
+    parameter_descriptions={
+        **base_parameter_descriptions,
+        'metric': 'Numerical metadata or artifact column to test.',
+        'group_column': (
+            'Metadata column on which to separate groups for comparison'),
+        'ci': 'Size of the confidence interval to plot on control chart.',
+        'plot_control_limits': ('Plot global mean and control limits (2X and '
+                                '3X standard deviations).')
+    },
+    name='Volatility analysis',
+    description=(
+        'Plot control chart and compare longitudinal variance of a single '
+        'dependent variable, "metric". Variances are compared between each '
+        'group, as defined by the metadata column "group_column".')
 )

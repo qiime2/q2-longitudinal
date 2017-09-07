@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from statsmodels.sandbox.stats.multicomp import multipletests
-from itertools import combinations
+from itertools import combinations, cycle
 import pkg_resources
 import q2templates
 from random import choice
@@ -354,6 +354,71 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                         ax=axes[num], lowess=lowess, ci=ci)
         axes[num].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
+
+
+def _control_chart_subplots(state_column, metric, metadata, group_column,
+                             ci=95, palette='Set1', plot_control_limits=True):
+
+    groups = metadata[group_column].unique()
+    chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))
+
+    # plot all groups together, compare variances
+    c, global_mean, global_std = _control_chart(
+        state_column, metric, metadata, group_column, ci=ci, palette=palette,
+        plot_control_limits=plot_control_limits, ax=axes[0])
+    c.set_title('Group volatility comparison plot')
+
+    # plot individual groups' control charts
+    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
+    for num in range(len(groups)):
+        group = groups[num]
+        group_md = metadata[metadata[group_column] == group]
+        c, gm, gs = _control_chart(
+            state_column, metric, group_md, None, ci=ci, legend=False,
+            color=next(colors), plot_control_limits=True, ax=axes[num + 1],
+            palette=None)
+        c.set_title('{0}: {1}'.format(group_column, group))
+
+    return chart, global_mean, global_std
+
+
+def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
+                              ci=95, palette='Set1', ax=None, legend=True,
+                              color=None):
+    g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
+                      ci=ci, palette=palette, color=color, ax=ax)
+    # place legend to right side of plot
+    if legend:
+        if ax is not None:
+            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        else:
+            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    return g
+
+
+def _calculate_variability(metadata, metric):
+    global_mean = metadata[metric].mean()
+    global_std = metadata[metric].std()
+    upper_limit = global_mean + global_std * 3
+    lower_limit = global_mean - global_std * 3
+    upper_warning = global_mean + global_std * 2
+    lower_warning = global_mean - global_std * 2
+    return (global_mean, global_std, upper_limit, lower_limit, upper_warning,
+            lower_warning)
+
+
+def _control_chart(state_column, metric, metadata, group_by, ci=95,
+                   palette='Set1', plot_control_limits=True, ax=None,
+                   color=None, legend=True):
+    g = _pointplot_from_dataframe(state_column, metric, metadata, group_by,
+                                  ci=95, palette=palette, ax=ax, legend=legend,
+                                  color=color)
+
+    m, stdev, ul, ll, uw, lw = _calculate_variability(metadata, metric)
+    if plot_control_limits:
+        for lm, ls in [(m, '-'), (ul, '--'), (ll, '--'), (uw, ':'), (lw, ':')]:
+            g.axes.plot(g.get_xlim(), [lm, lm], ls=ls, c='grey')
+    return g, m, stdev
 
 
 def _load_metadata(metadata):
