@@ -15,9 +15,10 @@ from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
-    _multiple_group_difference, _per_method_pairwise_stats)
+    _multiple_group_difference, _per_method_pairwise_stats,
+    _calculate_variability)
 from q2_longitudinal._longitudinal import (
-    pairwise_differences, pairwise_distances, linear_mixed_effects)
+    pairwise_differences, pairwise_distances, linear_mixed_effects, volatility)
 import tempfile
 import pkg_resources
 from qiime2.plugin.testing import TestPluginBase
@@ -115,6 +116,12 @@ class UtilitiesTests(longitudinalTestPluginBase):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=False)
         self.assertAlmostEqual(res['FDR P-value'][0], 0.0021830447373622506)
 
+    def test_calculate_variability(self):
+        res = _calculate_variability(md, 'Value')
+        for obs, exp in zip(res, [0.1808333, 0.0634548, 0.3711978, -0.0095311,
+                                  0.30774299, 0.05392367]):
+            self.assertAlmostEqual(obs, exp)
+
 
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
@@ -204,6 +211,12 @@ class longitudinalTests(longitudinalTestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
+
+    def test_volatility(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='observed_otus', group_column='delivery',
+            state_column='month', individual_id_column='studyid')
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
