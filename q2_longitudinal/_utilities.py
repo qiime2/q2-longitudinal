@@ -22,7 +22,7 @@ import numpy as np
 from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
 from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
-                         ttest_1samp, f_oneway)
+                         ttest_1samp, f_oneway, fligner, levene, bartlett)
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
@@ -206,9 +206,7 @@ def _compare_pairwise_differences(groups, parametric=False):
         pvals.append((name, t, p))
     result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
-    result['FDR P-value'] = multipletests(
-        result['P-value'], method='fdr_bh')[1]
-    result.sort_index(inplace=True)
+    result = _multiple_tests_correction(result, method='fdr_bh')
     return result
 
 
@@ -268,12 +266,7 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     result = pd.DataFrame(
         pvals, columns=["Group A", "Group B", stat_name, "P-value"])
     result.set_index(['Group A', 'Group B'], inplace=True)
-    try:
-        result['FDR P-value'] = multipletests(
-            result['P-value'], method='fdr_bh')[1]
-    except ZeroDivisionError:
-        pass
-    result.sort_index(inplace=True)
+    result = _multiple_tests_correction(result, method='fdr_bh')
 
     return result
 
@@ -405,6 +398,74 @@ def _calculate_variability(metadata, metric):
     lower_warning = global_mean - global_std * 2
     return (global_mean, global_std, upper_limit, lower_limit, upper_warning,
             lower_warning)
+
+
+def compare_variances(*groups, method='fligner', center='median'):
+    if method == 'fligner':
+        stat, pval = fligner(*groups, center=center)
+    elif method == 'levene':
+        stat, pval = levene(*groups, center=center)
+    elif method == 'bartlett':
+        stat, pval = bartlett(*groups)
+    return stat, pval
+
+
+def _per_group_variance_comparison(metadata, metric, state_column,
+                                   group_column, method='fligner',
+                                   center='median', baseline=None):
+    results = []
+    unique_states = metadata[state_column].unique()
+    unique_groups = metadata[group_column].unique()
+
+    # compare group variance across all timepoints
+    global_groups = [metadata[metadata[group_column] == group][metric]
+                     for group in unique_groups]
+    stat, pval = compare_variances(
+        *global_groups, method=method, center=center)
+    results.append(('All States', stat, pval))
+
+    # find baseline samples; assume baseline is first entry in unique states if
+    # not provided by user.
+    if baseline is None:
+        baseline = unique_states[0]
+
+    # compare group variance at each timepoint
+    groups = {
+        state: {group: metadata[(metadata[group_column] == group) &
+                                (metadata[state_column] == state)][metric]
+                for group in unique_groups} for state in unique_states}
+
+    for state in unique_states:
+        # compare to each other
+        stat, pval = compare_variances(
+            *groups[state].values(), method=method, center=center)
+        results.append((state, stat, pval))
+
+        # compare to baseline for that group
+        if state != baseline:
+            for group in unique_groups:
+                stat, pval = compare_variances(
+                    groups[baseline][group], groups[state][group],
+                    method=method, center=center)
+                comp_name = '{0}: {1} vs. {2}'.format(group, baseline, state)
+                results.append((comp_name, stat, pval))
+
+    # compile results and correct P values
+    result = pd.DataFrame(results, columns=["Comparison", method, "P-value"])
+    result.set_index(['Comparison'], inplace=True)
+    result = _multiple_tests_correction(result, method='fdr_bh', sort=False)
+
+    return result
+
+
+def _multiple_tests_correction(df, method='fdr_bh', sort=True):
+    try:
+        df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
+    except ZeroDivisionError:
+        pass
+    if sort:
+        df.sort_index(inplace=True)
+    return df
 
 
 def _control_chart(state_column, metric, metadata, group_by, ci=95,

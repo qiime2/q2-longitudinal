@@ -12,7 +12,7 @@ from skbio import DistanceMatrix
 from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _visualize,
+                         _visualize, _per_group_variance_comparison,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
@@ -153,8 +153,10 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
         state_column, metric, metadata, group_column, ci=ci, palette=palette,
         plot_control_limits=plot_control_limits)
 
-    # backup
-    # chart, global_mean, global_std = _control_chart(state_column, metric, metadata, group_column, ci=ci, palette=palette, plot_control_limits=plot_control_limits)
+    # compare variances
+    variance_results = _per_group_variance_comparison(
+        metadata, metric, state_column, group_column, method='fligner',
+        center='median', baseline=None)
 
     # summarize parameters and visualize
     summary = pd.Series(
@@ -165,4 +167,5 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                'Global standard deviation'],
         name='Volatility test parameters')
 
-    _visualize(output_dir, plot=chart, summary=summary)
+    _visualize(output_dir, pairwise_tests=variance_results, plot=chart,
+               summary=summary)
