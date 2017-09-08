@@ -96,7 +96,8 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
         output_dir, pairs, 'distance', group_column,
         state_column, state_1, state_2, individual_id_column, errors,
         parametric, palette, replicate_handling, multiple_group_test=True,
-        pairwise_tests=True, paired_difference_tests=False, boxplot=True)
+        pairwise_tests=True, paired_difference_tests=False, boxplot=True,
+        plot_name='Pairwise distance boxplot')
 
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
@@ -133,7 +134,8 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
         name='Linear mixed effects parameters')
 
     _visualize(output_dir, model_summary=model_summary,
-               model_results=model_results, plot=g, summary=summary)
+               model_results=model_results, plot=g, summary=summary,
+               plot_name='Regression scatterplots')
 
 
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
@@ -168,4 +170,5 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
         name='Volatility test parameters')
 
     _visualize(output_dir, pairwise_tests=variance_results, plot=chart,
-               summary=summary)
+               summary=summary, plot_name='Control charts',
+               pairwise_test_name='Equality of variance tests')

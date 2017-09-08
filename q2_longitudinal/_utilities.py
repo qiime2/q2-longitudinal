@@ -524,7 +524,9 @@ def _add_metric_to_metadata(table, metadata, metric):
 
 def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                paired_difference_tests=False, plot=False, summary=False,
-               errors=False, model_summary=False, model_results=False):
+               errors=False, model_summary=False, model_results=False,
+               plot_name='Pairwise difference boxplot',
+               pairwise_test_name='Pairwise group comparison tests'):
 
     pd.set_option('display.max_colwidth', -1)
 
@@ -568,6 +570,8 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         'pairwise_tests': pairwise_tests,
         'paired_difference_tests': paired_difference_tests,
         'plot': plot,
+        'plot_name': plot_name,
+        'pairwise_test_name': pairwise_test_name,
     })
 
 
@@ -576,7 +580,9 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                        individual_id_column, errors, parametric, palette,
                        replicate_handling,
                        multiple_group_test=True, pairwise_tests=True,
-                       paired_difference_tests=True, boxplot=True):
+                       paired_difference_tests=True, boxplot=True,
+                       plot_name='Pairwise difference boxplot',
+                       pairwise_test_name='Pairwise group comparison tests'):
     # kruskal test or ANOVA between groups
     if multiple_group_test:
         multiple_group_test = _multiple_group_difference(
@@ -608,4 +614,5 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
 
     _visualize(output_dir, multiple_group_test, pairwise_tests,
                paired_difference_tests, boxplot, summary=summary,
-               errors=errors)
+               errors=errors, plot_name=plot_name,
+               pairwise_test_name=pairwise_test_name)
