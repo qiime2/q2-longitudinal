@@ -4,7 +4,7 @@
 
 QIIME2 plugin for paired sample comparisons.
 
-q2-longitudinal's actions support statistical and visual comparisons of longitudinal study designs and paired samples, to determine if/how samples change between observational "states". "States" will most commonly be related to time, and the sample pairs should typically consist of the same individual subject  observed at two different time points. For example, patients in a clinical study whose stool samples are collected before and after receiving treatment.
+q2-longitudinal's actions support statistical and visual comparisons of longitudinal study designs and paired samples, to determine if/how samples change between observational "states". "States" will most commonly be related to time or an environmental gradient, and for paired analyses (`pairwise-distances` and `pairwise-differences`) the sample pairs should typically consist of the same individual subject  observed at two different time points. For example, patients in a clinical study whose stool samples are collected before and after receiving treatment.
 
 "States" can also commonly be methodological, in which case sample pairs will usually be the same individual at the same time with two different methods. For example, q2-feature-classifier could compare the effects of different collection methods, storage methods, DNA extraction methods, or any bioinformatic processing steps on the feature composition of individual samples.
 
@@ -78,7 +78,7 @@ The visualization contains boxplots comparing the pairwise distance distribution
 
 ### Linear mixed effects models
 
-Linear mixed effects (LME) models test the relationship between a single response variable and one or more independent variables, where observations are made across dependent samples, e.g., in repeated-measures sampling experiments. This implementation takes at least one numeric "state_column" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group column. The response variable may either be a sample metadata mapping file column or a feature ID in the feature table.
+Linear mixed effects (LME) models test the relationship between a single response variable and one or more independent variables, where observations are made across dependent samples, e.g., in repeated-measures sampling experiments. This implementation takes at least one numeric "state_column" (e.g., Time) and one or more comma-separated group_categories (which may be categorical or numeric) as independent variables in a LME model, and plots regression plots of the response variable ("metric") as a function of the state caregory and each group column. The response variable may either be a sample metadata mapping file column or a feature ID in the feature table. LME is useful for testing what factors affect the trajectory of change in the dependent variable across time (or a gradient).
 
 In this example, we demonstrate the use of `linear-mixed-effects` to test the relationship between `shannon` (alpha diversity), age, delivery mode, diet, and sex.
 
@@ -107,3 +107,24 @@ qiime longitudinal linear-mixed-effects \
     --p-individual-id-column studyid \
     --o-visualization ecam-bacteroides-lme
 ```
+
+### Volatility analysis
+
+Volatility analysis is a method for assessing how volatile a dependent variable is over time (or a gradient) in one or more groups. Whereas LME tests how different factors (e.g., treatment, subject characteristics) impact the trajectory of change in a dependent variable across time (or a gradient), `volatility` examines how variance changes over time (or a gradient), and compares variances between groups at each state, between baseline and each state, and between groups across all states globally. Any metadata (including alpha and beta diversity artifacts) or `FeatureTable[RelativeFrequency]` feature can be used as the dependent variable ("metric"). *Note that volatility analysis currently works best for comparing groups that are sampled fairly evenly at each state in the dataset. Datasets that contain groups sampled at different states are not supported, and users should either filter out those samples or "bin" them with other groups prior to using this visualizer.*
+
+Here we examine how variance in Shannon diversity changes across time in the ECAM cohort.
+```
+qiime longitudinal volatility \
+    --m-metadata-file ecam_map_maturity.txt \
+    --m-metadata-file ecam_shannon.qza \
+    --p-metric shannon \
+    --p-group-column delivery \
+    --p-state-column month \
+    --p-individual-id-column studyid \
+    --o-visualization ecam-volatility
+```
+The resulting visualization contains several resuls. First, the "Volatility test parameters" summarizes some key parameters, as well as global mean and standard deviation — these are measured across all samples, regardless of which group they are in.
+
+Second, control charts display the mean value of "metric" at each "state". The first plot shown contains all samples, categorized by group (as defined by `group-column`); the following plots show each individual group, in order to show their individual control characteristics as described in the rest of this paragraph. The mean for all samples in each plot is shown as a black line. The "control limits", 3 standard deviations above and below the mean, are shown as dashed lines. The "warning limits", 2 standard deviations above and below the mean, are shown as dotted lines. The idea behind this plot is to show how a variable is changing over time (or a gradient) in relation to the mean. Large departures from the mean values can cross the warning/control limits, indicating a major disruption at that state; for example, antibiotic use or other disturbances impacting diversity could be tracked with these plots.
+
+Finally, we are interested in seeing how variance changes over time (or a gradient). For example, we may be interested in testing whether a group of patients becomes more variable with time, following a treatment, or in relation to a control group. This pairs well with LME tests, which evaluate the impact of independent variables on the trajectory of change in a dependent variable, but here we are interested in how a single factor impacts the spread of the data. We assess this using variance tests (users have the choice of Bartlett's, [Levene](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.levene.html), or Fligner-Killeen tests), with the null hypothesis that all distributions being compared have equal variance. Equality of variances is tested between 1) all groups, regardless of state (time point), 2) all groups at each individual state (time point), and 3) between baseline and each state for each group. The row "All states: compare groups" contains the results of test 1. Rows labeled "State s: compare groups" contain the results of test type 2, where "s" indicates the state (e.g., time point) at which groups are compared. Rows labeled "group: baseline vs. state" contain the results of test type 3, where "group" indicates the individual group being tested, "baseline" indicates the baseline state (this defaults to "0", but any value in `state_column` can be used as `baseline`), and "state" indicates the state being compared to baseline. In this example, we see that vaginally delivered and cesarean-delivery infants exhibit significantly different variances across all time (vaginally born infants are more variable but only because they accrue higher species diversity, so this result is not necessarily interesting); that vaginally and cesarean-born infants typically do not exhibit significantly different variances at isolated time points (indicating similar degrees of volatility over time; this is a more important statistic, given the developmental trajectory expected during early life); and that both groups' variances differ significantly from baseline at many times (probably not an important or interesting finding, given the developmental trajectory espected during early life; this particular test is more interesting when assessing, e.g., how a stable system responds to perturbation at a particular time point).
