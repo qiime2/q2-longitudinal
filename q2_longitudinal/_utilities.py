@@ -425,7 +425,8 @@ def compare_variances(*groups, method='fligner', center='median'):
         stat, pval = levene(*groups, center=center)
     elif method == 'bartlett':
         stat, pval = bartlett(*groups)
-    return stat, pval
+    count = len([val for group in groups for val in group])
+    return stat, pval, count
 
 
 def _per_group_variance_comparison(metadata, metric, state_column,
@@ -438,9 +439,9 @@ def _per_group_variance_comparison(metadata, metric, state_column,
     # compare group variance across all timepoints
     global_groups = [metadata[metadata[group_column] == group][metric]
                      for group in unique_groups]
-    stat, pval = compare_variances(
+    stat, pval, count = compare_variances(
         *global_groups, method=method, center=center)
-    results.append(('All states: compare groups', stat, pval))
+    results.append(('All states: compare groups', count, stat, pval))
 
     # find baseline samples; assume baseline is first entry in unique states if
     # not provided by user.
@@ -455,23 +456,23 @@ def _per_group_variance_comparison(metadata, metric, state_column,
 
     for state in unique_states:
         # compare to each other
-        stat, pval = compare_variances(
+        stat, pval, count = compare_variances(
             *groups[state].values(), method=method, center=center)
         comp_name = 'State {0}: compare groups'.format(state)
-        results.append((comp_name, stat, pval))
+        results.append((comp_name, count, stat, pval))
 
         # compare to baseline for that group
         if state != baseline:
             for group in unique_groups:
-                stat, pval = compare_variances(
+                stat, pval, count = compare_variances(
                     groups[baseline][group], groups[state][group],
                     method=method, center=center)
                 comp_name = '{0}: {1} vs. {2}'.format(group, baseline, state)
-                results.append((comp_name, stat, pval))
+                results.append((comp_name, count, stat, pval))
 
     # compile results and correct P values
     result = pd.DataFrame(results, columns=[
-        "Comparison", '{0} test statistic'.format(method), "P-value"])
+        "Comparison", "N", '{0} test statistic'.format(method), "P-value"])
     result.set_index(['Comparison'], inplace=True)
     result = _multiple_tests_correction(result, method='fdr_bh', sort=False)
 

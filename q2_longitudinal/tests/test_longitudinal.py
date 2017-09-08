@@ -125,14 +125,15 @@ class UtilitiesTests(longitudinalTestPluginBase):
     def test_compare_variances_equal_variance(self):
         for method, exp in zip(['fligner', 'levene', 'bartlett'], [1, 1, 1]):
             groups = [[1, 2, 3], [4, 5, 6]]
-            s, p = compare_variances(*groups, method=method)
+            s, p, c = compare_variances(*groups, method=method)
             self.assertAlmostEqual(p, exp)
+            self.assertEqual(c, 6)
 
     def test_compare_variances_unequal_variance(self):
         for method, exp in zip(['fligner', 'levene', 'bartlett'],
                                [0.2984133, 0.3024691, 0.00131798]):
             groups = [[1, 2, 3], [4, 15, 96]]
-            s, p = compare_variances(*groups, method=method)
+            s, p, c = compare_variances(*groups, method=method)
             self.assertAlmostEqual(p, exp)
 
 
