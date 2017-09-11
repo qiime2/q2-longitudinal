@@ -7,7 +7,8 @@
 # ----------------------------------------------------------------------------
 
 
-from qiime2.plugin import Str, Bool, Plugin, Metadata, Choices, Range, Float
+from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
+                           Int)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility)
@@ -171,7 +172,7 @@ plugin.visualizers.register_function(
                 'plot_control_limits': Bool,
                 'method': Str % Choices(['fligner', 'levene', 'bartlett']),
                 'center': Str % Choices(['median', 'mean', 'trimmed']),
-                'baseline': Str},
+                'baseline': Int},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={

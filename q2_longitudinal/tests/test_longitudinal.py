@@ -16,7 +16,8 @@ from q2_longitudinal._utilities import (
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats,
-    _calculate_variability, compare_variances)
+    _calculate_variability, compare_variances, _multiple_tests_correction,
+    _add_sample_size_to_xtick_labels, _per_group_variance_comparison)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility)
 import tempfile
@@ -135,6 +136,34 @@ class UtilitiesTests(longitudinalTestPluginBase):
             groups = [[1, 2, 3], [4, 15, 96]]
             s, p, c = compare_variances(*groups, method=method)
             self.assertAlmostEqual(p, exp)
+
+    def test_add_sample_size_to_xtick_labels(self):
+        groups = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1, 2, 3]}
+        labels = _add_sample_size_to_xtick_labels(groups)
+        self.assertEqual(labels, ['a (n=3)', 'b (n=2)', 'c (n=3)'])
+
+    def test_multiple_tests_correction(self):
+        test_df = pd.DataFrame(
+            pd.DataFrame({'Group': [1, 2, 3], 'P-value': [1, 1, 0.01]}))
+        test_df = _multiple_tests_correction(test_df)
+        self.assertEqual(
+            list(test_df['FDR P-value']), [1., 1., 0.030000000000000002])
+
+    def test_per_group_variance_comparison(self):
+        exp = pd.DataFrame(
+            [(12, 7.729282, 0.005433, 0.027166),
+             (6, 0.163122, .686298, 0.726866),
+             (6, 0.122009, 0.726866, 0.726866),
+             (6, 0.635881, 0.425206, 0.708677),
+             (6, 0.996229, 0.318225, 0.708677)],
+            columns=['N', 'fligner test statistic', 'P-Value', 'FDR P-value'],
+            index=['All states: compare groups', 'State 1: compare groups',
+                   'State 2: compare groups', 'a: 1 vs. 2', 'b: 1 vs. 2'])
+        exp.index.name = 'Comparison'
+        result = _per_group_variance_comparison(
+            md, 'Value', 'Time', 'Group')
+        self.assertAlmostEqual(
+            result.sort_index(inplace=True), exp.sort_index(inplace=True))
 
 
 # This test class really just makes sure that each plugin runs without error.
