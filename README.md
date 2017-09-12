@@ -4,6 +4,4 @@
 
 QIIME2 plugin for paired sample comparisons.
 
-Use examples are provided in the [QIIME2 tutorial documentation](https://docs.qiime2.org/2017.8/tutorials/longitudinal/).
-
-If you use this plugin, please cite: https://github.com/qiime2/q2-longitudinal
+This is a QIIME 2 plugin. For details on QIIME 2 and tutorials demonstrating how to use this plugin, see the [QIIME2 documentation](https://qiime2.org/).
