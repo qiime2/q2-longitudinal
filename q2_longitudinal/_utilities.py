@@ -482,6 +482,7 @@ def _per_group_variance_comparison(metadata, metric, state_column,
 def _multiple_tests_correction(df, method='fdr_bh', sort=True):
     try:
         df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
+    # zero division error will occur if the P-value series is empty. Ignore.
     except ZeroDivisionError:
         pass
     if sort:
