@@ -169,6 +169,7 @@ class UtilitiesTests(longitudinalTestPluginBase):
         self.assertAlmostEqual(
             result.sort_index(inplace=True), exp_vol.sort_index(inplace=True))
 
+
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.
