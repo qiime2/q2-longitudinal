@@ -344,15 +344,20 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
     '''plot a single regplot for each group in group_by.'''
-    f, axes = plt.subplots(len(group_by), figsize=(6, 18))
+    height = 6 * len(group_by)
+    f, axes = plt.subplots(len(group_by), figsize=(6, height))
     for num in range(len(group_by)):
+        if len(group_by) > 1:
+            ax = axes[num]
+        else:
+            ax = axes
         sns.set_palette(palette)
         for group in metadata[group_by[num]].unique():
             subset = metadata[metadata[group_by[num]] == group]
             sns.regplot(state_column, metric, data=subset, fit_reg=True,
                         scatter_kws={"marker": ".", "s": 100}, label=group,
-                        ax=axes[num], lowess=lowess, ci=ci)
-        axes[num].legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+                        ax=ax, lowess=lowess, ci=ci)
+        ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
 
 
