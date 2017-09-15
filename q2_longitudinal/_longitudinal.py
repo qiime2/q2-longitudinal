@@ -12,7 +12,7 @@ from skbio import DistanceMatrix
 from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _visualize, _per_group_variance_comparison,
+                         _visualize,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
@@ -141,8 +141,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits=True, method='fligner', center='median',
-               baseline=None) -> None:
+               plot_control_limits=True) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -155,11 +154,6 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
         state_column, metric, metadata, group_column, ci=ci, palette=palette,
         plot_control_limits=plot_control_limits)
 
-    # compare variances
-    variance_results = _per_group_variance_comparison(
-        metadata, metric, state_column, group_column, method=method,
-        center=center, baseline=baseline)
-
     # summarize parameters and visualize
     summary = pd.Series(
         [metric, group_column, state_column, individual_id_column, global_mean,
@@ -169,6 +163,5 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                'Global standard deviation'],
         name='Volatility test parameters')
 
-    _visualize(output_dir, pairwise_tests=variance_results, plot=chart,
-               summary=summary, plot_name='Control charts',
-               pairwise_test_name='Equality of variance tests')
+    _visualize(output_dir, plot=chart, summary=summary,
+               plot_name='Control charts')

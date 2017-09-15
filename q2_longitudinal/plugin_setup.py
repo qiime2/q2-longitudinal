@@ -7,8 +7,7 @@
 # ----------------------------------------------------------------------------
 
 
-from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Int)
+from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility)
@@ -169,10 +168,7 @@ plugin.visualizers.register_function(
                 'metric': Str,
                 'group_column': Str,
                 'ci': Float % Range(0, 100),
-                'plot_control_limits': Bool,
-                'method': Str % Choices(['fligner', 'levene', 'bartlett']),
-                'center': Str % Choices(['median', 'mean', 'trimmed']),
-                'baseline': Int},
+                'plot_control_limits': Bool},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
@@ -183,32 +179,9 @@ plugin.visualizers.register_function(
         'ci': 'Size of the confidence interval to plot on control chart.',
         'plot_control_limits': ('Plot global mean and control limits (2X and '
                                 '3X standard deviations).'),
-        'method': 'Statistic to test for equal variances.',
-        'center': ('Which function of the data to use in the test of equal '
-                   'variances.'),
-        'baseline': ('Which state to use as baseline for comparing variances. '
-                     'Must be a value in the metadata "state_column". By '
-                     'default will use the lowest value in "state_column".'),
     },
     name='Volatility analysis',
     description=(
-        'Plot control chart and compare longitudinal variance of a single '
-        'dependent variable, "metric". Variances are compared between each '
-        'group, as defined by the metadata column "group_column". Equality of '
-        'variances is tested between 1) all groups, regardless of state (time '
-        'point), 2) all groups at each individual state (time point), and 3) '
-        'between baseline and each state for each group. Choices of variance '
-        'tests include: 1) Bartlett\'s test, a parametric test, 2) Levene '
-        'test (which is recommended over Bartlett\'s test where there are '
-        'significant deviations from normality), and 3) Fligner-Killeen test, '
-        'which is a non-parametric test when populations are identical and '
-        'also recommended for its robustness. Each test tests the null '
-        'hypothesis that all input samples are from populations with equal '
-        'variances. Levene and Fligner tests support three different '
-        'centering methods: "median" is recommended for skewed (non-normal) '
-        'distributions; "mean" is recommended for symmetric, moderate-tailed '
-        'distributions; "trimmed" removes five percent of data points from '
-        'either end (to trim outliers) and is recommended for heavy-tailed '
-        'distributions. For more information on variance tests, see '
-        'docs.scipy.org/doc/scipy/reference/generated/scipy.stats.levene.html')
+        'Plot control chart of a single dependent variable, "metric", across '
+        'multiple groups contained in sample metadata column "group_column".')
 )

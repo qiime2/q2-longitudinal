@@ -16,8 +16,8 @@ from q2_longitudinal._utilities import (
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats,
-    _calculate_variability, compare_variances, _multiple_tests_correction,
-    _add_sample_size_to_xtick_labels, _per_group_variance_comparison)
+    _calculate_variability, _multiple_tests_correction,
+    _add_sample_size_to_xtick_labels)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility)
 import tempfile
@@ -123,20 +123,6 @@ class UtilitiesTests(longitudinalTestPluginBase):
                                   0.30774299, 0.05392367]):
             self.assertAlmostEqual(obs, exp)
 
-    def test_compare_variances_equal_variance(self):
-        for method, exp in zip(['fligner', 'levene', 'bartlett'], [1, 1, 1]):
-            groups = [[1, 2, 3], [4, 5, 6]]
-            s, p, c = compare_variances(*groups, method=method)
-            self.assertAlmostEqual(p, exp)
-            self.assertEqual(c, 6)
-
-    def test_compare_variances_unequal_variance(self):
-        for method, exp in zip(['fligner', 'levene', 'bartlett'],
-                               [0.2984133, 0.3024691, 0.00131798]):
-            groups = [[1, 2, 3], [4, 15, 96]]
-            s, p, c = compare_variances(*groups, method=method)
-            self.assertAlmostEqual(p, exp)
-
     def test_add_sample_size_to_xtick_labels(self):
         groups = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1, 2, 3]}
         labels = _add_sample_size_to_xtick_labels(groups)
@@ -156,18 +142,6 @@ class UtilitiesTests(longitudinalTestPluginBase):
         # ZeroDivisionError is ignored, so new df should be empty and == old
         self.assertEqual(test_df_mt.sort_index(inplace=True),
                          test_df.sort_index(inplace=True))
-
-    def test_per_group_variance_comparison(self):
-        result = _per_group_variance_comparison(
-            md, 'Value', 'Time', 'Group')
-        self.assertAlmostEqual(
-            result.sort_index(inplace=True), exp_vol.sort_index(inplace=True))
-
-    def test_per_group_variance_comparison_non_default_baseline(self):
-        result = _per_group_variance_comparison(
-            md, 'Value', 'Time', 'Group', baseline=2)
-        self.assertAlmostEqual(
-            result.sort_index(inplace=True), exp_vol.sort_index(inplace=True))
 
 
 # This test class really just makes sure that each plugin runs without error.
