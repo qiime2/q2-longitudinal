@@ -246,6 +246,14 @@ class longitudinalTests(longitudinalTestPluginBase):
             metric='observed_otus', group_column='delivery',
             state_column='month', individual_id_column='studyid')
 
+    def test_linear_mixed_effects_singular_matrix_error(self):
+        with self.assertRaisesRegex(ValueError, "singular matrix error"):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                group_categories='diet,diet_3',
+                individual_id_column='studyid', metric='observed_otus')
+
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                    (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),

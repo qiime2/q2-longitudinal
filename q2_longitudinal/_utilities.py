@@ -19,6 +19,7 @@ from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
 
 import numpy as np
+from numpy.linalg.linalg import LinAlgError
 from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
 from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
@@ -291,7 +292,16 @@ def _linear_effects(metadata, metric, state_column, group_categories,
         mlm = mixedlm(
             formula, metadata, groups=metadata[individual_id_column])
 
-    model_fit = mlm.fit()
+    # numpy.linalg.linalg.LinAlgError appears to raise
+    # See https://github.com/qiime2/q2-longitudinal/issues/39
+    try:
+        model_fit = mlm.fit()
+    except LinAlgError:
+        raise ValueError((
+            'Linear model will not compute due to singular matrix error. '
+            'This may occur if input variables correlate closely or exhibit '
+            'zero variance. Please check your input variables. Removing '
+            'potential covariates may resolve this issue.'))
 
     # summarize model and format prettily
     model_summary, model_results = model_fit.summary().tables
