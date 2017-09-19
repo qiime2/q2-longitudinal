@@ -344,10 +344,11 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
     '''plot a single regplot for each group in group_by.'''
-    height = 6 * len(group_by)
-    f, axes = plt.subplots(len(group_by), figsize=(6, height))
-    for num in range(len(group_by)):
-        if len(group_by) > 1:
+    num_groups = len(group_by)
+    height = 6 * num_groups
+    f, axes = plt.subplots(num_groups, figsize=(6, height))
+    for num in range(num_groups):
+        if num_groups > 1:
             ax = axes[num]
         else:
             ax = axes
