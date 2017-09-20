@@ -471,7 +471,7 @@ def _add_metric_to_metadata(table, metadata, metric):
 def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                paired_difference_tests=False, plot=False, summary=False,
                errors=False, model_summary=False, model_results=False,
-               plot_name='Pairwise difference boxplot',
+               raw_data=False, plot_name='Pairwise difference boxplot',
                pairwise_test_name='Pairwise group comparison tests'):
 
     pd.set_option('display.max_colwidth', -1)
@@ -486,6 +486,10 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
     if pairwise_tests is not False:
         pairwise_tests.to_csv(join(output_dir, 'pairwise_tests.tsv'), sep='\t')
         pairwise_tests = q2templates.df_to_html(pairwise_tests)
+
+    if raw_data is not False:
+        raw_data.to_csv(join(output_dir, 'raw-data.tsv'), sep='\t')
+        raw_data = True
 
     if paired_difference_tests is not False:
         paired_difference_tests.to_csv(join(
@@ -517,6 +521,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         'paired_difference_tests': paired_difference_tests,
         'plot': plot,
         'plot_name': plot_name,
+        'raw_data': raw_data,
         'pairwise_test_name': pairwise_test_name,
     })
 
