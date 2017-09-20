@@ -34,6 +34,11 @@
         <br>
         <p>Download as PDF</p>
       </a>
+      {% if raw_data %}
+      <a href="raw-data.tsv">
+        <p>Download raw data as tsv</p>
+      </a>
+      {% endif %}
       {% if multiple_group_test %}
       <a href="pairs.tsv">
         <p>Download within-subject pairwise comparison data as tsv</p>

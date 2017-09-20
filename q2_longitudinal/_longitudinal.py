@@ -133,8 +133,12 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                'Individual ID column'],
         name='Linear mixed effects parameters')
 
+    raw_data = metadata[[
+        metric, state_column, individual_id_column, *group_categories]]
+
     _visualize(output_dir, model_summary=model_summary,
                model_results=model_results, plot=g, summary=summary,
+               raw_data=raw_data,
                plot_name='Regression scatterplots')
 
 
@@ -163,5 +167,8 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                'Global standard deviation'],
         name='Volatility test parameters')
 
-    _visualize(output_dir, plot=chart, summary=summary,
+    raw_data = metadata[[
+        metric, state_column, individual_id_column, group_column]]
+
+    _visualize(output_dir, plot=chart, summary=summary, raw_data=raw_data,
                plot_name='Control charts')
