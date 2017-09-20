@@ -297,11 +297,11 @@ def _linear_effects(metadata, metric, state_column, group_categories,
     try:
         model_fit = mlm.fit()
     except LinAlgError:
-        raise ValueError((
+        raise ValueError(
             'Linear model will not compute due to singular matrix error. '
             'This may occur if input variables correlate closely or exhibit '
             'zero variance. Please check your input variables. Removing '
-            'potential covariates may resolve this issue.'))
+            'potential covariates may resolve this issue.')
 
     # summarize model and format prettily
     model_summary, model_results = model_fit.summary().tables
