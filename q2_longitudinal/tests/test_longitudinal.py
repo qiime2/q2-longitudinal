@@ -197,6 +197,13 @@ class longitudinalTests(longitudinalTestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid', metric='observed_otus')
 
+    def test_linear_mixed_effects_one_variable(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_categories='delivery',
+            individual_id_column='studyid', metric='observed_otus')
+
     def test_linear_mixed_effects_taxa(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
