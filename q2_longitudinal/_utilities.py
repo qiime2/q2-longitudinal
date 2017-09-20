@@ -11,7 +11,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from statsmodels.sandbox.stats.multicomp import multipletests
-from itertools import combinations
+from itertools import combinations, cycle
 import pkg_resources
 import q2templates
 from random import choice
@@ -206,9 +206,7 @@ def _compare_pairwise_differences(groups, parametric=False):
         pvals.append((name, t, p))
     result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
-    result['FDR P-value'] = multipletests(
-        result['P-value'], method='fdr_bh')[1]
-    result.sort_index(inplace=True)
+    result = _multiple_tests_correction(result, method='fdr_bh')
     return result
 
 
@@ -268,12 +266,7 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     result = pd.DataFrame(
         pvals, columns=["Group A", "Group B", stat_name, "P-value"])
     result.set_index(['Group A', 'Group B'], inplace=True)
-    try:
-        result['FDR P-value'] = multipletests(
-            result['P-value'], method='fdr_bh')[1]
-    except ZeroDivisionError:
-        pass
-    result.sort_index(inplace=True)
+    result = _multiple_tests_correction(result, method='fdr_bh')
 
     return result
 
@@ -319,8 +312,7 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     hue, color variables all pass directly to equivalently named
         variables in seaborn.boxplot().
     """
-    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
-                     for k, v in sorted(groups.items())]
+    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
     vals = [v for k, v in sorted(groups.items())]
 
     ax = sns.boxplot(data=vals, hue=hue, palette=palette)
@@ -329,6 +321,13 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     ax.set_xlabel(x_label)
     ax.set_xticklabels(x_tick_labels, rotation=label_rotation)
     return ax
+
+
+def _add_sample_size_to_xtick_labels(groups):
+    '''groups is a dict of lists of values.'''
+    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
+                     for k, v in sorted(groups.items())]
+    return x_tick_labels
 
 
 def _lmplot_from_dataframe(state_column, metric, metadata, group_by,
@@ -362,6 +361,94 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
     return f
 
 
+def _control_chart_subplots(state_column, metric, metadata, group_column,
+                            ci=95, palette='Set1', plot_control_limits=True):
+
+    groups = metadata[group_column].unique()
+    chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))
+
+    # plot all groups together, compare variances
+    c, global_mean, global_std = _control_chart(
+        state_column, metric, metadata, group_column, ci=ci, palette=palette,
+        plot_control_limits=plot_control_limits, ax=axes[0])
+    c.set_title('Group volatility comparison plot')
+
+    # plot individual groups' control charts
+    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
+    for num in range(len(groups)):
+        group = groups[num]
+        group_md = metadata[metadata[group_column] == group]
+        c, gm, gs = _control_chart(
+            state_column, metric, group_md, None, ci=ci, legend=False,
+            color=next(colors), plot_control_limits=True, ax=axes[num + 1],
+            palette=None)
+        c.set_title('{0}: {1}'.format(group_column, group))
+    plt.tight_layout()
+
+    return chart, global_mean, global_std
+
+
+def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
+                              ci=95, palette='Set1', ax=None, legend=True,
+                              color=None):
+
+    g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
+                      ci=ci, palette=palette, color=color, ax=ax)
+
+    # relabel x axis with sample sizes
+    groups = {state: metadata[metadata[state_column] == state]
+              for state in metadata[state_column].unique()}
+    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
+    x_tick_labels = ['{0} (n={1})'.format(
+        state, len(metadata[metadata[state_column] == state]))
+        for state in metadata[state_column].unique()]
+    g.set_xticklabels(x_tick_labels, rotation=90)
+
+    # place legend to right side of plot
+    if legend:
+        if ax is not None:
+            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        else:
+            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    return g
+
+
+def _calculate_variability(metadata, metric):
+    global_mean = metadata[metric].mean()
+    global_std = metadata[metric].std()
+    upper_limit = global_mean + global_std * 3
+    lower_limit = global_mean - global_std * 3
+    upper_warning = global_mean + global_std * 2
+    lower_warning = global_mean - global_std * 2
+    return (global_mean, global_std, upper_limit, lower_limit, upper_warning,
+            lower_warning)
+
+
+def _multiple_tests_correction(df, method='fdr_bh', sort=True):
+    try:
+        df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
+    # zero division error will occur if the P-value series is empty. Ignore.
+    except ZeroDivisionError:
+        pass
+    if sort:
+        df.sort_index(inplace=True)
+    return df
+
+
+def _control_chart(state_column, metric, metadata, group_by, ci=95,
+                   palette='Set1', plot_control_limits=True, ax=None,
+                   color=None, legend=True):
+    g = _pointplot_from_dataframe(state_column, metric, metadata, group_by,
+                                  ci=95, palette=palette, ax=ax, legend=legend,
+                                  color=color)
+
+    m, stdev, ul, ll, uw, lw = _calculate_variability(metadata, metric)
+    if plot_control_limits:
+        for lm, ls in [(m, '-'), (ul, '--'), (ll, '--'), (uw, ':'), (lw, ':')]:
+            g.axes.plot(g.get_xlim(), [lm, lm], ls=ls, c='grey')
+    return g, m, stdev
+
+
 def _load_metadata(metadata):
     metadata = metadata.to_dataframe()
     metadata = metadata.apply(lambda x: pd.to_numeric(x, errors='ignore'))
@@ -383,7 +470,9 @@ def _add_metric_to_metadata(table, metadata, metric):
 
 def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                paired_difference_tests=False, plot=False, summary=False,
-               errors=False, model_summary=False, model_results=False):
+               errors=False, model_summary=False, model_results=False,
+               plot_name='Pairwise difference boxplot',
+               pairwise_test_name='Pairwise group comparison tests'):
 
     pd.set_option('display.max_colwidth', -1)
 
@@ -427,6 +516,8 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         'pairwise_tests': pairwise_tests,
         'paired_difference_tests': paired_difference_tests,
         'plot': plot,
+        'plot_name': plot_name,
+        'pairwise_test_name': pairwise_test_name,
     })
 
 
@@ -435,7 +526,9 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                        individual_id_column, errors, parametric, palette,
                        replicate_handling,
                        multiple_group_test=True, pairwise_tests=True,
-                       paired_difference_tests=True, boxplot=True):
+                       paired_difference_tests=True, boxplot=True,
+                       plot_name='Pairwise difference boxplot',
+                       pairwise_test_name='Pairwise group comparison tests'):
     # kruskal test or ANOVA between groups
     if multiple_group_test:
         multiple_group_test = _multiple_group_difference(
@@ -467,4 +560,5 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
 
     _visualize(output_dir, multiple_group_test, pairwise_tests,
                paired_difference_tests, boxplot, summary=summary,
-               errors=errors)
+               errors=errors, plot_name=plot_name,
+               pairwise_test_name=pairwise_test_name)

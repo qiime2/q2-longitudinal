@@ -27,14 +27,14 @@
   <div class="col-lg-12">
     {{ summary }}
     {% if plot %}
-    <h2>Pairwise difference boxplot</h1>
+    <h2>{{ plot_name }}</h1>
     <div class="text-center">
       <a href="plot.pdf">
         <img src="plot.png">
         <br>
         <p>Download as PDF</p>
       </a>
-      {% if pairwise_tests %}
+      {% if multiple_group_test %}
       <a href="pairs.tsv">
         <p>Download within-subject pairwise comparison data as tsv</p>
       </a>
@@ -79,7 +79,7 @@
     </div>
     {% endif %}
     {% if pairwise_tests %}
-    <h2>Pairwise group comparison tests</h1>
+    <h2>{{ pairwise_test_name }}</h1>
     <div class="col-lg-12">
       {{ pairwise_tests }}
       <a href="pairwise_tests.tsv">

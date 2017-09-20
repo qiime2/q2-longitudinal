@@ -16,7 +16,8 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
-                         _validate_input_values, _validate_input_columns)
+                         _validate_input_values, _validate_input_columns,
+                         _control_chart_subplots)
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -95,7 +96,8 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
         output_dir, pairs, 'distance', group_column,
         state_column, state_1, state_2, individual_id_column, errors,
         parametric, palette, replicate_handling, multiple_group_test=True,
-        pairwise_tests=True, paired_difference_tests=False, boxplot=True)
+        pairwise_tests=True, paired_difference_tests=False, boxplot=True,
+        plot_name='Pairwise distance boxplot')
 
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
@@ -132,4 +134,34 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
         name='Linear mixed effects parameters')
 
     _visualize(output_dir, model_summary=model_summary,
-               model_results=model_results, plot=g, summary=summary)
+               model_results=model_results, plot=g, summary=summary,
+               plot_name='Regression scatterplots')
+
+
+def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
+               metric: str, state_column: str, individual_id_column: str,
+               table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
+               plot_control_limits=True) -> None:
+
+    # find metric in metadata or derive from table and merge into metadata
+    metadata = _add_metric_to_metadata(table, metadata, metric)
+
+    _validate_input_columns(metadata, individual_id_column, group_column,
+                            state_column)
+
+    # plot control charts
+    chart, global_mean, global_std = _control_chart_subplots(
+        state_column, metric, metadata, group_column, ci=ci, palette=palette,
+        plot_control_limits=plot_control_limits)
+
+    # summarize parameters and visualize
+    summary = pd.Series(
+        [metric, group_column, state_column, individual_id_column, global_mean,
+         global_std],
+        index=['Metric', 'Group column', 'State column',
+               'Individual ID column', 'Global mean',
+               'Global standard deviation'],
+        name='Volatility test parameters')
+
+    _visualize(output_dir, plot=chart, summary=summary,
+               plot_name='Control charts')
