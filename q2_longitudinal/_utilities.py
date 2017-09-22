@@ -19,8 +19,9 @@ from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
 
 import numpy as np
+from scipy import linalg
 from numpy.linalg.linalg import LinAlgError
-from skbio.stats.distance import MissingIDError
+from skbio.stats.distance import MissingIDError, permanova
 from skbio import DistanceMatrix
 from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
                          ttest_1samp, f_oneway)
@@ -577,3 +578,76 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                paired_difference_tests, boxplot, summary=summary,
                errors=errors, plot_name=plot_name,
                pairwise_test_name=pairwise_test_name)
+
+
+def _temporal_corr(table, individual_id, corr_method="kendall"):
+    '''Create Temporal correlation from a feature table containing repeated
+    measures samples.
+    table: pd.DataFrame
+        rows are samples, columns are features (count / relative_abundance)
+    individual_id: pd.Series
+        subject id of samples, with the same length as df
+    corr_method: str
+        temporal correlation method, "kendall", "pearson", "spearman"
+
+    '''
+    results = {}
+
+    # Start to calculate temporal correlation
+    for id_key in individual_id.unique():
+        table_id = table.loc[individual_id == id_key]
+        results[id_key] = table_id.corr(method=corr_method).fillna(0)
+
+    return results
+
+
+def _temporal_distance(corr, id_set, dist_method="fro"):
+    '''Calculate Distance Matrix from temporal correlation data.
+    corr_dict: dict
+        output from temporal_corr
+    id_set: pd.Series
+        unique subject ids from individual_id with index attached
+    dist_method: str
+        method supported by scipy.linalg.norm parameter ord
+    '''
+    id_n = len(id_set)
+
+    dist = np.zeros((id_n, id_n))
+    for i, id_i in enumerate(id_set):
+        for j, id_j in enumerate(id_set):
+            dist[i, j] = linalg.norm(
+                corr[id_i] - corr[id_j], ord=dist_method)
+    return DistanceMatrix(dist, ids=id_set.index)
+
+
+def _nmit(taxa, sample_md, individual_id_column, group_column,
+          test_method="permanova", corr_method="kendall",
+          dist_method="fro"):
+    '''Function to perform nonparametric microbial interdependence test (nmit)
+    test.
+    sample_md: pd.DataFrame
+        Sample metadata
+    test_method: str
+        Statistical test to use. Default is PERMANOVA.
+    corr_method: str
+        temporal correlation method.
+    dist_method: str
+        temporal distance method from numpy.linalg.norm, default is "fro".
+    '''
+    # compile series of unique individuals/groups with index retained
+    # the goal here is to have ordered lists of ids/group membership
+    # that we eventually pass to permanova (or other test).
+    _key = sample_md[[individual_id_column, group_column]].drop_duplicates()
+    id_set = _key[individual_id_column]
+    grp = _key[group_column]
+
+    # full series of individual ids
+    individual_id = sample_md[individual_id_column]
+
+    # calculate species correlation in individuals
+    _corr = _temporal_corr(taxa, individual_id,  corr_method)
+
+    # calculate distance between individuals
+    _dist = _temporal_distance(_corr, id_set, dist_method)
+
+    return _dist
