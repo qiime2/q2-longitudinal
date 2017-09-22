@@ -150,7 +150,7 @@ class UtilitiesTests(longitudinalTestPluginBase):
     def test_temporal_corr(self):
         ind_id = pd.Series(
             [1, 2, 3, 1, 2, 3], index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_tc = _temporal_corr(tab, ind_id)
+        obs_tc = _temporal_corr(tab, ind_id, ind_id.drop_duplicates())
         for k in obs_tc.keys():
             self.assertEqual(exp_tc[k].sort_index(inplace=True),
                              obs_tc[k].sort_index(inplace=True))

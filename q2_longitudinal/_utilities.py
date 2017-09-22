@@ -594,7 +594,7 @@ def _temporal_corr(table, individual_id, id_set, corr_method="kendall"):
 
     '''
     results = {}
-      
+
     # Start to calculate temporal correlation
     for id_key in id_set:
         table_id = table.loc[individual_id == id_key]
@@ -633,14 +633,14 @@ def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
     dist_method: str
         temporal distance method from numpy.linalg.norm, default is "fro".
     '''
+    # full series of individual ids
+    individual_id = sample_md[individual_id_column]
+
     # compile series of unique individuals with index retained
     # the goal here is to have ordered lists of ids that we eventually append
     # to distance matrix (for metadata extraction during permanova or other
     # follow-up tests/plotting), hence we do not use pd.unique()
-    id_set = sample_md[individual_id_column].drop_duplicates()
-
-    # full series of individual ids
-    individual_id = sample_md[individual_id_column]
+    id_set = individual_id.drop_duplicates()
 
     # calculate species correlation in individuals
     _corr = _temporal_corr(taxa, individual_id, id_set,  corr_method)
