@@ -21,7 +21,7 @@ from patsy import PatsyError
 import numpy as np
 from scipy import linalg
 from numpy.linalg.linalg import LinAlgError
-from skbio.stats.distance import MissingIDError, permanova
+from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
 from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
                          ttest_1samp, f_oneway)

@@ -194,6 +194,7 @@ class longitudinalTests(longitudinalTestPluginBase):
             return dm
 
         self.table_ecam_fp = _load_features('ecam-table-maturity.qza')
+        self.table_taxa_fp = _load_features('ecam-table-small.qza')
         self.md_ecam_fp = _load_md('ecam_map_maturity.txt')
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
@@ -276,6 +277,10 @@ class longitudinalTests(longitudinalTestPluginBase):
                 metadata=self.md_ecam_fp, state_column='month',
                 group_categories='diet,diet_3',
                 individual_id_column='studyid', metric='observed_otus')
+
+    def test_nmit(self):
+        nmit(table=self.table_taxa_fp, metadata=self.md_ecam_fp,
+             individual_id_column='studyid')
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),

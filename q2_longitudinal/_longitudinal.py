@@ -180,9 +180,9 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
 
     # load and merge feature table and metadata to ensure IDs match
     metadata = _load_metadata(metadata)
-    metadata = metadata[[individual_id_column, group_column]]
+    metadata = metadata[[individual_id_column]]
     metadata = pd.concat([metadata, table], axis=1, join='inner')
-    taxa = metadata.drop([group_column, individual_id_column], axis=1)
+    taxa = metadata.drop([individual_id_column], axis=1)
 
     # validate id column
     _validate_input_columns(metadata, individual_id_column, None, None)
