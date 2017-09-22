@@ -620,26 +620,22 @@ def _temporal_distance(corr, id_set, dist_method="fro"):
     return DistanceMatrix(dist, ids=id_set.index)
 
 
-def _nmit(taxa, sample_md, individual_id_column, group_column,
-          test_method="permanova", corr_method="kendall",
+def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
           dist_method="fro"):
     '''Function to perform nonparametric microbial interdependence test (nmit)
     test.
     sample_md: pd.DataFrame
         Sample metadata
-    test_method: str
-        Statistical test to use. Default is PERMANOVA.
     corr_method: str
         temporal correlation method.
     dist_method: str
         temporal distance method from numpy.linalg.norm, default is "fro".
     '''
-    # compile series of unique individuals/groups with index retained
-    # the goal here is to have ordered lists of ids/group membership
-    # that we eventually pass to permanova (or other test).
-    _key = sample_md[[individual_id_column, group_column]].drop_duplicates()
-    id_set = _key[individual_id_column]
-    grp = _key[group_column]
+    # compile series of unique individuals with index retained
+    # the goal here is to have ordered lists of ids that we eventually append
+    # to distance matrix (for metadata extraction during permanova or other
+    # follow-up tests/plotting), hence we do not use pd.unique()
+    id_set = sample_md[individual_id_column].drop_duplicates()
 
     # full series of individual ids
     individual_id = sample_md[individual_id_column]

@@ -174,9 +174,9 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                plot_name='Control charts')
 
 
-def nmit(table: pd.DataFrame, metadata: qiime2.Metadata, group_column: str,
-         individual_id_column: str, test_method="permanova",
-         corr_method="kendall", dist_method="fro") -> DistanceMatrix:
+def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
+         individual_id_column: str, corr_method="kendall", dist_method="fro"
+         ) -> DistanceMatrix:
 
     # load and merge feature table and metadata to ensure IDs match
     metadata = _load_metadata(metadata)
@@ -184,13 +184,12 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata, group_column: str,
     metadata = pd.concat([metadata, table], axis=1, join='inner')
     taxa = metadata.drop([group_column, individual_id_column], axis=1)
 
-    _validate_input_columns(
-        metadata, individual_id_column, group_column, group_column)
+    # validate id column
+    _validate_input_columns(metadata, individual_id_column, None, None)
 
     # run NMIT
     _dist = _nmit(
         taxa, metadata, individual_id_column=individual_id_column,
-        group_column=group_column, test_method=test_method,
         corr_method=corr_method, dist_method=dist_method)
 
     return _dist

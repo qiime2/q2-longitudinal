@@ -201,8 +201,6 @@ plugin.methods.register_function(
     function=nmit,
     inputs={'table': FeatureTable[RelativeFrequency]},
     parameters={**basest_parameters,
-                'group_column': Str,
-                'test_method': Str % Choices(["permanova"]),
                 'corr_method': Str % Choices(
                     ["kendall", "pearson", "spearman"]),
                 'dist_method': Str % Choices(["fro", "nuc"])},
@@ -211,9 +209,6 @@ plugin.methods.register_function(
         'Feature table to use for microbial interdependence test.')},
     parameter_descriptions={
         **basest_parameter_descriptions,
-        'group_column': (
-            'Metadata column on which to separate groups for comparison'),
-        'test_method': 'The group significance test to be applied.',
         'corr_method': 'The temporal correlation test to be applied.',
         'dist_method': (
             'Temporal distance method, see numpy.linalg.norm for details.'),

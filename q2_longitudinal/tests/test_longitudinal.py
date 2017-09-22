@@ -8,6 +8,7 @@
 
 import qiime2
 import pandas as pd
+import numpy as np
 from skbio import DistanceMatrix
 from io import StringIO
 from warnings import filterwarnings
@@ -17,15 +18,18 @@ from q2_longitudinal._utilities import (
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats,
     _calculate_variability, _multiple_tests_correction,
-    _add_sample_size_to_xtick_labels)
+    _add_sample_size_to_xtick_labels, _temporal_corr, _temporal_distance,
+    _nmit)
 from q2_longitudinal._longitudinal import (
-    pairwise_differences, pairwise_distances, linear_mixed_effects, volatility)
+    pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
+    nmit)
 import tempfile
 import pkg_resources
 from qiime2.plugin.testing import TestPluginBase
 
 
 filterwarnings("ignore", category=UserWarning)
+filterwarnings("ignore", category=RuntimeWarning)
 
 
 class longitudinalTestPluginBase(TestPluginBase):
@@ -142,6 +146,25 @@ class UtilitiesTests(longitudinalTestPluginBase):
         # ZeroDivisionError is ignored, so new df should be empty and == old
         self.assertEqual(test_df_mt.sort_index(inplace=True),
                          test_df.sort_index(inplace=True))
+
+    def test_temporal_corr(self):
+        ind_id = pd.Series(
+            [1, 2, 3, 1, 2, 3], index=['s1', 's2', 's3', 's4', 's5', 's6'])
+        obs_tc = _temporal_corr(tab, ind_id)
+        for k in obs_tc.keys():
+            self.assertEqual(exp_tc[k].sort_index(inplace=True),
+                             obs_tc[k].sort_index(inplace=True))
+
+    def test_temporal_distance(self):
+        id_set = pd.Series([1, 2, 3], index=['s1', 's2', 's3'])
+        obs_td = _temporal_distance(exp_tc, id_set)
+        self.assertTrue(np.array_equal(obs_td.data, exp_td))
+
+    def test_nmit(self):
+        sample_md = pd.DataFrame([1, 2, 3, 1, 2, 3], columns=['sample_id'],
+                                 index=['s1', 's2', 's3', 's4', 's5', 's6'])
+        obs_td = _nmit(tab, sample_md, 'sample_id')
+        self.assertTrue(np.array_equal(obs_td.data, exp_td))
 
 
 # This test class really just makes sure that each plugin runs without error.
@@ -301,3 +324,18 @@ exp_vol = pd.DataFrame(
     index=['All states: compare groups', 'State 1: compare groups',
            'State 2: compare groups', 'a: 1 vs. 2', 'b: 1 vs. 2'])
 exp_vol.index.name = 'Comparison'
+
+tab = pd.DataFrame({'o1': [0.3, 0.6, 0.6, 0.4, 0.5, 0.6],
+                    'o2': [0.4, 0.3, 0.2, 0.4, 0.4, 0.3],
+                    'o3': [0.3, 0.1, 0.2, 0.2, 0.1, 0.1]},
+                   index=['s1', 's2', 's3', 's4', 's5', 's6'])
+
+exp_tc = {
+    1: pd.DataFrame({'o1': [1., 0., -1.], 'o2': [0., 1., 0.],
+                     'o3': [-1., 0., 1.]}, index=['o1', 'o2', 'o3']),
+    2: pd.DataFrame({'o1': [1., -1., 0.], 'o2': [-1., 1., 0.],
+                     'o3': [0., 0., 1.]}, index=['o1', 'o2', 'o3']),
+    3: pd.DataFrame({'o1': [1., 0., 0.], 'o2': [0., 1., -1.],
+                     'o3': [0., -1., 1.]}, index=['o1', 'o2', 'o3'])}
+
+exp_td = np.array([[0., 2., 2.], [2., 0., 2.], [2., 2., 0.]])
