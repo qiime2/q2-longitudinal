@@ -619,6 +619,7 @@ def _temporal_distance(corr, id_set, dist_method="fro"):
                 dist[i,j]  = 0
     return DistanceMatrix(dist, ids=id_set.index)
 
+
 def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
           dist_method="fro"):
     '''Function to perform nonparametric microbial interdependence test (nmit)
