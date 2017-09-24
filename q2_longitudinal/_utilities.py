@@ -593,7 +593,8 @@ def _temporal_corr(table, individual_id, corr_method="kendall"):
 
     # Start to calculate temporal correlation
     table["individual_id"] = individual_id
-    results = table.groupby(["individual_id"]).corr(method=corr_method).fillna(0)
+    results = table.groupby(["individual_id"]).corr(method=corr_method)
+    results = results.fillna(0)
 
     return results
 
@@ -612,11 +613,12 @@ def _temporal_distance(corr, id_set, dist_method="fro"):
     dist = np.zeros((id_n, id_n))
     for i, id_i in enumerate(id_set):
         for j, id_j in enumerate(id_set):
-            if i<j:
-                dist[i, j] = linalg.norm(corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
+            if i < j:
+                dist[i, j] = linalg.norm(
+                  corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
                 dist[j, i] = dist[i, j]
-            if i==j:
-                dist[i,j]  = 0
+            if i == j:
+                dist[i, j] = 0
     return DistanceMatrix(dist, ids=id_set.index)
 
 
@@ -641,7 +643,7 @@ def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
     id_set = individual_id.drop_duplicates()
 
     # calculate species correlation in individuals
-    _corr = _temporal_corr(taxa, individual_id, id_set,  corr_method)
+    _corr = _temporal_corr(taxa, individual_id,  corr_method)
 
     # calculate distance between individuals
     _dist = _temporal_distance(_corr, id_set, dist_method)
