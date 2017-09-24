@@ -580,36 +580,6 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                pairwise_test_name=pairwise_test_name)
 
 
-def _temporal_screening(taxa, abs_or_rel="rel", abs_threshold=10,
-                        rel_threshold=0.001, pct_threshold=0.15):
-    '''Screening taxa. Keep OTUs whose relative/abolute abundance
-    is larger than abs_threshold/rel_threshold in more than
-    pct_threshold samples.
-    taxa: pd.DataFrame
-        OTU table. rows are samples, columns are taxa
-        (absolute/relative abundance)
-    abs_or_rel: str
-        OTU table is "abs" (absolute abundance) or "rel"
-        (relative abundance)
-    abs_threshold: float
-        threshold for absolute abundance. Default is 10
-    rel_threshold: float
-        threshold for relative abundance. Default is 0.1%
-    pct_threshold: float
-        threshold for percent of samples. Default is 15%
-    '''
-
-    if abs_or_rel == "rel":
-        _threshold = rel_threshold
-    if abs_or_rel == "abs":
-        _threshold = abs_threshold
-
-    _screening = (taxa > _threshold).sum(axis=0) / taxa.shape[0]
-    _screening = _screening > 0.15
-
-    return taxa[_screening.index[_screening]]
-
-
 def _temporal_corr(taxa, individual_id, corr_method="kendall"):
     '''Create Temporal correlation from a feature table
     containing repeated measures samples.
