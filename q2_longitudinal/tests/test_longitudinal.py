@@ -150,7 +150,7 @@ class UtilitiesTests(longitudinalTestPluginBase):
     def test_temporal_corr(self):
         ind_id = pd.Series(
             [1, 2, 3, 1, 2, 3], index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_tc = _temporal_corr(tab, ind_id, ind_id.drop_duplicates())
+        obs_tc = _temporal_corr(tab, ind_id)
         for k in obs_tc.keys():
             self.assertEqual(exp_tc[k].sort_index(inplace=True),
                              obs_tc[k].sort_index(inplace=True))
@@ -335,12 +335,10 @@ tab = pd.DataFrame({'o1': [0.3, 0.6, 0.6, 0.4, 0.5, 0.6],
                     'o3': [0.3, 0.1, 0.2, 0.2, 0.1, 0.1]},
                    index=['s1', 's2', 's3', 's4', 's5', 's6'])
 
-exp_tc = {
-    1: pd.DataFrame({'o1': [1., 0., -1.], 'o2': [0., 1., 0.],
-                     'o3': [-1., 0., 1.]}, index=['o1', 'o2', 'o3']),
-    2: pd.DataFrame({'o1': [1., -1., 0.], 'o2': [-1., 1., 0.],
-                     'o3': [0., 0., 1.]}, index=['o1', 'o2', 'o3']),
-    3: pd.DataFrame({'o1': [1., 0., 0.], 'o2': [0., 1., -1.],
-                     'o3': [0., -1., 1.]}, index=['o1', 'o2', 'o3'])}
+exp_tc = pd.DataFrame({(1, 'o1'): [1., 0., -1.], (1, 'o2'): [0., 1., 0.],
+                       (1, 'o3'): [-1., 0., 1.], (2, 'o1'): [1., -1., 0.],
+                       (2, 'o2'): [-1., 1., 0.], (2, 'o3'): [0., 0., 1.],
+                       (3, 'o1'): [1., 0., 0.], (3, 'o2'): [0., 1., -1.],
+                       (3, 'o3'): [0., -1., 1.]}, index=['o1', 'o2', 'o3']).T
 
 exp_td = np.array([[0., 2., 2.], [2., 0., 2.], [2., 2., 0.]])
