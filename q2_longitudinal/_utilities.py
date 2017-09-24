@@ -580,25 +580,20 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                pairwise_test_name=pairwise_test_name)
 
 
-def _temporal_corr(table, individual_id, id_set, corr_method="kendall"):
+def _temporal_corr(table, individual_id, corr_method="kendall"):
     '''Create Temporal correlation from a feature table containing repeated
     measures samples.
     table: pd.DataFrame
         rows are samples, columns are features (count / relative_abundance)
     individual_id: pd.Series
         subject id of samples, with the same length as df
-    id_set: pd.Series
-        unique subject ids from individual_id with index attached
     corr_method: str
         temporal correlation method, "kendall", "pearson", "spearman"
-
     '''
-    results = {}
 
     # Start to calculate temporal correlation
-    for id_key in id_set:
-        table_id = table.loc[individual_id == id_key]
-        results[id_key] = table_id.corr(method=corr_method).fillna(0)
+    table["individual_id"] = individual_id
+    results = table.groupby(["individual_id"]).corr(method=corr_method).fillna(0)
 
     return results
 
@@ -617,8 +612,11 @@ def _temporal_distance(corr, id_set, dist_method="fro"):
     dist = np.zeros((id_n, id_n))
     for i, id_i in enumerate(id_set):
         for j, id_j in enumerate(id_set):
-            dist[i, j] = linalg.norm(
-                corr[id_i] - corr[id_j], ord=dist_method)
+            if i<j:
+                dist[i, j] = linalg.norm(corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
+                dist[j, i] = dist[i, j]
+            if i==j:
+                dist[i,j]  = 0
     return DistanceMatrix(dist, ids=id_set.index)
 
 
