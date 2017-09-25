@@ -28,13 +28,13 @@ plugin = Plugin(
 )
 
 
-basest_parameters = {
+shared_parameters = {
     'metadata': Metadata,
     'individual_id_column': Str,
 }
 
 base_parameters = {
-    **basest_parameters,
+    **shared_parameters,
     'state_column': Str,
     'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
@@ -51,7 +51,7 @@ paired_params = {
     'replicate_handling': Str % Choices(['error', 'random', 'drop']),
 }
 
-basest_parameter_descriptions = {
+shared_parameter_descriptions = {
         'metadata': (
             'Sample metadata containing group_column,  state_column, '
             'individual_id_column, and optionally metric values.'),
@@ -60,7 +60,7 @@ basest_parameter_descriptions = {
 }
 
 base_parameter_descriptions = {
-        **basest_parameter_descriptions,
+        **shared_parameter_descriptions,
         'state_column': ('Metadata column containing state (e.g., Time) '
                          'across which samples are paired.'),
         'palette': 'Color palette to use for generating boxplots.',
@@ -76,7 +76,7 @@ paired_parameter_descriptions = {
             'either state_1 or state_2, that subject will be dropped and '
             'reported in standard output by default. Set '
             'replicate_handling="random" to instead randomly select one '
-            'member, and use --verbose to list conflicts.'),
+            'member.'),
         'state_1': 'Baseline state column value.',
         'state_2': 'State column value to pair with baseline.',
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
@@ -200,7 +200,7 @@ plugin.visualizers.register_function(
 plugin.methods.register_function(
     function=nmit,
     inputs={'table': FeatureTable[RelativeFrequency]},
-    parameters={**basest_parameters,
+    parameters={**shared_parameters,
                 'corr_method': Str % Choices(
                     ["kendall", "pearson", "spearman"]),
                 'dist_method': Str % Choices(["fro", "nuc"])},
@@ -208,7 +208,7 @@ plugin.methods.register_function(
     input_descriptions={'table': (
         'Feature table to use for microbial interdependence test.')},
     parameter_descriptions={
-        **basest_parameter_descriptions,
+        **shared_parameter_descriptions,
         'corr_method': 'The temporal correlation test to be applied.',
         'dist_method': (
             'Temporal distance method, see numpy.linalg.norm for details.'),

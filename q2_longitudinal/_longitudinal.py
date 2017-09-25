@@ -12,7 +12,7 @@ from skbio import DistanceMatrix
 from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _visualize,
+                         _visualize, _validate_metadata_is_superset,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
@@ -181,6 +181,7 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
     # load and merge feature table and metadata to ensure IDs match
     metadata = _load_metadata(metadata)
     metadata = metadata[[individual_id_column]]
+    _validate_metadata_is_superset(metadata, table)
     metadata = pd.concat([metadata, table], axis=1, join='inner')
     taxa = metadata.drop([individual_id_column], axis=1)
 

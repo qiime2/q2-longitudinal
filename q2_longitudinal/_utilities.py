@@ -580,12 +580,11 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                pairwise_test_name=pairwise_test_name)
 
 
-def _temporal_corr(taxa, individual_id, corr_method="kendall"):
+def _temporal_corr(table, individual_id, corr_method="kendall"):
     '''Create Temporal correlation from a feature table
     containing repeated measures samples.
-    taxa: pd.DataFrame
-        OTU table. rows are samples, columns are taxa
-        (absolute/relative_abundance)
+    table: pd.DataFrame
+        OTU table. rows are samples, columns are features
     individual_id: pd.Series
         subject id of samples, with the same length as df
     corr_method: str
@@ -593,8 +592,8 @@ def _temporal_corr(taxa, individual_id, corr_method="kendall"):
     '''
 
     # Start to calculate temporal correlation
-    taxa["individual_id"] = individual_id
-    results = taxa.groupby(["individual_id"]).corr(method=corr_method)
+    table["individual_id"] = individual_id
+    results = table.groupby(["individual_id"]).corr(method=corr_method)
     results = results.fillna(0)
 
     return results
@@ -602,7 +601,7 @@ def _temporal_corr(taxa, individual_id, corr_method="kendall"):
 
 def _temporal_distance(corr, id_set, dist_method="fro"):
     '''Calculate Distance Matrix from temporal correlation data.
-    corr_dict: pd.DataFrame
+    corr: pd.DataFrame
         output from temporal_corr
     id_set: pd.Series
         unique subject ids from individual_id with index attached
@@ -613,25 +612,22 @@ def _temporal_distance(corr, id_set, dist_method="fro"):
 
     dist = np.zeros((id_n, id_n))
     for i, id_i in enumerate(id_set):
-        for j, id_j in enumerate(id_set):
-            if i < j:
-                dist[i, j] = linalg.norm(
-                  corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
-                dist[j, i] = dist[i, j]
-            if i == j:
-                dist[i, j] = 0
+        for j, id_j in enumerate(id_set[:i]):
+            dist[i, j] = dist[j, i] = linalg.norm(
+                corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
     return DistanceMatrix(dist, ids=id_set.index)
 
 
-def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
+def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
           dist_method="fro"):
     '''Function to perform nonparametric microbial interdependence test (nmit)
     test.
-    taxa: pd.DataFrame
-        OTU table. rows are samples, columns are taxa
-        (absolute/relative_abundance)
+    table: pd.DataFrame
+        OTU table. rows are samples, columns are features
     sample_md: pd.DataFrame
         Sample metadata
+    individual_id_column: str
+        Metadata column containing IDs for individual subjects.
     corr_method: str
         temporal correlation method.
     dist_method: str
@@ -647,9 +643,17 @@ def _nmit(taxa, sample_md, individual_id_column, corr_method="kendall",
     id_set = individual_id.drop_duplicates()
 
     # calculate species correlation in individuals
-    _corr = _temporal_corr(taxa, individual_id,  corr_method)
+    _corr = _temporal_corr(table, individual_id,  corr_method)
 
     # calculate distance between individuals
     _dist = _temporal_distance(_corr, id_set, dist_method)
 
     return _dist
+
+
+def _validate_metadata_is_superset(metadata, table):
+    metadata_ids = set(metadata.index.tolist())
+    table_ids = set(table.index.tolist())
+    if not table_ids.issubset(metadata_ids):
+        raise ValueError('Missing samples in metadata: %r' %
+                         table_ids.difference(metadata_ids))
