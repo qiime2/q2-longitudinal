@@ -641,7 +641,7 @@ def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
     # follow-up tests/plotting), hence we do not use pd.unique()
     id_set = individual_id.drop_duplicates()
 
-    # calculate species correlation in individuals
+    # calculate correlation in individuals
     _corr = _temporal_corr(table, individual_id,  corr_method)
 
     # calculate distance between individuals
