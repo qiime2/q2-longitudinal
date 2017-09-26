@@ -182,15 +182,14 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
     metadata = _load_metadata(metadata)
     metadata = metadata[[individual_id_column]]
     _validate_metadata_is_superset(metadata, table)
-    metadata = pd.concat([metadata, table], axis=1, join='inner')
-    taxa = metadata.drop([individual_id_column], axis=1)
+    metadata = metadata[metadata.index.isin(table.index)]
 
     # validate id column
     _validate_input_columns(metadata, individual_id_column, None, None)
 
     # run NMIT
     _dist = _nmit(
-        taxa, metadata, individual_id_column=individual_id_column,
+        table, metadata, individual_id_column=individual_id_column,
         corr_method=corr_method, dist_method=dist_method)
 
     return _dist
