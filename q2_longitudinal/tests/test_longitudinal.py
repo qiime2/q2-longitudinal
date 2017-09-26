@@ -282,6 +282,12 @@ class longitudinalTests(longitudinalTestPluginBase):
         nmit(table=self.table_taxa_fp, metadata=self.md_ecam_fp,
              individual_id_column='studyid')
 
+    def test_nmit_missing_table_ids(self):
+        md = qiime2.Metadata(pd.DataFrame([[1]], columns=['i'], index=['20']))
+        with self.assertRaisesRegex(ValueError, 'Missing samples'):
+            nmit(table=self.table_taxa_fp, metadata=md,
+                 individual_id_column='studyid')
+
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                    (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),

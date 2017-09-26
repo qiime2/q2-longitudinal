@@ -584,14 +584,13 @@ def _temporal_corr(table, individual_id, corr_method="kendall"):
     '''Create Temporal correlation from a feature table
     containing repeated measures samples.
     table: pd.DataFrame
-        OTU table. rows are samples, columns are features
+        Feature table, rows are samples, columns are features
     individual_id: pd.Series
-        subject id of samples, with the same length as df
+        sample ids, with the same length as table
     corr_method: str
         temporal correlation method, "kendall", "pearson", "spearman"
     '''
 
-    # Start to calculate temporal correlation
     table["individual_id"] = individual_id
     results = table.groupby(["individual_id"]).corr(method=corr_method)
     results = results.fillna(0)
@@ -602,7 +601,7 @@ def _temporal_corr(table, individual_id, corr_method="kendall"):
 def _temporal_distance(corr, id_set, dist_method="fro"):
     '''Calculate Distance Matrix from temporal correlation data.
     corr: pd.DataFrame
-        output from temporal_corr
+        table grouped by individual ids, this is the output from _temporal_corr
     id_set: pd.Series
         unique subject ids from individual_id with index attached
     dist_method: str
@@ -623,15 +622,15 @@ def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
     '''Function to perform nonparametric microbial interdependence test (nmit)
     test.
     table: pd.DataFrame
-        OTU table. rows are samples, columns are features
+        Feature table, rows are samples, columns are features
     sample_md: pd.DataFrame
         Sample metadata
     individual_id_column: str
-        Metadata column containing IDs for individual subjects.
+        Metadata column containing IDs for individual subjects
     corr_method: str
-        temporal correlation method.
+        temporal correlation method
     dist_method: str
-        temporal distance method from numpy.linalg.norm, default is "fro".
+        temporal distance method from numpy.linalg.norm, default is "fro"
     '''
     # full series of individual ids
     individual_id = sample_md[individual_id_column]

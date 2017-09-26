@@ -178,9 +178,8 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
          individual_id_column: str, corr_method="kendall", dist_method="fro"
          ) -> DistanceMatrix:
 
-    # load and merge feature table and metadata to ensure IDs match
+    # load and prep metadata
     metadata = _load_metadata(metadata)
-    metadata = metadata[[individual_id_column]]
     _validate_metadata_is_superset(metadata, table)
     metadata = metadata[metadata.index.isin(table.index)]
 
