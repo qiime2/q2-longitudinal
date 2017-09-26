@@ -19,6 +19,7 @@ from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
 
 import numpy as np
+from scipy import linalg
 from numpy.linalg.linalg import LinAlgError
 from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
@@ -577,3 +578,81 @@ def _stats_and_visuals(output_dir, pairs, metric, group_column,
                paired_difference_tests, boxplot, summary=summary,
                errors=errors, plot_name=plot_name,
                pairwise_test_name=pairwise_test_name)
+
+
+def _temporal_corr(table, individual_id, corr_method="kendall"):
+    '''Create Temporal correlation from a feature table
+    containing repeated measures samples.
+    table: pd.DataFrame
+        Feature table, rows are samples, columns are features
+    individual_id: pd.Series
+        sample ids, with the same length as table
+    corr_method: str
+        temporal correlation method, "kendall", "pearson", "spearman"
+    '''
+
+    table["individual_id"] = individual_id
+    results = table.groupby(["individual_id"]).corr(method=corr_method)
+    results = results.fillna(0)
+
+    return results
+
+
+def _temporal_distance(corr, id_set, dist_method="fro"):
+    '''Calculate Distance Matrix from temporal correlation data.
+    corr: pd.DataFrame
+        table grouped by individual ids, this is the output from _temporal_corr
+    id_set: pd.Series
+        unique subject ids from individual_id with index attached
+    dist_method: str
+        method supported by scipy.linalg.norm parameter ord
+    '''
+    id_n = len(id_set)
+
+    dist = np.zeros((id_n, id_n))
+    for i, id_i in enumerate(id_set):
+        for j, id_j in enumerate(id_set[:i]):
+            dist[i, j] = dist[j, i] = linalg.norm(
+                corr.loc[id_i] - corr.loc[id_j], ord=dist_method)
+    return DistanceMatrix(dist, ids=id_set.index)
+
+
+def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
+          dist_method="fro"):
+    '''Function to perform nonparametric microbial interdependence test (nmit)
+    test.
+    table: pd.DataFrame
+        Feature table, rows are samples, columns are features
+    sample_md: pd.DataFrame
+        Sample metadata
+    individual_id_column: str
+        Metadata column containing IDs for individual subjects
+    corr_method: str
+        temporal correlation method
+    dist_method: str
+        temporal distance method from numpy.linalg.norm, default is "fro"
+    '''
+    # full series of individual ids
+    individual_id = sample_md[individual_id_column]
+
+    # compile series of unique individuals with index retained
+    # the goal here is to have ordered lists of ids that we eventually append
+    # to distance matrix (for metadata extraction during permanova or other
+    # follow-up tests/plotting), hence we do not use pd.unique()
+    id_set = individual_id.drop_duplicates()
+
+    # calculate correlation in individuals
+    _corr = _temporal_corr(table, individual_id,  corr_method)
+
+    # calculate distance between individuals
+    _dist = _temporal_distance(_corr, id_set, dist_method)
+
+    return _dist
+
+
+def _validate_metadata_is_superset(metadata, table):
+    metadata_ids = set(metadata.index.tolist())
+    table_ids = set(table.index.tolist())
+    if not table_ids.issubset(metadata_ids):
+        raise ValueError('Missing samples in metadata: %r' %
+                         table_ids.difference(metadata_ids))

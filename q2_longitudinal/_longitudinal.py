@@ -12,12 +12,12 @@ from skbio import DistanceMatrix
 from os.path import join
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
-                         _visualize,
+                         _visualize, _validate_metadata_is_superset,
                          _get_pairwise_differences, _stats_and_visuals,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
-                         _control_chart_subplots)
+                         _control_chart_subplots, _nmit)
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -172,3 +172,23 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
     _visualize(output_dir, plot=chart, summary=summary, raw_data=raw_data,
                plot_name='Control charts')
+
+
+def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
+         individual_id_column: str, corr_method="kendall", dist_method="fro"
+         ) -> DistanceMatrix:
+
+    # load and prep metadata
+    metadata = _load_metadata(metadata)
+    _validate_metadata_is_superset(metadata, table)
+    metadata = metadata[metadata.index.isin(table.index)]
+
+    # validate id column
+    _validate_input_columns(metadata, individual_id_column, None, None)
+
+    # run NMIT
+    _dist = _nmit(
+        table, metadata, individual_id_column=individual_id_column,
+        corr_method=corr_method, dist_method=dist_method)
+
+    return _dist
