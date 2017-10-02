@@ -36,10 +36,11 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     # calculate paired difference distributions
     pairs = {}
     pairs_summaries = {}
+    errors = []
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs, errors = _get_group_pairs(
+        group_pairs, error = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -48,6 +49,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
         pairs[group], pairs_summaries[group] = _get_pairwise_differences(
             metadata, group_pairs, metric, individual_id_column, group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
+        errors.extend(error)
     pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
@@ -76,10 +78,11 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
     # calculate pairwise distance distributions
     pairs = {}
     pairs_summaries = {}
+    errors = []
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs, errors = _get_group_pairs(
+        group_pairs, error = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -89,6 +92,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             distance_matrix, group_pairs, metadata, individual_id_column,
             group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
+        errors.extend(error)
     pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
@@ -192,3 +196,58 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
         corr_method=corr_method, dist_method=dist_method)
 
     return _dist
+
+
+def first_differences(metadata: qiime2.Metadata, state_column: str,
+                      individual_id_column: str, metric: str='Distance',
+                      replicate_handling: str='error',
+                      distance_matrix: DistanceMatrix=None,
+                      table: pd.DataFrame=None) -> pd.Series:
+
+    # find metric in metadata or derive from table and merge into metadata
+    if table is not None:
+        metadata = _add_metric_to_metadata(table, metadata, metric)
+    else:
+        metadata = _load_metadata(metadata)
+
+    _validate_input_columns(
+        metadata, individual_id_column, state_column, None)
+
+    # create dummy group column in metadata so we can use downstream functions
+    # that split metadata by groups without actually bothering to do so.
+    group_column = "dummy_group"
+    metadata[group_column] = 'null'
+
+    # calculate paired difference/distance distributions between each state
+    pairs_summary = pd.DataFrame()
+    errors = []
+    states = metadata[state_column].unique()
+    # iterate over range of sorted states in order to compare sequential states
+    for s in range(len(states) - 1):
+        # get pairs of samples at each sequential state
+        group_pairs, error = _get_group_pairs(
+            metadata, group_value='null',
+            individual_id_column=individual_id_column,
+            group_column=group_column, state_column=state_column,
+            state_values=[states[s], states[s + 1]],
+            replicate_handling=replicate_handling)
+        # compute distance between pairs
+        if metric == 'Distance':
+            pairs, pairs_summaries = _extract_distance_distribution(
+                distance_matrix, group_pairs, metadata,
+                individual_id_column, group_column)
+        # or compute difference between pairs
+        else:
+            pairs, pairs_summaries = _get_pairwise_differences(
+                metadata, group_pairs, metric, individual_id_column,
+                group_column)
+        pairs_summary = pd.concat([pairs_summary, pairs_summaries])
+        errors.extend(error)
+
+    # convert pairs_summary to series with relevant metric
+    if metric == 'Distance':
+        pairs_summary = pairs_summary[metric]
+    else:
+        pairs_summary = pairs_summary['Difference']
+
+    return pairs_summary

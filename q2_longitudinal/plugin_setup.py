@@ -9,10 +9,12 @@
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
-from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects, volatility, nmit)
-import q2_longitudinal
 from q2_types.distance_matrix import DistanceMatrix
+from q2_types.sample_data import SampleData, AlphaDiversity
+from ._longitudinal import (pairwise_differences, pairwise_distances,
+                            linear_mixed_effects, volatility, nmit,
+                            first_differences)
+import q2_longitudinal
 
 
 plugin = Plugin(
@@ -28,6 +30,11 @@ plugin = Plugin(
 )
 
 
+miscellaneous_parameters = {
+    'state_column': Str,
+    'replicate_handling': Str % Choices(['error', 'random', 'drop'])
+}
+
 shared_parameters = {
     'metadata': Metadata,
     'individual_id_column': Str,
@@ -35,7 +42,8 @@ shared_parameters = {
 
 base_parameters = {
     **shared_parameters,
-    'state_column': Str,
+    **{k: v for k, v in miscellaneous_parameters.items()
+       if k == 'state_column'},
     'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
         'Dark2', 'tab10', 'tab20', 'tab20b', 'tab20c', 'viridis', 'plasma',
@@ -48,7 +56,19 @@ paired_params = {
     'state_1': Str,
     'state_2': Str,
     'parametric': Bool,
-    'replicate_handling': Str % Choices(['error', 'random', 'drop']),
+    **{k: v for k, v in miscellaneous_parameters.items()
+       if k == 'replicate_handling'},
+}
+
+miscellaneous_parameter_descriptions = {
+    'state_column': ('Metadata column containing state (e.g., Time) '
+                     'across which samples are paired.'),
+    'replicate_handling': (
+        'Choose how replicate samples are handled. If replicates are '
+        'detected, "error" causes method to fail; "drop" will discard all '
+        'subject IDs with replicate samples at either state_1 or state_2; '
+        '"random" chooses one representative at random from among '
+        'replicates.')
 }
 
 shared_parameter_descriptions = {
@@ -61,8 +81,8 @@ shared_parameter_descriptions = {
 
 base_parameter_descriptions = {
         **shared_parameter_descriptions,
-        'state_column': ('Metadata column containing state (e.g., Time) '
-                         'across which samples are paired.'),
+        **{k: v for k, v in miscellaneous_parameter_descriptions.items()
+           if k == 'state_column'},
         'palette': 'Color palette to use for generating boxplots.',
 }
 
@@ -82,12 +102,8 @@ paired_parameter_descriptions = {
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
                        'parametric (Kruskal-Wallis, Wilcoxon, and Mann-'
                        'Whitney U tests) statistical tests.'),
-        'replicate_handling': (
-            'Choose how replicate samples are handled. If replicates are '
-            'detected, "error" causes method to fail; "drop" will discard all '
-            'subject IDs with replicate samples at either state_1 or state_2; '
-            '"random" chooses one representative at random from among '
-            'replicates.')
+        **{k: v for k, v in miscellaneous_parameter_descriptions.items()
+           if k == 'replicate_handling'},
 }
 
 
@@ -220,4 +236,40 @@ plugin.methods.register_function(
         'longitudinal sample similarity as a function of temporal microbial '
         'composition. For more details and citation, please see '
         'doi.org/10.1002/gepi.22065')
+)
+
+
+plugin.methods.register_function(
+    function=first_differences,
+    inputs={'table': FeatureTable[RelativeFrequency],
+            'distance_matrix': DistanceMatrix},
+    parameters={**miscellaneous_parameters,
+                **shared_parameters,
+                'metric': Str},
+    outputs=[('first_differences', SampleData[AlphaDiversity])],
+    input_descriptions={
+        'table': 'Feature table to optionally use for paired comparisons.',
+        'distance_matrix': 'Matrix of distances between pairs of samples.'},
+    parameter_descriptions={
+        **miscellaneous_parameter_descriptions,
+        **shared_parameter_descriptions,
+        'metric': ('Numerical metadata or artifact column to test. If '
+                   'computing first differences on a distance matrix, do not '
+                   'set a value for this parameter.'),
+    },
+    output_descriptions={'first_differences': 'Series of first differences.'},
+    name='First difference computation between sequential states',
+    description=(
+        'Calculates first differences in "metric" between sequential states '
+        'for samples collected from individual subjects sampled repeatedly at '
+        'two or more states. First differences can be performed on a metadata '
+        'column (including artifacts that can be input as metadata), a '
+        'feature in a feature table, or on a distance matrix. Outputs a data '
+        'series of first differences for each individual subject at each '
+        'sequential pair of states, labeled by the SampleID of the second '
+        'state (e.g., paired differences between time 0 and time 1 would be '
+        'labeled by the SampleIDs at time 1). This file can be used as input '
+        'to linear mixed effects models or other longitudinal or diversity '
+        'methods to compare changes in first differences across time or among '
+        'groups of subjects.')
 )

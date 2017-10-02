@@ -122,14 +122,14 @@ def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs,
         try:
             dist = distance_matrix[p]
             result.append(dist)
-            individual_id = df[individual_id_column][p[0]]
-            group = df[group_column][p[0]]
-            pairs_summary.append((individual_id, dist, group))
+            individual_id = df[individual_id_column][p[1]]
+            group = df[group_column][p[1]]
+            pairs_summary.append((p[1], individual_id, dist, group))
         except MissingIDError:
             pass
     pairs_summary = pd.DataFrame(
-        pairs_summary, columns=['SubjectID', 'Distance', 'Group'])
-    pairs_summary.set_index('SubjectID', inplace=True)
+        pairs_summary, columns=['#SampleID', 'SubjectID', 'Distance', 'Group'])
+    pairs_summary.set_index('#SampleID', inplace=True)
     return result, pairs_summary
 
 
@@ -183,12 +183,15 @@ def _get_pairwise_differences(df, pairs, category, individual_id_column,
         pre_value = float(df[category][pre_idx])
         post_value = float(df[category][post_idx])
         paired_difference = post_value - pre_value
+        print(paired_difference)
         if not np.isnan(paired_difference):
             result.append(paired_difference)
-            pairs_summary.append((individual_id, paired_difference, group))
+            pairs_summary.append((
+                post_idx, individual_id, paired_difference, group))
     pairs_summary = pd.DataFrame(
-        pairs_summary, columns=['SubjectID', 'Difference', 'Group'])
-    pairs_summary.set_index('SubjectID', inplace=True)
+        pairs_summary,
+        columns=['#SampleID', 'SubjectID', 'Difference', 'Group'])
+    pairs_summary.set_index('#SampleID', inplace=True)
     return result, pairs_summary
 
 

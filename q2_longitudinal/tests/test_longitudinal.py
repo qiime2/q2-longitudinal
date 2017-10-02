@@ -22,7 +22,7 @@ from q2_longitudinal._utilities import (
     _nmit)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit)
+    nmit, first_differences)
 import tempfile
 import pkg_resources
 from qiime2.plugin.testing import TestPluginBase
@@ -287,6 +287,33 @@ class longitudinalTests(longitudinalTestPluginBase):
         with self.assertRaisesRegex(ValueError, 'Missing samples'):
             nmit(table=self.table_taxa_fp, metadata=md,
                  individual_id_column='studyid')
+
+    def test_first_differences(self):
+        exp = pd.Series([0.08, 0.06, 0.07999999999999999, 0.12, 0.14,
+                         0.14999999999999997],
+                        index=['3', '4', '5', '9', '10', '11'],
+                        name='Difference')
+        obs = first_differences(
+            metadata=qiime2.Metadata(md), state_column='Time',
+            individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        self.assertTrue(obs.sort_index().equals(exp.sort_index()))
+
+    def test_first_differences_taxa(self):
+        first_differences(
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            metric='e2c3ff4f647112723741aa72087f1bfa',
+            replicate_handling='drop', table=self.table_ecam_fp)
+
+    def test_first_differences_distance_matrix(self):
+        exp = pd.Series([0.1, 0.1, 0.3, 0.1, 0.2, 0.4],
+                        index=['3', '4', '5', '9', '10', '11'])
+        obs = first_differences(
+            metadata=qiime2.Metadata(md), state_column='Time',
+            individual_id_column='ind', replicate_handling='drop',
+            distance_matrix=dm)
+        self.assertTrue(obs.equals(exp))
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
