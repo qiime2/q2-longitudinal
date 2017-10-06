@@ -191,7 +191,9 @@ plugin.visualizers.register_function(
         'ci': 'Size of the confidence interval to plot on control chart.',
         'plot_control_limits': ('Plot global mean and control limits (2X and '
                                 '3X standard deviations).'),
-        'xtick_interval': 'Interval between major tick marks on x axis.'
+        'xtick_interval': ('Interval between major tick marks on x axis. '
+                           'Defaults to 1, or autoscales to show up to 30 '
+                           'ticks if data contain more than 30 x-axis values.')
     },
     name='Volatility analysis',
     description=(

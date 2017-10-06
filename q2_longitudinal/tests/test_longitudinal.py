@@ -131,7 +131,7 @@ class UtilitiesTests(longitudinalTestPluginBase):
         groups = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1, 2, 3]}
         labels = _add_sample_size_to_xtick_labels(groups)
         self.assertEqual(
-            sorted(labels.values()), sorted(['a (n=3)', 'b (n=2)', 'c (n=3)']))
+            sorted(labels.values()), ['a (n=3)', 'b (n=2)', 'c (n=3)'])
 
     def test_multiple_tests_correction(self):
         test_df = pd.DataFrame(
