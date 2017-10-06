@@ -10,6 +10,7 @@ from os.path import join
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
 from itertools import combinations, cycle
 import pkg_resources
@@ -17,6 +18,7 @@ import q2templates
 from random import choice
 from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
+from math import ceil
 
 import numpy as np
 from scipy import linalg
@@ -323,7 +325,8 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     hue, color variables all pass directly to equivalently named
         variables in seaborn.boxplot().
     """
-    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
+    x_tick_labels = [v for k, v in sorted(
+        _add_sample_size_to_xtick_labels(groups).items())]
     vals = [v for k, v in sorted(groups.items())]
 
     ax = sns.boxplot(data=vals, hue=hue, palette=palette)
@@ -336,8 +339,8 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
 
 def _add_sample_size_to_xtick_labels(groups):
     '''groups is a dict of lists of values.'''
-    x_tick_labels = ['{0} (n={1})'.format(k, len(v))
-                     for k, v in sorted(groups.items())]
+    x_tick_labels = {k: '{0} (n={1})'.format(k, len(v))
+                     for k, v in groups.items()}
     return x_tick_labels
 
 
@@ -373,16 +376,23 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
 
 
 def _control_chart_subplots(state_column, metric, metadata, group_column,
-                            ci=95, palette='Set1', plot_control_limits=True):
+                            ci=95, palette='Set1', plot_control_limits=True,
+                            xtick_interval=None):
 
     groups = metadata[group_column].unique()
+    states = metadata[state_column].unique()
     chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))
+
+    # determine x tick interval: autoscale so that ≤ 30 labels appear
+    xtick_interval = _set_xtick_interval(xtick_interval, states)
 
     # plot all groups together, compare variances
     c, global_mean, global_std = _control_chart(
         state_column, metric, metadata, group_column, ci=ci, palette=palette,
-        plot_control_limits=plot_control_limits, ax=axes[0])
+        plot_control_limits=plot_control_limits, ax=axes[0],
+        xtick_interval=xtick_interval)
     c.set_title('Group volatility comparison plot')
+    c = _set_xticks(c, metadata, state_column, states, xtick_interval)
 
     # plot individual groups' control charts
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
@@ -392,28 +402,51 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
             color=next(colors), plot_control_limits=True, ax=axes[num + 1],
-            palette=None)
+            palette=None, xtick_interval=xtick_interval)
         c.set_title('{0}: {1}'.format(group_column, group))
+        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
     plt.tight_layout()
 
     return chart, global_mean, global_std
 
 
+def _set_xtick_interval(xtick_interval, states):
+    if xtick_interval is None:
+        if len(states) > 30:
+            xtick_interval = ceil(len(states) / 30)
+        else:
+            xtick_interval = 1
+    return xtick_interval
+
+
+def _set_xtick_labels(metadata, state_column, states, xtick_interval):
+    # pull x-axis labels from array of unique states, slice xtick_interval
+    x_tick_labels = {state: metadata[metadata[state_column] == state]
+                     for state in states[::xtick_interval]}
+    # sort labels by key (state), add sample size to labels.
+    # x_tick_labels[0] must be empty because this label does not appear in plot
+    x_tick_labels = [''] + [v for k, v in sorted(
+        _add_sample_size_to_xtick_labels(x_tick_labels).items())]
+    return x_tick_labels
+
+
+def _set_xticks(ax, metadata, state_column, states, xtick_interval):
+    # generate x-axis tick labels
+    x_tick_labels = _set_xtick_labels(
+        metadata, state_column, states, xtick_interval)
+    # Find tick locations at set at xtick_interval
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(xtick_interval))
+    # add new labels and rotate
+    ax.set_xticklabels(x_tick_labels, rotation=90)
+    return ax
+
+
 def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
                               ci=95, palette='Set1', ax=None, legend=True,
-                              color=None):
+                              color=None, xtick_interval=None):
 
     g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
                       ci=ci, palette=palette, color=color, ax=ax)
-
-    # relabel x axis with sample sizes
-    groups = {state: metadata[metadata[state_column] == state]
-              for state in metadata[state_column].unique()}
-    x_tick_labels = _add_sample_size_to_xtick_labels(groups)
-    x_tick_labels = ['{0} (n={1})'.format(
-        state, len(metadata[metadata[state_column] == state]))
-        for state in metadata[state_column].unique()]
-    g.set_xticklabels(x_tick_labels, rotation=90)
 
     # place legend to right side of plot
     if legend:
@@ -448,10 +481,10 @@ def _multiple_tests_correction(df, method='fdr_bh', sort=True):
 
 def _control_chart(state_column, metric, metadata, group_by, ci=95,
                    palette='Set1', plot_control_limits=True, ax=None,
-                   color=None, legend=True):
+                   color=None, legend=True, xtick_interval=None):
     g = _pointplot_from_dataframe(state_column, metric, metadata, group_by,
                                   ci=95, palette=palette, ax=ax, legend=legend,
-                                  color=color)
+                                  color=color, xtick_interval=xtick_interval)
 
     m, stdev, ul, ll, uw, lw = _calculate_variability(metadata, metric)
     if plot_control_limits:
