@@ -393,7 +393,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
     num = 1
     for group, group_md in metadata.groupby(group_column):
-        color=next(colors)
+        color = next(colors)
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
             color=color, plot_control_limits=True, ax=axes[num],
