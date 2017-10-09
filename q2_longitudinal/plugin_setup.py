@@ -180,6 +180,8 @@ plugin.visualizers.register_function(
                 'group_column': Str,
                 'ci': Float % Range(0, 100),
                 'plot_control_limits': Bool,
+                'yscale': Str % Choices(["linear", "log", "symlog", "logit"]),
+                'spaghetti': Bool,
                 'xtick_interval': Int},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
@@ -191,6 +193,8 @@ plugin.visualizers.register_function(
         'ci': 'Size of the confidence interval to plot on control chart.',
         'plot_control_limits': ('Plot global mean and control limits (2X and '
                                 '3X standard deviations).'),
+        'yscale': 'y-axis scaling strategy to apply.',
+        'spaghetti': 'Co-plot spaghetti plot of per-individual trajectories.',
         'xtick_interval': ('Interval between major tick marks on x axis. '
                            'Defaults to 1, or autoscales to show up to 30 '
                            'ticks if data contain more than 30 x-axis values.')

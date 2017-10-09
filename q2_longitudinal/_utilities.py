@@ -376,15 +376,37 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
 
 
 def _control_chart_subplots(state_column, metric, metadata, group_column,
-                            ci=95, palette='Set1', plot_control_limits=True,
-                            xtick_interval=None):
+                            individual_id_column, ci=95, palette='Set1',
+                            plot_control_limits=True, xtick_interval=None,
+                            yscale='linear', spaghetti=False):
 
     groups = metadata[group_column].unique()
     states = metadata[state_column].unique()
-    chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))
+    fig_count = len(groups) + 1
+    fig_height = fig_count * 6
+    chart, axes = plt.subplots(fig_count, figsize=(6, fig_height))
 
     # determine x tick interval: autoscale so that ≤ 30 labels appear
     xtick_interval = _set_xtick_interval(xtick_interval, states)
+
+    # plot individual groups' control charts
+    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
+    num = 1
+    for group, group_md in metadata.groupby(group_column):
+        color=next(colors)
+        c, gm, gs = _control_chart(
+            state_column, metric, group_md, None, ci=ci, legend=False,
+            color=color, plot_control_limits=True, ax=axes[num],
+            palette=None, xtick_interval=xtick_interval)
+        c.set_title('{0}: {1}'.format(group_column, group))
+        if spaghetti:
+            # plot group's sphaghetti on main plot and current subplot
+            for ax in [0, num]:
+                c = _make_spaghetti(
+                    group_md, state_column, metric, individual_id_column,
+                    ax=axes[ax], color=color, alpha=0.3)
+        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
+        num += 1
 
     # plot all groups together, compare variances
     c, global_mean, global_std = _control_chart(
@@ -394,20 +416,19 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     c.set_title('Group volatility comparison plot')
     c = _set_xticks(c, metadata, state_column, states, xtick_interval)
 
-    # plot individual groups' control charts
-    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    for num in range(len(groups)):
-        group = groups[num]
-        group_md = metadata[metadata[group_column] == group]
-        c, gm, gs = _control_chart(
-            state_column, metric, group_md, None, ci=ci, legend=False,
-            color=next(colors), plot_control_limits=True, ax=axes[num + 1],
-            palette=None, xtick_interval=xtick_interval)
-        c.set_title('{0}: {1}'.format(group_column, group))
-        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
+    plt.yscale(yscale)
+
     plt.tight_layout()
 
     return chart, global_mean, global_std
+
+
+def _make_spaghetti(metadata, state_column, metric, individual_id_column,
+                    ax, color=None, alpha=1.0):
+    for ind, ind_data in metadata.groupby(individual_id_column):
+        ax.plot(ind_data[state_column], ind_data[metric], alpha=alpha, c=color,
+                label='_nolegend_')
+    return ax
 
 
 def _set_xtick_interval(xtick_interval, states):
@@ -446,7 +467,7 @@ def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
                               color=None, xtick_interval=None):
 
     g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
-                      ci=ci, palette=palette, color=color, ax=ax)
+                      ci=ci, palette=palette, color=color, ax=ax, markers=".")
 
     # place legend to right side of plot
     if legend:
