@@ -13,7 +13,7 @@ from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData, AlphaDiversity
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
-                            first_differences)
+                            first_differences, first_distances)
 import q2_longitudinal
 
 
@@ -42,8 +42,7 @@ shared_parameters = {
 
 base_parameters = {
     **shared_parameters,
-    **{k: v for k, v in miscellaneous_parameters.items()
-       if k == 'state_column'},
+    'state_column': miscellaneous_parameters['state_column'],
     'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
         'Dark2', 'tab10', 'tab20', 'tab20b', 'tab20c', 'viridis', 'plasma',
@@ -56,8 +55,7 @@ paired_params = {
     'state_1': Str,
     'state_2': Str,
     'parametric': Bool,
-    **{k: v for k, v in miscellaneous_parameters.items()
-       if k == 'replicate_handling'},
+    'replicate_handling': miscellaneous_parameters['replicate_handling'],
 }
 
 miscellaneous_parameter_descriptions = {
@@ -66,23 +64,20 @@ miscellaneous_parameter_descriptions = {
     'replicate_handling': (
         'Choose how replicate samples are handled. If replicates are '
         'detected, "error" causes method to fail; "drop" will discard all '
-        'subject IDs with replicate samples at either state_1 or state_2; '
-        '"random" chooses one representative at random from among '
-        'replicates.')
+        'replicated samples; "random" chooses one representative at random '
+        'from among replicates.')
 }
 
 shared_parameter_descriptions = {
         'metadata': (
-            'Sample metadata containing group_column,  state_column, '
-            'individual_id_column, and optionally metric values.'),
+            'Sample metadata file containing individual_id_column.'),
         'individual_id_column': (
             'Metadata column containing IDs for individual subjects.'),
 }
 
 base_parameter_descriptions = {
         **shared_parameter_descriptions,
-        **{k: v for k, v in miscellaneous_parameter_descriptions.items()
-           if k == 'state_column'},
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
         'palette': 'Color palette to use for generating boxplots.',
 }
 
@@ -102,8 +97,8 @@ paired_parameter_descriptions = {
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
                        'parametric (Kruskal-Wallis, Wilcoxon, and Mann-'
                        'Whitney U tests) statistical tests.'),
-        **{k: v for k, v in miscellaneous_parameter_descriptions.items()
-           if k == 'replicate_handling'},
+        'replicate_handling': (
+            miscellaneous_parameter_descriptions['replicate_handling']),
 }
 
 
@@ -241,15 +236,14 @@ plugin.methods.register_function(
 
 plugin.methods.register_function(
     function=first_differences,
-    inputs={'table': FeatureTable[RelativeFrequency],
-            'distance_matrix': DistanceMatrix},
+    inputs={'table': FeatureTable[RelativeFrequency]},
     parameters={**miscellaneous_parameters,
                 **shared_parameters,
                 'metric': Str},
     outputs=[('first_differences', SampleData[AlphaDiversity])],
     input_descriptions={
-        'table': 'Feature table to optionally use for paired comparisons.',
-        'distance_matrix': 'Matrix of distances between pairs of samples.'},
+        'table': ('Feature table to optionally use for computing first '
+                  'differences.')},
     parameter_descriptions={
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
@@ -263,13 +257,43 @@ plugin.methods.register_function(
         'Calculates first differences in "metric" between sequential states '
         'for samples collected from individual subjects sampled repeatedly at '
         'two or more states. First differences can be performed on a metadata '
-        'column (including artifacts that can be input as metadata), a '
-        'feature in a feature table, or on a distance matrix. Outputs a data '
+        'column (including artifacts that can be input as metadata) or a '
+        'feature in a feature table. Outputs a data '
         'series of first differences for each individual subject at each '
         'sequential pair of states, labeled by the SampleID of the second '
         'state (e.g., paired differences between time 0 and time 1 would be '
         'labeled by the SampleIDs at time 1). This file can be used as input '
         'to linear mixed effects models or other longitudinal or diversity '
         'methods to compare changes in first differences across time or among '
+        'groups of subjects.')
+)
+
+
+plugin.methods.register_function(
+    function=first_distances,
+    inputs={'distance_matrix': DistanceMatrix},
+    parameters={**miscellaneous_parameters,
+                **shared_parameters},
+    outputs=[('first_distances', SampleData[AlphaDiversity])],
+    input_descriptions={
+        'distance_matrix': 'Matrix of distances between pairs of samples.'},
+    parameter_descriptions={
+        **miscellaneous_parameter_descriptions,
+        **shared_parameter_descriptions,
+    },
+    output_descriptions={'first_distances': 'Series of first distances.'},
+    name='First distance computation between sequential states',
+    description=(
+        'Calculates first distances between sequential states for samples '
+        'collected from individual subjects sampled repeatedly at two or more '
+        'states. This method is similar to the first differences method, '
+        'except that it requires a distance matrix as input and calculates '
+        'first differences as distances between successive states. Outputs a '
+        'data series of first distances for each individual subject at each '
+        'sequential pair of states, labeled by the SampleID of the second '
+        'state (e.g., paired distances between time 0 and time 1 would be '
+        'labeled by the SampleIDs at time 1). This file can be used as input '
+        'to linear mixed effects models or other longitudinal or diversity '
+        'methods to compare changes in first distances across time or among '
         'groups of subjects.')
 )
