@@ -387,6 +387,19 @@ class longitudinalTests(longitudinalTestPluginBase):
             metric='e2c3ff4f647112723741aa72087f1bfa',
             replicate_handling='drop', table=self.table_ecam_fp)
 
+    def test_first_differences_one_subject_many_times(self):
+        exp = pd.Series(
+            [-0.01, 0.01, 0.01, 0.06, -0.01, 0.03, -0.02, 0.03, 0.05, -0.03,
+             0.04],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
     def test_first_distances(self):
         exp = pd.Series([0.1, 0.1, 0.3, 0.1, 0.2, 0.4],
                         index=['3', '4', '5', '9', '10', '11'],
@@ -397,6 +410,34 @@ class longitudinalTests(longitudinalTestPluginBase):
             state_column='Time', individual_id_column='ind',
             replicate_handling='drop')
         pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_single_sample(self):
+        with self.assertRaisesRegex(RuntimeError, "Output is empty"):
+            obs = first_distances(
+                distance_matrix=dm_single_sample, metadata=qiime2.Metadata(md),
+                state_column='Time', individual_id_column='ind',
+                replicate_handling='drop')
+            print(obs)
+
+    def test_first_distances_one_subject_many_times(self):
+        exp = pd.Series(
+            [0.3, 0.9, 0.3, 0.2, 0.4, 0.4, 0.5, 0.8, 0.3, 0.4, 0.6],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Distance')
+        exp.index.name = '#SampleID'
+        obs = first_distances(
+            distance_matrix=dm,
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    # just check that it works on real data
+    def test_first_distances_ecam(self):
+        first_distances(
+            distance_matrix=self.md_ecam_dm, metadata=self.md_ecam_fp,
+            state_column='month', individual_id_column='studyid',
+            replicate_handling='drop')
 
     def test_validate_metadata_is_superset_df(self):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
@@ -415,6 +456,13 @@ md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                   columns=['Time', 'Group', 'Value', 'ind'],
                   index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                          '10', '11'])
+
+md_one_subject_many_times = pd.DataFrame(
+    [(0, 0.12, 1), (1, 0.11, 1), (2, 0.12, 1), (3, 0.13, 1), (4, 0.19, 1),
+     (5, 0.18, 1), (6, 0.21, 1), (7, 0.19, 1), (8, 0.22, 1), (9, 0.27, 1),
+     (10, 0.24, 1), (11, 0.28, 1)],
+    columns=['Time', 'Value', 'ind'],
+    index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'])
 
 md_static = pd.DataFrame(
     [(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
@@ -448,6 +496,11 @@ dm = DistanceMatrix.read(StringIO(
     "9\t0.1\t0.2\t0.3\t0.4\t0.1\t0.2\t0.1\t0.1\t0.3\t0.0\t0.4\t0.5\n"
     "10\t0.2\t0.3\t0.3\t0.2\t0.5\t0.4\t0.3\t0.2\t0.5\t0.4\t0.0\t0.6\n"
     "11\t0.3\t0.4\t0.4\t0.3\t0.3\t0.2\t0.1\t0.3\t0.4\t0.5\t0.6\t0.0\n"
+    ))
+
+dm_single_sample = DistanceMatrix.read(StringIO(
+    "\t0\n"
+    "0\t0.0\n"
     ))
 
 groups = {'a': [1, 2, 3, 2, 3, 1.5, 2.5, 2.7, 3, 2, 1, 1.5],

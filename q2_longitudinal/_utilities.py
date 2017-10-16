@@ -715,6 +715,13 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
     else:
         pairs_summary = pairs_summary['Difference']
 
+    # raise sensible error if output is empty.
+    if len(pairs_summary) == 0:
+        raise RuntimeError(
+            'Output is empty. Either no paired samples were detected in the '
+            'inputs or replicate samples were dropped. Check input files, '
+            'parameters, and replicate_handling settings.')
+
     return pairs_summary
 
 
