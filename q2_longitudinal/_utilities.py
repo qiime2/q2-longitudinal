@@ -108,10 +108,12 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                         ' '.join(map(str, individual_at_state_idx))))
                 if replicate_handling == 'error':
                     raise ValueError((
-                        'Replicate values for individual {0} at state {1}. '
-                        'Remove replicate values from input files or set '
-                        'replicate_handling parameter to select how '
-                        'replicates are handled.'))
+                        'Detected replicate samples for individual ({0}) {1} '
+                        'at state ({2}) {3}. Remove replicate values from '
+                        'input files or set replicate_handling parameter to '
+                        'select how replicates are handled.'.format(
+                            individual_id_column, individual_id, state_column,
+                            state_value)))
                 elif replicate_handling == 'random':
                     result.append(choice(individual_at_state_idx))
                 elif replicate_handling == 'drop':

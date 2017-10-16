@@ -234,6 +234,11 @@ class longitudinalTests(longitudinalTestPluginBase):
                 state_column='month', state_1=0, state_2=0,
                 individual_id_column='studyid', metric='observed_otus',
                 replicate_handling='drop')
+        with self.assertRaisesRegex(ValueError, "Detected replicate samples"):
+            res, err = _get_group_pairs(
+                md_dup, 'a', individual_id_column='ind', group_column='Group',
+                state_column='Time', state_values=[1, 2],
+                replicate_handling='error')
 
     def test_pairwise_differences(self):
         pairwise_differences(
