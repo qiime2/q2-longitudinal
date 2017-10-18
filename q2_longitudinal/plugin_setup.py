@@ -9,7 +9,8 @@
 
 import qiime2
 import pandas as pd
-from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float)
+from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
+                           ValidationError)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -40,14 +41,17 @@ FirstDifferences = SemanticType(
 
 
 class FirstDifferencesFormat(model.TextFileFormat):
-    def sniff(self):
+    def _check_n_records(self, n_lines=None):
         with self.open() as fh:
             line = fh.readline()
-            for line, _ in zip(fh, range(5)):
+            for line, _ in zip(fh, range(n_lines)):
                 cells = line.strip().split('\t')
                 if len(cells) != 2:
-                    return False
-            return True
+                    raise ValidationError('File is not FirstDifferencesFormat')
+
+    def _validate_(self, level):
+        record_count_map = {'min': 5, 'max': 1000}
+        self._check_n_records(record_count_map[level])
 
 
 FirstDifferencesDirectoryFormat = model.SingleFileDirectoryFormat(

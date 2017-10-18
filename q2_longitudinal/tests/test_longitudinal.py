@@ -28,7 +28,6 @@ from q2_longitudinal._longitudinal import (
 from q2_types.sample_data import SampleData
 from q2_longitudinal.plugin_setup import (
     FirstDifferencesFormat, FirstDifferencesDirectoryFormat, FirstDifferences)
-import shutil
 from qiime2.plugin import ValidationError
 
 import tempfile
@@ -187,19 +186,13 @@ class TestSemanticTypes(longitudinalTestPluginBase):
     def test_first_differences_format_validate_positive(self):
         filepath = self.get_data_path('first-differences.tsv')
         format = FirstDifferencesFormat(filepath, mode='r')
-        format.validate()
+        format._validate_('max')
 
     def test_first_differences_format_validate_negative(self):
         filepath = self.get_data_path('not-first-differences.tsv')
         format = FirstDifferencesFormat(filepath, mode='r')
         with self.assertRaisesRegex(ValidationError, 'FirstDifferencesFormat'):
-            format.validate()
-
-    def test_first_differences_dir_fmt_validate_positive(self):
-        filepath = self.get_data_path('first-differences.tsv')
-        shutil.copy(filepath, self.temp_dir.name)
-        format = FirstDifferencesDirectoryFormat(self.temp_dir.name, mode='r')
-        format.validate()
+            format._validate_('max')
 
     def test_first_differences_semantic_type_registration(self):
         self.assertRegisteredSemanticType(FirstDifferences)
