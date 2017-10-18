@@ -207,7 +207,7 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
 
 
 def first_differences(metadata: qiime2.Metadata, state_column: str,
-                      individual_id_column: str, metric: str='Distance',
+                      individual_id_column: str, metric: str,
                       replicate_handling: str='error',
                       table: pd.DataFrame=None) -> pd.Series:
 
@@ -231,7 +231,7 @@ def first_distances(distance_matrix: DistanceMatrix, metadata: qiime2.Metadata,
                     state_column: str, individual_id_column: str,
                     replicate_handling: str='error') -> pd.Series:
 
-    # find metric in metadata or derive from table and merge into metadata
+    # load and validate metadata
     metadata = _load_metadata(metadata)
     _validate_metadata_is_superset(
         metadata, _tabulate_matrix_ids(distance_matrix))

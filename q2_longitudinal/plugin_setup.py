@@ -7,10 +7,14 @@
 # ----------------------------------------------------------------------------
 
 
+import qiime2
+import pandas as pd
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
-from q2_types.sample_data import SampleData, AlphaDiversity
+from q2_types.sample_data import SampleData
+from qiime2.plugin import SemanticType
+import qiime2.plugin.model as model
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances)
@@ -28,6 +32,68 @@ plugin = Plugin(
         'study designs.'),
     short_description='Plugin for paired sample and time series analyses.'
 )
+
+
+# FirstDifferencesFormat is a near replica of AlphaDiversityFormat in q2_types
+FirstDifferences = SemanticType(
+    'FirstDifferences', variant_of=SampleData.field['type'])
+
+
+class FirstDifferencesFormat(model.TextFileFormat):
+    def sniff(self):
+        with self.open() as fh:
+            line = fh.readline()
+            for line, _ in zip(fh, range(5)):
+                cells = line.strip().split('\t')
+                if len(cells) != 2:
+                    return False
+            return True
+
+
+FirstDifferencesDirectoryFormat = model.SingleFileDirectoryFormat(
+    'FirstDifferencesDirectoryFormat', 'FirstDifferences.tsv',
+    FirstDifferencesFormat)
+
+
+# borrowed from q2_types
+def _read_dataframe(fh):
+    # Using `dtype=object` and `set_index` to avoid type casting/inference
+    # of any columns or the index.
+    df = pd.read_csv(fh, sep='\t', header=0, dtype=object)
+    df.set_index(df.columns[0], drop=True, append=False, inplace=True)
+    df.index.name = None
+    return df
+
+
+@plugin.register_transformer
+def _4(data: pd.Series) -> (FirstDifferencesFormat):
+    ff = FirstDifferencesFormat()
+    with ff.open() as fh:
+        data.to_csv(fh, sep='\t', header=True)
+    return ff
+
+
+@plugin.register_transformer
+def _5(ff: FirstDifferencesFormat) -> (pd.Series):
+    with ff.open() as fh:
+        df = _read_dataframe(fh)
+        return df.iloc[:, 0]
+
+
+@plugin.register_transformer
+def _6(ff: FirstDifferencesFormat) -> (qiime2.Metadata):
+    with ff.open() as fh:
+        return qiime2.Metadata(_read_dataframe(fh))
+
+
+plugin.register_formats(
+    FirstDifferencesFormat, FirstDifferencesDirectoryFormat)
+
+plugin.register_semantic_types(FirstDifferences)
+
+plugin.register_semantic_type_to_format(
+    SampleData[FirstDifferences],
+    artifact_format=FirstDifferencesDirectoryFormat)
 
 
 miscellaneous_parameters = {
@@ -240,16 +306,14 @@ plugin.methods.register_function(
     parameters={**miscellaneous_parameters,
                 **shared_parameters,
                 'metric': Str},
-    outputs=[('first_differences', SampleData[AlphaDiversity])],
+    outputs=[('first_differences', SampleData[FirstDifferences])],
     input_descriptions={
         'table': ('Feature table to optionally use for computing first '
                   'differences.')},
     parameter_descriptions={
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
-        'metric': ('Numerical metadata or artifact column to test. If '
-                   'computing first differences on a distance matrix, do not '
-                   'set a value for this parameter.'),
+        'metric': 'Numerical metadata or artifact column to test.',
     },
     output_descriptions={'first_differences': 'Series of first differences.'},
     name='First difference computation between sequential states',
@@ -274,7 +338,7 @@ plugin.methods.register_function(
     inputs={'distance_matrix': DistanceMatrix},
     parameters={**miscellaneous_parameters,
                 **shared_parameters},
-    outputs=[('first_distances', SampleData[AlphaDiversity])],
+    outputs=[('first_distances', SampleData[FirstDifferences])],
     input_descriptions={
         'distance_matrix': 'Matrix of distances between pairs of samples.'},
     parameter_descriptions={
@@ -286,7 +350,7 @@ plugin.methods.register_function(
     description=(
         'Calculates first distances between sequential states for samples '
         'collected from individual subjects sampled repeatedly at two or more '
-        'states. This method is similar to the first differences method, '
+        'states. This method is similar to the "first differences" method, '
         'except that it requires a distance matrix as input and calculates '
         'first differences as distances between successive states. Outputs a '
         'data series of first distances for each individual subject at each '

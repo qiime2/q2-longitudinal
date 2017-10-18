@@ -24,6 +24,13 @@ from q2_longitudinal._utilities import (
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
+
+from q2_types.sample_data import SampleData
+from q2_longitudinal.plugin_setup import (
+    FirstDifferencesFormat, FirstDifferencesDirectoryFormat, FirstDifferences)
+import shutil
+from qiime2.plugin import ValidationError
+
 import tempfile
 import pkg_resources
 from qiime2.plugin.testing import TestPluginBase
@@ -38,6 +45,7 @@ class longitudinalTestPluginBase(TestPluginBase):
     package = 'q2_longitudinal.tests'
 
     def setUp(self):
+        super().setUp()
         self.temp_dir = tempfile.TemporaryDirectory(
             prefix='q2-longitudinal-test-temp-')
 
@@ -174,6 +182,60 @@ class UtilitiesTests(longitudinalTestPluginBase):
             _validate_is_numeric_column(erroneous_metadata, 'a')
 
 
+class TestSemanticTypes(longitudinalTestPluginBase):
+
+    def test_first_differences_format_validate_positive(self):
+        filepath = self.get_data_path('first-differences.tsv')
+        format = FirstDifferencesFormat(filepath, mode='r')
+        format.validate()
+
+    def test_first_differences_format_validate_negative(self):
+        filepath = self.get_data_path('not-first-differences.tsv')
+        format = FirstDifferencesFormat(filepath, mode='r')
+        with self.assertRaisesRegex(ValidationError, 'FirstDifferencesFormat'):
+            format.validate()
+
+    def test_first_differences_dir_fmt_validate_positive(self):
+        filepath = self.get_data_path('first-differences.tsv')
+        shutil.copy(filepath, self.temp_dir.name)
+        format = FirstDifferencesDirectoryFormat(self.temp_dir.name, mode='r')
+        format.validate()
+
+    def test_first_differences_semantic_type_registration(self):
+        self.assertRegisteredSemanticType(FirstDifferences)
+
+    def test_first_differences_dir_fmt_registration(self):
+        self.assertSemanticTypeRegisteredToFormat(
+            SampleData[FirstDifferences], FirstDifferencesDirectoryFormat)
+
+    def test_pd_series_to_first_differences_format(self):
+        transformer = self.get_transformer(pd.Series, FirstDifferencesFormat)
+        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
+        exp = pd.Series([1, 2, 3, 4], name='Difference',
+                        index=exp_index)
+        obs = transformer(exp)
+        obs = pd.Series.from_csv(str(obs), sep='\t', header=0)
+        self.assertEqual(sorted(exp), sorted(obs))
+
+    def test_first_differences_format_to_pd_series(self):
+        _, obs = self.transform_format(
+            FirstDifferencesFormat, pd.Series, 'first-differences.tsv')
+        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
+        exp = pd.Series(['1', '2', '3', '4'], name='Difference',
+                        index=exp_index)
+        self.assertEqual(sorted(exp), sorted(obs))
+
+    def test_first_differences_format_to_metadata(self):
+        _, obs = self.transform_format(
+            FirstDifferencesFormat, qiime2.Metadata, 'first-differences.tsv')
+        obs_category = obs.get_category('Difference')
+
+        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
+        exp = pd.Series(['1', '2', '3', '4'], name='Difference',
+                        index=exp_index)
+        self.assertEqual(sorted(exp), sorted(obs_category.to_series()))
+
+
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.
@@ -235,7 +297,7 @@ class longitudinalTests(longitudinalTestPluginBase):
                 individual_id_column='studyid', metric='observed_otus',
                 replicate_handling='drop')
         with self.assertRaisesRegex(ValueError, "Detected replicate samples"):
-            res, err = _get_group_pairs(
+            _get_group_pairs(
                 md_dup, 'a', individual_id_column='ind', group_column='Group',
                 state_column='Time', state_values=[1, 2],
                 replicate_handling='error')
@@ -341,7 +403,11 @@ class longitudinalTests(longitudinalTestPluginBase):
             metric='Value', replicate_handling='random')
         # The first diff of individual 2 is subject to random rep handling
         mystery_number = obs.iloc[1]
-        self.assertTrue(mystery_number in [0.04999999999999999, 0.06])
+        if mystery_number < 0.051:
+            self.assertAlmostEqual(mystery_number, 0.05)
+        else:
+            self.assertAlmostEqual(mystery_number, 0.06)
+
         # but other values are constant, so we will just drop in the mystery
         # value and the exp/obs series should match.
         exp = pd.Series([0.08, mystery_number, 0.12, 0.14,
@@ -386,11 +452,15 @@ class longitudinalTests(longitudinalTestPluginBase):
                 metric='Value', replicate_handling='drop')
 
     def test_first_differences_taxa(self):
-        first_differences(
+        exp = pd.read_csv(self.get_data_path(
+            'ecam-taxa-first-differences.tsv'),
+            sep='\t', squeeze=True, index_col=0)
+        obs = first_differences(
             metadata=self.md_ecam_fp, state_column='month',
             individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa',
             replicate_handling='drop', table=self.table_ecam_fp)
+        pdt.assert_series_equal(obs, exp)
 
     def test_first_differences_one_subject_many_times(self):
         exp = pd.Series(
@@ -418,11 +488,10 @@ class longitudinalTests(longitudinalTestPluginBase):
 
     def test_first_distances_single_sample(self):
         with self.assertRaisesRegex(RuntimeError, "Output is empty"):
-            obs = first_distances(
+            first_distances(
                 distance_matrix=dm_single_sample, metadata=qiime2.Metadata(md),
                 state_column='Time', individual_id_column='ind',
                 replicate_handling='drop')
-            print(obs)
 
     def test_first_distances_one_subject_many_times(self):
         exp = pd.Series(
@@ -437,12 +506,14 @@ class longitudinalTests(longitudinalTestPluginBase):
             replicate_handling='drop')
         pdt.assert_series_equal(obs, exp)
 
-    # just check that it works on real data
     def test_first_distances_ecam(self):
-        first_distances(
+        exp = pd.read_csv(self.get_data_path(
+            'ecam-first-distances.tsv'), sep='\t', squeeze=True, index_col=0)
+        obs = first_distances(
             distance_matrix=self.md_ecam_dm, metadata=self.md_ecam_fp,
             state_column='month', individual_id_column='studyid',
             replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
 
     def test_validate_metadata_is_superset_df(self):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
@@ -463,11 +534,11 @@ md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                          '10', '11'])
 
 md_one_subject_many_times = pd.DataFrame(
-    [(0, 0.12, 1), (1, 0.11, 1), (2, 0.12, 1), (3, 0.13, 1), (4, 0.19, 1),
-     (5, 0.18, 1), (6, 0.21, 1), (7, 0.19, 1), (8, 0.22, 1), (9, 0.27, 1),
+    [(5, 0.18, 1), (6, 0.21, 1), (7, 0.19, 1), (8, 0.22, 1), (9, 0.27, 1),
+     (0, 0.12, 1), (1, 0.11, 1), (2, 0.12, 1), (3, 0.13, 1), (4, 0.19, 1),
      (10, 0.24, 1), (11, 0.28, 1)],
     columns=['Time', 'Value', 'ind'],
-    index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'])
+    index=['5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '10', '11'])
 
 md_static = pd.DataFrame(
     [(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),

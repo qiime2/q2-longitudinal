@@ -34,9 +34,9 @@ def _validate_input_values(df, metric, individual_id_column, group_column,
                            state_column, state_1, state_2):
     # confirm that different state values are input
     if state_1 is not None and state_1 == state_2:
-        raise ValueError((
+        raise ValueError(
             'You have chosen the same value for state_1 and state_2. These '
-            'parameters must be given different values.'))
+            'parameters must be given different values.')
     # confirm that metric, individual, group, and state columns are in metadata
     # and do not match
     _validate_input_columns(
@@ -47,16 +47,16 @@ def _validate_input_values(df, metric, individual_id_column, group_column,
         for state in [state_1, state_2]:
             state = df[state_column].dtype.type(state)
             if state not in df[state_column].values:
-                raise ValueError((
+                raise ValueError(
                     'State {0} not present in column {1} of metadata'.format(
-                        state, state_column)))
+                        state, state_column))
             for group in df[group_column].unique():
                 df1 = df[df[group_column] == group]
                 if state not in df1[state_column].values:
-                    raise ValueError((
+                    raise ValueError(
                         'State {0} is not represented by any members of group '
                         '{1} in metadata. Consider using a different '
-                        'group_column or state value.'.format(state, group)))
+                        'group_column or state value.'.format(state, group))
 
 
 def _validate_input_columns(df, individual_id_column, group_column,
@@ -68,9 +68,9 @@ def _validate_input_columns(df, individual_id_column, group_column,
     # confirm that variable values (column names) do not match
     cols = [c for c in cols if c is not None]
     if len(set(cols)) < len(cols):
-        raise ValueError((
+        raise ValueError(
             "individual_id_column, group_column, state_column, and metric "
-            "must all be set to unique values."))
+            "must all be set to unique values.")
     # confirm that individual, group, and state columns are in metadata
     for column in cols:
         if column not in df.columns:
@@ -80,9 +80,9 @@ def _validate_input_columns(df, individual_id_column, group_column,
     if state_column is not None:
         states = df[state_column].unique()
         if len(states) < 2:
-            raise ValueError(("state_column must contain at least two unique "
-                              "values. Values in {0}: {1}".format(
-                                state_column, states)))
+            raise ValueError("state_column must contain at least two unique "
+                             "values. Values in {0}: {1}".format(
+                                state_column, states))
 
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
@@ -107,13 +107,13 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                         state_value,
                         ' '.join(map(str, individual_at_state_idx))))
                 if replicate_handling == 'error':
-                    raise ValueError((
+                    raise ValueError(
                         'Detected replicate samples for individual ({0}) {1} '
                         'at state ({2}) {3}. Remove replicate values from '
                         'input files or set replicate_handling parameter to '
                         'select how replicates are handled.'.format(
                             individual_id_column, individual_id, state_column,
-                            state_value)))
+                            state_value))
                 elif replicate_handling == 'random':
                     result.append(choice(individual_at_state_idx))
                 elif replicate_handling == 'drop':
@@ -435,7 +435,7 @@ def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
     x_tick_labels = _add_sample_size_to_xtick_labels(groups)
     x_tick_labels = ['{0} (n={1})'.format(
         state, len(metadata[metadata[state_column] == state]))
-        for state in metadata[state_column].unique()]
+        for state in sorted(metadata[state_column].unique())]
     g.set_xticklabels(x_tick_labels, rotation=90)
 
     # place legend to right side of plot
@@ -682,13 +682,13 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
 
     # create dummy group column in metadata so we can use downstream functions
     # that split metadata by groups without actually bothering to do so.
-    group_column = "dummy_group"
+    group_column = "a_name_that_no_user_of_qiime2_could_conceivably_ever_use"
     metadata[group_column] = 'null'
 
     # calculate paired difference/distance distributions between each state
     pairs_summary = pd.DataFrame()
     errors = []
-    states = metadata[state_column].unique()
+    states = sorted(metadata[state_column].unique())
     # iterate over range of sorted states in order to compare sequential states
     for s in range(len(states) - 1):
         # get pairs of samples at each sequential state
@@ -699,7 +699,7 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
             state_values=[states[s], states[s + 1]],
             replicate_handling=replicate_handling)
         # compute distance between pairs
-        if metric == 'Distance':
+        if distance_matrix is not None:
             pairs, pairs_summaries = _extract_distance_distribution(
                 distance_matrix, group_pairs, metadata,
                 individual_id_column, group_column)
@@ -712,8 +712,8 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
         errors.extend(error)
 
     # convert pairs_summary to series with relevant metric
-    if metric == 'Distance':
-        pairs_summary = pairs_summary[metric]
+    if distance_matrix is not None:
+        pairs_summary = pairs_summary['Distance']
     else:
         pairs_summary = pairs_summary['Difference']
 
@@ -739,6 +739,6 @@ def _validate_is_numeric_column(metadata, metric):
     if np.issubdtype(metadata[metric].dtype, np.number):
         pass
     else:
-        raise ValueError(('{0} is not a numeric metadata column. '
-                          'Please choose a metadata column containing only '
-                          'numeric values.'.format(metric)))
+        raise ValueError('{0} is not a numeric metadata column. '
+                         'Please choose a metadata column containing only '
+                         'numeric values.'.format(metric))
