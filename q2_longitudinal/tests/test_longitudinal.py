@@ -294,7 +294,8 @@ class longitudinalTests(longitudinalTestPluginBase):
         volatility(
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             metric='observed_otus', group_column='delivery',
-            state_column='month', individual_id_column='studyid')
+            state_column='month', individual_id_column='studyid',
+            spaghetti=True)
 
     def test_linear_mixed_effects_singular_matrix_error(self):
         with self.assertRaisesRegex(ValueError, "singular matrix error"):

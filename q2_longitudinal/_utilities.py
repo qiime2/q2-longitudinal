@@ -392,8 +392,10 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     # plot individual groups' control charts
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
     num = 1
+    cmap = {}
     for group, group_md in metadata.groupby(group_column):
         color = next(colors)
+        cmap[group] = color
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
             color=color, plot_control_limits=True, ax=axes[num],
@@ -410,7 +412,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 
     # plot all groups together, compare variances
     c, global_mean, global_std = _control_chart(
-        state_column, metric, metadata, group_column, ci=ci, palette=palette,
+        state_column, metric, metadata, group_column, ci=ci, palette=cmap,
         plot_control_limits=plot_control_limits, ax=axes[0],
         xtick_interval=xtick_interval)
     c.set_title('Group volatility comparison plot')
