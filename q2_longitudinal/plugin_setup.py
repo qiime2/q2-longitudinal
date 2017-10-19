@@ -10,7 +10,7 @@
 import qiime2
 import pandas as pd
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           ValidationError)
+                           Int, ValidationError)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -259,7 +259,8 @@ plugin.visualizers.register_function(
                 'metric': Str,
                 'group_column': Str,
                 'ci': Float % Range(0, 100),
-                'plot_control_limits': Bool},
+                'plot_control_limits': Bool,
+                'xtick_interval': Int},
     input_descriptions={'table': (
         'Feature table to optionally use for paired comparisons.')},
     parameter_descriptions={
@@ -270,6 +271,9 @@ plugin.visualizers.register_function(
         'ci': 'Size of the confidence interval to plot on control chart.',
         'plot_control_limits': ('Plot global mean and control limits (2X and '
                                 '3X standard deviations).'),
+        'xtick_interval': ('Interval between major tick marks on x axis. '
+                           'Defaults to 1, or autoscales to show up to 30 '
+                           'ticks if data contain more than 30 x-axis values.')
     },
     name='Volatility analysis',
     description=(
