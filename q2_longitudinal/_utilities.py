@@ -381,7 +381,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
                             yscale='linear', spaghetti=False):
 
     groups = metadata[group_column].unique()
-    states = metadata[state_column].unique()
+    states = sorted(metadata[state_column].unique())
     fig_count = len(groups) + 1
     fig_height = fig_count * 6
     chart, axes = plt.subplots(fig_count, figsize=(6, fig_height))
@@ -391,8 +391,8 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 
     # plot individual groups' control charts
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    num = 1
     cmap = {}
+    num = 1
     for group, group_md in metadata.groupby(group_column):
         color = next(colors)
         cmap[group] = color
@@ -406,7 +406,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
             for ax in [0, num]:
                 c = _make_spaghetti(
                     group_md, state_column, metric, individual_id_column,
-                    ax=axes[ax], color=color, alpha=0.3)
+                    states, ax=axes[ax], color=color, alpha=0.3)
         c = _set_xticks(c, group_md, state_column, states, xtick_interval)
         num += 1
 
@@ -426,9 +426,18 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 
 
 def _make_spaghetti(metadata, state_column, metric, individual_id_column,
-                    ax, color=None, alpha=1.0):
+                    states, ax, color=None, alpha=1.0):
     for ind, ind_data in metadata.groupby(individual_id_column):
-        ax.plot(ind_data[state_column], ind_data[metric], alpha=alpha, c=color,
+        # Adjust xticks on so that it follows a pseudo-categorical scale
+        # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
+        # so that spaghetti aligns with seaborn pointplot x axis.
+        if states is not None:
+            altered_states = ind_data[state_column].apply(
+                lambda x: states.index(x))
+        else:
+            altered_states = ind_data[state_column]
+
+        ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
                 label='_nolegend_')
     return ax
 
