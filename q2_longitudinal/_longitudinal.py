@@ -145,7 +145,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits=True, xtick_interval=None) -> None:
+               plot_control_limits: bool=True, xtick_interval: int=None):
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -175,8 +175,8 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
-         individual_id_column: str, corr_method="kendall", dist_method="fro"
-         ) -> DistanceMatrix:
+         individual_id_column: str, corr_method: str="kendall",
+         dist_method: str="fro") -> DistanceMatrix:
 
     # load and prep metadata
     metadata = _load_metadata(metadata)
