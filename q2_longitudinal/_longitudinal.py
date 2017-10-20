@@ -217,6 +217,7 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
         metadata = _add_metric_to_metadata(table, metadata, metric)
     else:
         metadata = _load_metadata(metadata)
+        _validate_is_numeric_column(metadata, metric)
 
     # validate columns
     _validate_input_columns(
@@ -242,5 +243,5 @@ def first_distances(distance_matrix: DistanceMatrix, metadata: qiime2.Metadata,
         metadata, individual_id_column, None, state_column, None)
 
     return _first_differences(
-        metadata, state_column, individual_id_column, metric='Distance',
+        metadata, state_column, individual_id_column, metric=None,
         replicate_handling=replicate_handling, distance_matrix=distance_matrix)

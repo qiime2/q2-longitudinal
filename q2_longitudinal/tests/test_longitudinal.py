@@ -240,7 +240,7 @@ class TestSemanticTypes(longitudinalTestPluginBase):
         _, obs = self.transform_format(
             FirstDifferencesFormat, pd.Series, 'first-differences.tsv')
         exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
-        exp = pd.Series(['1', '2', '3', '4'], name='Difference',
+        exp = pd.Series([1, 2, 3, 4], name='Difference',
                         index=exp_index)
         self.assertEqual(sorted(exp), sorted(obs))
 
@@ -250,7 +250,7 @@ class TestSemanticTypes(longitudinalTestPluginBase):
         obs_category = obs.get_category('Difference')
 
         exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
-        exp = pd.Series(['1', '2', '3', '4'], name='Difference',
+        exp = pd.Series([1, 2, 3, 4], name='Difference',
                         index=exp_index)
         self.assertEqual(sorted(exp), sorted(obs_category.to_series()))
 
@@ -470,6 +470,13 @@ class longitudinalTests(longitudinalTestPluginBase):
                 state_column='Time', individual_id_column='ind',
                 metric='Value', replicate_handling='drop')
 
+    def test_first_differences_nonnumeric_metric_error(self):
+        with self.assertRaisesRegex(ValueError, "not a numeric"):
+            first_differences(
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                metric='delivery', replicate_handling='drop')
+
     def test_first_differences_taxa(self):
         exp = pd.read_csv(self.get_data_path(
             'ecam-taxa-first-differences.tsv'),
@@ -490,6 +497,19 @@ class longitudinalTests(longitudinalTestPluginBase):
         exp.index.name = '#SampleID'
         obs = first_differences(
             metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_numeric_values_represented_as_strings(self):
+        numeric_values_represented_as_strings = pd.DataFrame(
+            [('0', '0.18', '1'), ('1', '0.21', '1')],
+            columns=['Time', 'Value', 'ind'],
+            index=['0', '1'])
+        exp = pd.Series([0.03], index=['1'], name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(numeric_values_represented_as_strings),
             state_column='Time', individual_id_column='ind',
             metric='Value', replicate_handling='drop')
         pdt.assert_series_equal(obs, exp)

@@ -19,6 +19,7 @@ from random import choice
 from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
 from math import ceil
+import uuid
 
 import numpy as np
 from scipy import linalg
@@ -527,8 +528,10 @@ def _add_metric_to_metadata(table, metadata, metric):
     metadata = _load_metadata(metadata)
     if metric not in metadata.columns:
         if table is not None and metric in table.columns:
+            table_metric = pd.DataFrame(
+                pd.to_numeric(table[metric], errors='ignore'))
             metadata = pd.concat(
-                [metadata, pd.DataFrame(table[metric])], axis=1, join='inner')
+                [metadata, table_metric], axis=1, join='inner')
         else:
             raise ValueError(
                 'metric must be a valid metadata or feature table column.')
@@ -715,7 +718,7 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
 
     # create dummy group column in metadata so we can use downstream functions
     # that split metadata by groups without actually bothering to do so.
-    group_column = "a_name_that_no_user_of_qiime2_could_conceivably_ever_use"
+    group_column = _generate_column_name(metadata)
     metadata[group_column] = 'null'
 
     # calculate paired difference/distance distributions between each state
@@ -758,6 +761,15 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
             'parameters, and replicate_handling settings.')
 
     return pairs_summary
+
+
+# borrowed from qiime2 framework
+def _generate_column_name(df):
+    """Generate column name that doesn't clash with current columns."""
+    while True:
+        name = str(uuid.uuid4())
+        if name not in df.columns:
+            return name
 
 
 def _validate_metadata_is_superset(metadata, table):

@@ -9,6 +9,7 @@
 
 import qiime2
 import pandas as pd
+import numbers
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
                            Int, ValidationError)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
@@ -43,14 +44,33 @@ FirstDifferences = SemanticType(
 class FirstDifferencesFormat(model.TextFileFormat):
     def _check_n_records(self, n_lines=None):
         with self.open() as fh:
-            line = fh.readline()
-            for line, _ in zip(fh, range(n_lines)):
+            line = fh.readline().rstrip()
+            if line not in ['#SampleID\tDifference', '#SampleID\tDistance']:
+                raise ValidationError(
+                    'File is not FirstDifferencesFormat: header line must '
+                    'contain labels "#SampleID" and either "Difference" or '
+                    '"Distance".')
+            for n, line in enumerate(fh):
                 cells = line.strip().split('\t')
                 if len(cells) != 2:
-                    raise ValidationError('File is not FirstDifferencesFormat')
+                    raise ValidationError(
+                        'File is not FirstDifferencesFormat: Expected two '
+                        'columns, detected {0} at line {0}.'.format(
+                            len(cells), n))
+                else:
+                    try:
+                        float(cells[1])
+                    except ValueError:
+                        raise ValidationError(
+                            'File is not FirstDifferencesFormat: second '
+                            'column must contain only numeric values. Non-'
+                            'numeric values were detected at line {0}.'.format(
+                                n))
+                if n_lines is not None and n == n_lines:
+                    break
 
     def _validate_(self, level):
-        record_count_map = {'min': 5, 'max': 1000}
+        record_count_map = {'min': 5, 'max': None}
         self._check_n_records(record_count_map[level])
 
 
@@ -66,6 +86,7 @@ def _read_dataframe(fh):
     df = pd.read_csv(fh, sep='\t', header=0, dtype=object)
     df.set_index(df.columns[0], drop=True, append=False, inplace=True)
     df.index.name = None
+    df = df.apply(lambda x: pd.to_numeric(x, errors='ignore'))
     return df
 
 
