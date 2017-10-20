@@ -9,7 +9,6 @@
 
 import qiime2
 import pandas as pd
-import numbers
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
                            Int, ValidationError)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
