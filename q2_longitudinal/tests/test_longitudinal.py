@@ -6,12 +6,17 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2
-import pandas as pd
-import numpy as np
-from skbio import DistanceMatrix
+import unittest
 from io import StringIO
 from warnings import filterwarnings
+
+import numpy as np
+import pandas as pd
+import pandas.util.testing as pdt
+import skbio
+import qiime2
+from qiime2.plugin.testing import TestPluginBase
+
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
@@ -25,38 +30,12 @@ from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
 
-from q2_types.sample_data import SampleData
-from q2_longitudinal.plugin_setup import (
-    FirstDifferencesFormat, FirstDifferencesDirectoryFormat, FirstDifferences)
-from qiime2.plugin import ValidationError
-
-import tempfile
-import pkg_resources
-from qiime2.plugin.testing import TestPluginBase
-import pandas.util.testing as pdt
-
-
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
 
 
-class longitudinalTestPluginBase(TestPluginBase):
+class TestUtilities(TestPluginBase):
     package = 'q2_longitudinal.tests'
-
-    def setUp(self):
-        super().setUp()
-        self.temp_dir = tempfile.TemporaryDirectory(
-            prefix='q2-longitudinal-test-temp-')
-
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
-    def get_data_path(self, filename):
-        return pkg_resources.resource_filename(self.package,
-                                               'data/%s' % filename)
-
-
-class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_get_group_pairs(self):
         res, err = _get_group_pairs(
@@ -207,58 +186,11 @@ class UtilitiesTests(longitudinalTestPluginBase):
             self.assertEqual(labels, exp)
 
 
-class TestSemanticTypes(longitudinalTestPluginBase):
-
-    def test_first_differences_format_validate_positive(self):
-        filepath = self.get_data_path('first-differences.tsv')
-        format = FirstDifferencesFormat(filepath, mode='r')
-        format._validate_('max')
-
-    def test_first_differences_format_validate_negative(self):
-        filepath = self.get_data_path('not-first-differences.tsv')
-        format = FirstDifferencesFormat(filepath, mode='r')
-        with self.assertRaisesRegex(ValidationError, 'FirstDifferencesFormat'):
-            format._validate_('max')
-
-    def test_first_differences_semantic_type_registration(self):
-        self.assertRegisteredSemanticType(FirstDifferences)
-
-    def test_first_differences_dir_fmt_registration(self):
-        self.assertSemanticTypeRegisteredToFormat(
-            SampleData[FirstDifferences], FirstDifferencesDirectoryFormat)
-
-    def test_pd_series_to_first_differences_format(self):
-        transformer = self.get_transformer(pd.Series, FirstDifferencesFormat)
-        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
-        exp = pd.Series([1, 2, 3, 4], name='Difference',
-                        index=exp_index)
-        obs = transformer(exp)
-        obs = pd.Series.from_csv(str(obs), sep='\t', header=0)
-        self.assertEqual(sorted(exp), sorted(obs))
-
-    def test_first_differences_format_to_pd_series(self):
-        _, obs = self.transform_format(
-            FirstDifferencesFormat, pd.Series, 'first-differences.tsv')
-        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
-        exp = pd.Series([1, 2, 3, 4], name='Difference',
-                        index=exp_index)
-        self.assertEqual(sorted(exp), sorted(obs))
-
-    def test_first_differences_format_to_metadata(self):
-        _, obs = self.transform_format(
-            FirstDifferencesFormat, qiime2.Metadata, 'first-differences.tsv')
-        obs_category = obs.get_category('Difference')
-
-        exp_index = pd.Index(['a', 'b', 'c', 'd'], dtype=object)
-        exp = pd.Series([1, 2, 3, 4], name='Difference',
-                        index=exp_index)
-        self.assertEqual(sorted(exp), sorted(obs_category.to_series()))
-
-
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.
-class longitudinalTests(longitudinalTestPluginBase):
+class TestLongitudinal(TestPluginBase):
+    package = 'q2_longitudinal.tests'
 
     def setUp(self):
         super().setUp()
@@ -278,7 +210,7 @@ class longitudinalTests(longitudinalTestPluginBase):
         def _load_dm(dm_fp):
             dm_fp = self.get_data_path(dm_fp)
             dm = qiime2.Artifact.load(dm_fp)
-            dm = dm.view(DistanceMatrix)
+            dm = dm.view(skbio.DistanceMatrix)
             return dm
 
         self.table_ecam_fp = _load_features('ecam-table-maturity.qza')
@@ -597,7 +529,7 @@ md_dup = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 2),
                       index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                              '10', '11'])
 
-dm = DistanceMatrix.read(StringIO(
+dm = skbio.DistanceMatrix.read(StringIO(
     "\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\n"
     "0\t0.0\t0.3\t1.0\t0.1\t0.1\t0.3\t0.4\t0.5\t0.6\t0.1\t0.2\t0.3\n"
     "1\t0.3\t0.0\t0.9\t0.2\t0.1\t0.4\t0.2\t0.6\t0.5\t0.2\t0.3\t0.4\n"
@@ -613,7 +545,7 @@ dm = DistanceMatrix.read(StringIO(
     "11\t0.3\t0.4\t0.4\t0.3\t0.3\t0.2\t0.1\t0.3\t0.4\t0.5\t0.6\t0.0\n"
     ))
 
-dm_single_sample = DistanceMatrix.read(StringIO(
+dm_single_sample = skbio.DistanceMatrix.read(StringIO(
     "\t0\n"
     "0\t0.0\n"
     ))
@@ -644,3 +576,7 @@ exp_tc = pd.DataFrame({(1, 'o1'): [1., 0., -1.], (1, 'o2'): [0., 1., 0.],
                        (3, 'o3'): [0., -1., 1.]}, index=['o1', 'o2', 'o3']).T
 
 exp_td = np.array([[0., 2., 2.], [2., 0., 2.], [2., 2., 0.]])
+
+
+if __name__ == '__main__':
+    unittest.main()

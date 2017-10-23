@@ -6,28 +6,28 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join
+from itertools import combinations, cycle
+from math import ceil
+import os.path
+import pkg_resources
+from random import choice
+import uuid
+
+import numpy as np
+from numpy.linalg.linalg import LinAlgError
+from scipy import linalg
+from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
+                         ttest_1samp, f_oneway)
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
-from itertools import combinations, cycle
-import pkg_resources
-import q2templates
-from random import choice
 from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
-from math import ceil
-import uuid
-
-import numpy as np
-from scipy import linalg
-from numpy.linalg.linalg import LinAlgError
-from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
-from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
-                         ttest_1samp, f_oneway)
+from skbio.stats.distance import MissingIDError
+import q2templates
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
@@ -555,33 +555,36 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         multiple_group_test = q2templates.df_to_html(multiple_group_test)
 
     if pairwise_tests is not False:
-        pairwise_tests.to_csv(join(output_dir, 'pairwise_tests.tsv'), sep='\t')
+        pairwise_tests.to_csv(os.path.join(output_dir, 'pairwise_tests.tsv'),
+                              sep='\t')
         pairwise_tests = q2templates.df_to_html(pairwise_tests)
 
     if raw_data is not False:
-        raw_data.to_csv(join(output_dir, 'raw-data.tsv'), sep='\t')
+        raw_data.to_csv(os.path.join(output_dir, 'raw-data.tsv'), sep='\t')
         raw_data = True
 
     if paired_difference_tests is not False:
-        paired_difference_tests.to_csv(join(
+        paired_difference_tests.to_csv(os.path.join(
             output_dir, 'paired_difference_tests.tsv'), sep='\t')
         paired_difference_tests = q2templates.df_to_html(
             paired_difference_tests)
 
     if model_summary is not False:
-        model_summary.to_csv(join(output_dir, 'model_summary.tsv'), sep='\t')
+        model_summary.to_csv(os.path.join(output_dir, 'model_summary.tsv'),
+                             sep='\t')
         model_summary = q2templates.df_to_html(model_summary)
 
     if model_results is not False:
-        model_results.to_csv(join(output_dir, 'model_results.tsv'), sep='\t')
+        model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
+                             sep='\t')
         model_results = q2templates.df_to_html(model_results)
 
     if plot is not False:
-        plot.savefig(join(output_dir, 'plot.png'), bbox_inches='tight')
-        plot.savefig(join(output_dir, 'plot.pdf'), bbox_inches='tight')
+        plot.savefig(os.path.join(output_dir, 'plot.png'), bbox_inches='tight')
+        plot.savefig(os.path.join(output_dir, 'plot.pdf'), bbox_inches='tight')
         plt.close('all')
 
-    index = join(TEMPLATES, 'index.html')
+    index = os.path.join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
         'errors': errors,
         'summary': summary,

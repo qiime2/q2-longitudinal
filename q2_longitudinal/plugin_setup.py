@@ -6,16 +6,16 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import importlib
 
-import qiime2
-import pandas as pd
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Int, ValidationError)
+                           Int)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
-from qiime2.plugin import SemanticType
-import qiime2.plugin.model as model
+
+from ._type import FirstDifferences
+from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances)
@@ -34,91 +34,14 @@ plugin = Plugin(
     short_description='Plugin for paired sample and time series analyses.'
 )
 
-
-# FirstDifferencesFormat is a near replica of AlphaDiversityFormat in q2_types
-FirstDifferences = SemanticType(
-    'FirstDifferences', variant_of=SampleData.field['type'])
-
-
-class FirstDifferencesFormat(model.TextFileFormat):
-    def _check_n_records(self, n_lines=None):
-        with self.open() as fh:
-            line = fh.readline().rstrip()
-            if line not in ['#SampleID\tDifference', '#SampleID\tDistance']:
-                raise ValidationError(
-                    'File is not FirstDifferencesFormat: header line must '
-                    'contain labels "#SampleID" and either "Difference" or '
-                    '"Distance".')
-            for n, line in enumerate(fh):
-                cells = line.strip().split('\t')
-                if len(cells) != 2:
-                    raise ValidationError(
-                        'File is not FirstDifferencesFormat: Expected two '
-                        'columns, detected {0} at line {0}.'.format(
-                            len(cells), n))
-                else:
-                    try:
-                        float(cells[1])
-                    except ValueError:
-                        raise ValidationError(
-                            'File is not FirstDifferencesFormat: second '
-                            'column must contain only numeric values. Non-'
-                            'numeric values were detected at line {0}.'.format(
-                                n))
-                if n_lines is not None and n == n_lines:
-                    break
-
-    def _validate_(self, level):
-        record_count_map = {'min': 5, 'max': None}
-        self._check_n_records(record_count_map[level])
-
-
-FirstDifferencesDirectoryFormat = model.SingleFileDirectoryFormat(
-    'FirstDifferencesDirectoryFormat', 'FirstDifferences.tsv',
-    FirstDifferencesFormat)
-
-
-# borrowed from q2_types
-def _read_dataframe(fh):
-    # Using `dtype=object` and `set_index` to avoid type casting/inference
-    # of any columns or the index.
-    df = pd.read_csv(fh, sep='\t', header=0, dtype=object)
-    df.set_index(df.columns[0], drop=True, append=False, inplace=True)
-    df.index.name = None
-    df = df.apply(lambda x: pd.to_numeric(x, errors='ignore'))
-    return df
-
-
-@plugin.register_transformer
-def _4(data: pd.Series) -> (FirstDifferencesFormat):
-    ff = FirstDifferencesFormat()
-    with ff.open() as fh:
-        data.to_csv(fh, sep='\t', header=True)
-    return ff
-
-
-@plugin.register_transformer
-def _5(ff: FirstDifferencesFormat) -> (pd.Series):
-    with ff.open() as fh:
-        df = _read_dataframe(fh)
-        return df.iloc[:, 0]
-
-
-@plugin.register_transformer
-def _6(ff: FirstDifferencesFormat) -> (qiime2.Metadata):
-    with ff.open() as fh:
-        return qiime2.Metadata(_read_dataframe(fh))
-
+plugin.register_semantic_types(FirstDifferences)
 
 plugin.register_formats(
     FirstDifferencesFormat, FirstDifferencesDirectoryFormat)
 
-plugin.register_semantic_types(FirstDifferences)
-
 plugin.register_semantic_type_to_format(
     SampleData[FirstDifferences],
     artifact_format=FirstDifferencesDirectoryFormat)
-
 
 miscellaneous_parameters = {
     'state_column': Str,
@@ -389,3 +312,5 @@ plugin.methods.register_function(
         'methods to compare changes in first distances across time or among '
         'groups of subjects.')
 )
+
+importlib.import_module('q2_longitudinal._transformer')

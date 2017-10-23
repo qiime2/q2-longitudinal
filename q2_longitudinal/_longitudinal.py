@@ -6,10 +6,11 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2
+import os.path
+
 import pandas as pd
-from skbio import DistanceMatrix
-from os.path import join
+import skbio
+import qiime2
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -52,7 +53,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
             metadata, group_pairs, metric, individual_id_column, group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
         errors.extend(error)
-    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
+    pairs_summary.to_csv(os.path.join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     y_label = 'Difference in {0} ({1} {2} - {1} {3})'.format(
@@ -65,7 +66,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
         paired_difference_tests=True, boxplot=True)
 
 
-def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
+def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
                        metadata: qiime2.Metadata, group_column: str,
                        state_column: str, state_1: str, state_2: str,
                        individual_id_column: str, parametric: bool=False,
@@ -95,7 +96,7 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
         errors.extend(error)
-    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
+    pairs_summary.to_csv(os.path.join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
@@ -188,7 +189,7 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
          individual_id_column: str, corr_method: str="kendall",
-         dist_method: str="fro") -> DistanceMatrix:
+         dist_method: str="fro") -> skbio.DistanceMatrix:
 
     # load and prep metadata
     metadata = _load_metadata(metadata)
@@ -228,8 +229,9 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
         replicate_handling, distance_matrix=None)
 
 
-def first_distances(distance_matrix: DistanceMatrix, metadata: qiime2.Metadata,
-                    state_column: str, individual_id_column: str,
+def first_distances(distance_matrix: skbio.DistanceMatrix,
+                    metadata: qiime2.Metadata, state_column: str,
+                    individual_id_column: str,
                     replicate_handling: str='error') -> pd.Series:
 
     # load and validate metadata
