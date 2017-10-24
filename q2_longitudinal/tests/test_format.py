@@ -45,7 +45,7 @@ class TestFirstDifferencesFormat(TestPluginBase):
 
         for level in 'min', 'max':
             with self.assertRaisesRegex(ValidationError,
-                                        'Header.*\n\n.*#SampleID.*Peanut'):
+                                        'Header.*#SampleID.*Peanut'):
                 format.validate(level)
 
     def test_invalid_not_two_fields(self):
@@ -54,7 +54,7 @@ class TestFirstDifferencesFormat(TestPluginBase):
 
         for level in 'min', 'max':
             with self.assertRaisesRegex(ValidationError,
-                                        'two fields.*3.*line 2.*\n\n.*a'):
+                                        'two fields.*3.*line 2:.*a'):
                 format.validate(level)
 
     def test_invalid_non_numeric_column(self):

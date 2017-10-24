@@ -363,6 +363,42 @@ class TestLongitudinal(TestPluginBase):
                 state_column='month', individual_id_column='studyid',
                 spaghetti=True, table=self.table_ecam_fp)
 
+    def test_volatility_must_use_unique_columns(self):
+        with self.assertRaisesRegex(ValueError, "set to unique values"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='observed_otus', group_column='studyid',
+                state_column='month', individual_id_column='studyid',
+                spaghetti=True)
+
+    def test_volatility_invalid_columns(self):
+        with self.assertRaisesRegex(ValueError, "peanut is not a column"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='observed_otus', group_column='peanut',
+                state_column='month', individual_id_column='studyid',
+                spaghetti=True)
+
+    def test_volatility_invalid_metric(self):
+        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='peanut', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti=True)
+
+    def test_volatility_single_state(self):
+        single_state = self.md_ecam_fp.to_dataframe()
+        single_state = single_state[single_state['month'] == 0]
+        # state_column must contain at least two unique values...
+        with self.assertRaisesRegex(ValueError, "state_column must contain"):
+            volatility(
+                output_dir=self.temp_dir.name,
+                metadata=qiime2.Metadata(single_state),
+                metric='observed_otus', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti=True)
+
     def test_linear_mixed_effects_singular_matrix_error(self):
         with self.assertRaisesRegex(ValueError, "singular matrix error"):
             linear_mixed_effects(
