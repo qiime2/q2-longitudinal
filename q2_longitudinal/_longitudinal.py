@@ -6,10 +6,11 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2
+import os.path
+
 import pandas as pd
-from skbio import DistanceMatrix
-from os.path import join
+import skbio
+import qiime2
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -17,7 +18,9 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
-                         _control_chart_subplots, _nmit)
+                         _control_chart_subplots, _nmit,
+                         _validate_is_numeric_column, _tabulate_matrix_ids,
+                         _first_differences)
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -30,16 +33,17 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
-    _validate_input_values(metadata, individual_id_column, group_column,
-                           state_column, state_1, state_2)
+    _validate_input_values(metadata, metric, individual_id_column,
+                           group_column, state_column, state_1, state_2)
 
     # calculate paired difference distributions
     pairs = {}
     pairs_summaries = {}
+    errors = []
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs, errors = _get_group_pairs(
+        group_pairs, error = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -48,7 +52,8 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
         pairs[group], pairs_summaries[group] = _get_pairwise_differences(
             metadata, group_pairs, metric, individual_id_column, group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
-    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
+        errors.extend(error)
+    pairs_summary.to_csv(os.path.join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     y_label = 'Difference in {0} ({1} {2} - {1} {3})'.format(
@@ -61,7 +66,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
         paired_difference_tests=True, boxplot=True)
 
 
-def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
+def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
                        metadata: qiime2.Metadata, group_column: str,
                        state_column: str, state_1: str, state_2: str,
                        individual_id_column: str, parametric: bool=False,
@@ -70,16 +75,17 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
 
     metadata = _load_metadata(metadata)
 
-    _validate_input_values(metadata, individual_id_column, group_column,
+    _validate_input_values(metadata, None, individual_id_column, group_column,
                            state_column, state_1, state_2)
 
     # calculate pairwise distance distributions
     pairs = {}
     pairs_summaries = {}
+    errors = []
     pairs_summary = pd.DataFrame()
     group_names = metadata[group_column].unique()
     for group in group_names:
-        group_pairs, errors = _get_group_pairs(
+        group_pairs, error = _get_group_pairs(
             metadata, group_value=group,
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
@@ -89,7 +95,8 @@ def pairwise_distances(output_dir: str, distance_matrix: DistanceMatrix,
             distance_matrix, group_pairs, metadata, individual_id_column,
             group_column)
         pairs_summary = pd.concat([pairs_summary, pairs_summaries[group]])
-    pairs_summary.to_csv(join(output_dir, 'pairs.tsv'), sep='\t')
+        errors.extend(error)
+    pairs_summary.to_csv(os.path.join(output_dir, 'pairs.tsv'), sep='\t')
 
     # Calculate test statistics and generate boxplots
     _stats_and_visuals(
@@ -113,7 +120,10 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
     _validate_input_columns(metadata, individual_id_column, group_categories,
-                            state_column)
+                            state_column, metric)
+
+    # let's force states to be numeric
+    _validate_is_numeric_column(metadata, state_column)
 
     # Generate LME model summary
     model_summary, model_results = _linear_effects(
@@ -145,14 +155,17 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits=True, xtick_interval=None, yscale='linear',
-               spaghetti=False) -> None:
+               plot_control_limits: bool=True, xtick_interval: int=None,
+               yscale: str='linear',  spaghetti: bool=False) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
     _validate_input_columns(metadata, individual_id_column, group_column,
-                            state_column)
+                            state_column, metric)
+
+    # let's force states to be numeric
+    _validate_is_numeric_column(metadata, state_column)
 
     # plot control charts
     chart, global_mean, global_std = _control_chart_subplots(
@@ -177,8 +190,8 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
-         individual_id_column: str, corr_method="kendall", dist_method="fro"
-         ) -> DistanceMatrix:
+         individual_id_column: str, corr_method: str="kendall",
+         dist_method: str="fro") -> skbio.DistanceMatrix:
 
     # load and prep metadata
     metadata = _load_metadata(metadata)
@@ -186,7 +199,7 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
     metadata = metadata[metadata.index.isin(table.index)]
 
     # validate id column
-    _validate_input_columns(metadata, individual_id_column, None, None)
+    _validate_input_columns(metadata, individual_id_column, None, None, None)
 
     # run NMIT
     _dist = _nmit(
@@ -194,3 +207,45 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
         corr_method=corr_method, dist_method=dist_method)
 
     return _dist
+
+
+def first_differences(metadata: qiime2.Metadata, state_column: str,
+                      individual_id_column: str, metric: str,
+                      replicate_handling: str='error',
+                      table: pd.DataFrame=None) -> pd.Series:
+
+    # find metric in metadata or derive from table and merge into metadata
+    if table is not None:
+        _validate_metadata_is_superset(metadata.to_dataframe(), table)
+        metadata = _add_metric_to_metadata(table, metadata, metric)
+    else:
+        metadata = _load_metadata(metadata)
+        _validate_is_numeric_column(metadata, metric)
+
+    # validate columns
+    _validate_input_columns(
+        metadata, individual_id_column, None, state_column, metric)
+
+    return _first_differences(
+        metadata, state_column, individual_id_column, metric,
+        replicate_handling, distance_matrix=None)
+
+
+def first_distances(distance_matrix: skbio.DistanceMatrix,
+                    metadata: qiime2.Metadata, state_column: str,
+                    individual_id_column: str,
+                    replicate_handling: str='error') -> pd.Series:
+
+    # load and validate metadata
+    metadata = _load_metadata(metadata)
+    _validate_metadata_is_superset(
+        metadata, _tabulate_matrix_ids(distance_matrix))
+
+    # validate columns
+    # "Distance" is not actually a metadata value, so don't validate metric!
+    _validate_input_columns(
+        metadata, individual_id_column, None, state_column, None)
+
+    return _first_differences(
+        metadata, state_column, individual_id_column, metric=None,
+        replicate_handling=replicate_handling, distance_matrix=distance_matrix)
