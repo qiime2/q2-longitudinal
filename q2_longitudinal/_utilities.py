@@ -6,71 +6,86 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from os.path import join
+from itertools import combinations, cycle
+from math import ceil
+import os.path
+import pkg_resources
+from random import choice
+import uuid
+
+import numpy as np
+from numpy.linalg.linalg import LinAlgError
+from scipy import linalg
+from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
+                         ttest_1samp, f_oneway)
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
-from itertools import combinations, cycle
-import pkg_resources
-import q2templates
-from random import choice
 from statsmodels.formula.api import mixedlm
 from patsy import PatsyError
-from math import ceil
-
-import numpy as np
-from scipy import linalg
-from numpy.linalg.linalg import LinAlgError
-from skbio.stats.distance import MissingIDError
 from skbio import DistanceMatrix
-from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
-                         ttest_1samp, f_oneway)
+from skbio.stats.distance import MissingIDError
+import q2templates
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
-def _validate_input_values(df, individual_id_column, group_column,
+def _validate_input_values(df, metric, individual_id_column, group_column,
                            state_column, state_1, state_2):
     # confirm that different state values are input
     if state_1 is not None and state_1 == state_2:
-        raise ValueError((
+        raise ValueError(
             'You have chosen the same value for state_1 and state_2. These '
-            'parameters must be given different values.'))
-    # confirm that individual, group, and state columns are in metadata
+            'parameters must be given different values.')
+    # confirm that metric, individual, group, and state columns are in metadata
+    # and do not match
     _validate_input_columns(
-        df, individual_id_column, group_column, state_column)
+        df, individual_id_column, group_column, state_column, metric)
     # confirm that state_1 and state_2 exist in metadata and in each group in
     # group_column. Both checks are performed to give specific error messages.
     if state_1 is not None:
         for state in [state_1, state_2]:
             state = df[state_column].dtype.type(state)
             if state not in df[state_column].values:
-                raise ValueError((
+                raise ValueError(
                     'State {0} not present in column {1} of metadata'.format(
-                        state, state_column)))
+                        state, state_column))
             for group in df[group_column].unique():
                 df1 = df[df[group_column] == group]
                 if state not in df1[state_column].values:
-                    raise ValueError((
+                    raise ValueError(
                         'State {0} is not represented by any members of group '
                         '{1} in metadata. Consider using a different '
-                        'group_column or state value.'.format(state, group)))
+                        'group_column or state value.'.format(state, group))
 
 
 def _validate_input_columns(df, individual_id_column, group_column,
-                            state_column):
-    # confirm that individual, group, and state columns are in metadata
+                            state_column, metric):
     if isinstance(group_column, list):
-        cols = [individual_id_column, state_column] + group_column
+        cols = [individual_id_column, state_column, metric] + group_column
     else:
-        cols = [individual_id_column, group_column, state_column]
+        cols = [individual_id_column, group_column, state_column, metric]
+    # confirm that variable values (column names) do not match
+    cols = [c for c in cols if c is not None]
+    if len(set(cols)) < len(cols):
+        raise ValueError(
+            "individual_id_column, group_column, state_column, and metric "
+            "must all be set to unique values.")
+    # confirm that individual, group, and state columns are in metadata
     for column in cols:
-        if column is not None and column not in df.columns:
+        if column not in df.columns:
             raise ValueError('{0} is not a column in your metadata'.format(
                              column))
+    # check that more than one states exist
+    if state_column is not None:
+        states = df[state_column].unique()
+        if len(states) < 2:
+            raise ValueError("state_column must contain at least two unique "
+                             "values. Values in {0}: {1}".format(
+                                state_column, states))
 
 
 def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
@@ -95,11 +110,13 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                         state_value,
                         ' '.join(map(str, individual_at_state_idx))))
                 if replicate_handling == 'error':
-                    raise ValueError((
-                        'Replicate values for individual {0} at state {1}. '
-                        'Remove replicate values from input files or set '
-                        'replicate_handling parameter to select how '
-                        'replicates are handled.'))
+                    raise ValueError(
+                        'Detected replicate samples for individual ({0}) {1} '
+                        'at state ({2}) {3}. Remove replicate values from '
+                        'input files or set replicate_handling parameter to '
+                        'select how replicates are handled.'.format(
+                            individual_id_column, individual_id, state_column,
+                            state_value))
                 elif replicate_handling == 'random':
                     result.append(choice(individual_at_state_idx))
                 elif replicate_handling == 'drop':
@@ -124,14 +141,14 @@ def _extract_distance_distribution(distance_matrix: DistanceMatrix, pairs,
         try:
             dist = distance_matrix[p]
             result.append(dist)
-            individual_id = df[individual_id_column][p[0]]
-            group = df[group_column][p[0]]
-            pairs_summary.append((individual_id, dist, group))
+            individual_id = df[individual_id_column][p[1]]
+            group = df[group_column][p[1]]
+            pairs_summary.append((p[1], individual_id, dist, group))
         except MissingIDError:
             pass
     pairs_summary = pd.DataFrame(
-        pairs_summary, columns=['SubjectID', 'Distance', 'Group'])
-    pairs_summary.set_index('SubjectID', inplace=True)
+        pairs_summary, columns=['#SampleID', 'SubjectID', 'Distance', 'Group'])
+    pairs_summary.set_index('#SampleID', inplace=True)
     return result, pairs_summary
 
 
@@ -175,6 +192,11 @@ def _between_subject_distance_distribution(
     return list(results.values())
 
 
+def _tabulate_matrix_ids(distance_matrix):
+    _ids = distance_matrix.ids
+    return pd.Series(_ids, index=_ids)
+
+
 def _get_pairwise_differences(df, pairs, category, individual_id_column,
                               group_column):
     result = []
@@ -187,10 +209,12 @@ def _get_pairwise_differences(df, pairs, category, individual_id_column,
         paired_difference = post_value - pre_value
         if not np.isnan(paired_difference):
             result.append(paired_difference)
-            pairs_summary.append((individual_id, paired_difference, group))
+            pairs_summary.append((
+                post_idx, individual_id, paired_difference, group))
     pairs_summary = pd.DataFrame(
-        pairs_summary, columns=['SubjectID', 'Difference', 'Group'])
-    pairs_summary.set_index('SubjectID', inplace=True)
+        pairs_summary,
+        columns=['#SampleID', 'SubjectID', 'Difference', 'Group'])
+    pairs_summary.set_index('#SampleID', inplace=True)
     return result, pairs_summary
 
 
@@ -504,11 +528,14 @@ def _add_metric_to_metadata(table, metadata, metric):
     metadata = _load_metadata(metadata)
     if metric not in metadata.columns:
         if table is not None and metric in table.columns:
+            table_metric = pd.DataFrame(
+                pd.to_numeric(table[metric], errors='ignore'))
             metadata = pd.concat(
-                [metadata, pd.DataFrame(table[metric])], axis=1, join='inner')
+                [metadata, table_metric], axis=1, join='inner')
         else:
             raise ValueError(
                 'metric must be a valid metadata or feature table column.')
+    _validate_is_numeric_column(metadata, metric)
     return metadata
 
 
@@ -528,33 +555,36 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         multiple_group_test = q2templates.df_to_html(multiple_group_test)
 
     if pairwise_tests is not False:
-        pairwise_tests.to_csv(join(output_dir, 'pairwise_tests.tsv'), sep='\t')
+        pairwise_tests.to_csv(os.path.join(output_dir, 'pairwise_tests.tsv'),
+                              sep='\t')
         pairwise_tests = q2templates.df_to_html(pairwise_tests)
 
     if raw_data is not False:
-        raw_data.to_csv(join(output_dir, 'raw-data.tsv'), sep='\t')
+        raw_data.to_csv(os.path.join(output_dir, 'raw-data.tsv'), sep='\t')
         raw_data = True
 
     if paired_difference_tests is not False:
-        paired_difference_tests.to_csv(join(
+        paired_difference_tests.to_csv(os.path.join(
             output_dir, 'paired_difference_tests.tsv'), sep='\t')
         paired_difference_tests = q2templates.df_to_html(
             paired_difference_tests)
 
     if model_summary is not False:
-        model_summary.to_csv(join(output_dir, 'model_summary.tsv'), sep='\t')
+        model_summary.to_csv(os.path.join(output_dir, 'model_summary.tsv'),
+                             sep='\t')
         model_summary = q2templates.df_to_html(model_summary)
 
     if model_results is not False:
-        model_results.to_csv(join(output_dir, 'model_results.tsv'), sep='\t')
+        model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
+                             sep='\t')
         model_results = q2templates.df_to_html(model_results)
 
     if plot is not False:
-        plot.savefig(join(output_dir, 'plot.png'), bbox_inches='tight')
-        plot.savefig(join(output_dir, 'plot.pdf'), bbox_inches='tight')
+        plot.savefig(os.path.join(output_dir, 'plot.png'), bbox_inches='tight')
+        plot.savefig(os.path.join(output_dir, 'plot.pdf'), bbox_inches='tight')
         plt.close('all')
 
-    index = join(TEMPLATES, 'index.html')
+    index = os.path.join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
         'errors': errors,
         'summary': summary,
@@ -683,9 +713,80 @@ def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
     return _dist
 
 
+def _first_differences(metadata, state_column, individual_id_column, metric,
+                       replicate_handling='error', distance_matrix=None):
+
+    # let's force states to be numeric
+    _validate_is_numeric_column(metadata, state_column)
+
+    # create dummy group column in metadata so we can use downstream functions
+    # that split metadata by groups without actually bothering to do so.
+    group_column = _generate_column_name(metadata)
+    metadata[group_column] = 'null'
+
+    # calculate paired difference/distance distributions between each state
+    pairs_summary = pd.DataFrame()
+    errors = []
+    states = sorted(metadata[state_column].unique())
+    # iterate over range of sorted states in order to compare sequential states
+    for s in range(len(states) - 1):
+        # get pairs of samples at each sequential state
+        group_pairs, error = _get_group_pairs(
+            metadata, group_value='null',
+            individual_id_column=individual_id_column,
+            group_column=group_column, state_column=state_column,
+            state_values=[states[s], states[s + 1]],
+            replicate_handling=replicate_handling)
+        # compute distance between pairs
+        if distance_matrix is not None:
+            pairs, pairs_summaries = _extract_distance_distribution(
+                distance_matrix, group_pairs, metadata,
+                individual_id_column, group_column)
+        # or compute difference between pairs
+        else:
+            pairs, pairs_summaries = _get_pairwise_differences(
+                metadata, group_pairs, metric, individual_id_column,
+                group_column)
+        pairs_summary = pd.concat([pairs_summary, pairs_summaries])
+        errors.extend(error)
+
+    # convert pairs_summary to series with relevant metric
+    if distance_matrix is not None:
+        pairs_summary = pairs_summary['Distance']
+    else:
+        pairs_summary = pairs_summary['Difference']
+
+    # raise sensible error if output is empty.
+    if len(pairs_summary) == 0:
+        raise RuntimeError(
+            'Output is empty. Either no paired samples were detected in the '
+            'inputs or replicate samples were dropped. Check input files, '
+            'parameters, and replicate_handling settings.')
+
+    return pairs_summary
+
+
+# borrowed from qiime2 framework
+def _generate_column_name(df):
+    """Generate column name that doesn't clash with current columns."""
+    while True:
+        name = str(uuid.uuid4())
+        if name not in df.columns:
+            return name
+
+
 def _validate_metadata_is_superset(metadata, table):
     metadata_ids = set(metadata.index.tolist())
     table_ids = set(table.index.tolist())
     if not table_ids.issubset(metadata_ids):
         raise ValueError('Missing samples in metadata: %r' %
                          table_ids.difference(metadata_ids))
+
+
+def _validate_is_numeric_column(metadata, metric):
+    if np.issubdtype(metadata[metric].dtype, np.number):
+        pass
+    else:
+        raise ValueError('{0} is not a numeric metadata column. '
+                         'Please choose a metadata column containing only '
+                         'numeric values.'.format(metric))

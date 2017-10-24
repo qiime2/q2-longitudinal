@@ -6,12 +6,17 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-import qiime2
-import pandas as pd
-import numpy as np
-from skbio import DistanceMatrix
+import unittest
 from io import StringIO
 from warnings import filterwarnings
+
+import numpy as np
+import pandas as pd
+import pandas.util.testing as pdt
+import skbio
+import qiime2
+from qiime2.plugin.testing import TestPluginBase
+
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
@@ -19,35 +24,18 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _calculate_variability, _multiple_tests_correction,
     _add_sample_size_to_xtick_labels, _temporal_corr, _temporal_distance,
-    _nmit, _set_xtick_interval, _set_xtick_labels)
+    _nmit, _validate_is_numeric_column, _tabulate_matrix_ids,
+    _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit)
-import tempfile
-import pkg_resources
-from qiime2.plugin.testing import TestPluginBase
-
+    nmit, first_differences, first_distances)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
 
 
-class longitudinalTestPluginBase(TestPluginBase):
+class TestUtilities(TestPluginBase):
     package = 'q2_longitudinal.tests'
-
-    def setUp(self):
-        self.temp_dir = tempfile.TemporaryDirectory(
-            prefix='q2-longitudinal-test-temp-')
-
-    def tearDown(self):
-        self.temp_dir.cleanup()
-
-    def get_data_path(self, filename):
-        return pkg_resources.resource_filename(self.package,
-                                               'data/%s' % filename)
-
-
-class UtilitiesTests(longitudinalTestPluginBase):
 
     def test_get_group_pairs(self):
         res, err = _get_group_pairs(
@@ -167,6 +155,11 @@ class UtilitiesTests(longitudinalTestPluginBase):
         obs_td = _nmit(tab, sample_md, 'sample_id')
         self.assertTrue(np.array_equal(obs_td.data, exp_td))
 
+    def test_validate_is_numeric_column_raise_error(self):
+        erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
+        with self.assertRaisesRegex(ValueError, "is not a numeric"):
+            _validate_is_numeric_column(erroneous_metadata, 'a')
+
     def test_set_xtick_interval_long(self):
         xtick_interval = _set_xtick_interval(None, np.arange(1, 100, 1))
         self.assertEqual(xtick_interval, 4)
@@ -196,7 +189,8 @@ class UtilitiesTests(longitudinalTestPluginBase):
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.
-class longitudinalTests(longitudinalTestPluginBase):
+class TestLongitudinal(TestPluginBase):
+    package = 'q2_longitudinal.tests'
 
     def setUp(self):
         super().setUp()
@@ -216,7 +210,7 @@ class longitudinalTests(longitudinalTestPluginBase):
         def _load_dm(dm_fp):
             dm_fp = self.get_data_path(dm_fp)
             dm = qiime2.Artifact.load(dm_fp)
-            dm = dm.view(DistanceMatrix)
+            dm = dm.view(skbio.DistanceMatrix)
             return dm
 
         self.table_ecam_fp = _load_features('ecam-table-maturity.qza')
@@ -225,17 +219,27 @@ class longitudinalTests(longitudinalTestPluginBase):
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
     def test_validate_input_values(self):
+        # should not raise error
+        _validate_input_columns(md, "ind", "Group", "Time", None)
+        _validate_input_columns(md, "ind", None, None, None)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
-            _validate_input_values(md, "ind", "Group", "Time", 1, 1)
+            _validate_input_values(md, "Value", "ind", "Group", "Time", 1, 1)
         with self.assertRaisesRegex(ValueError, "not present"):
-            _validate_input_values(md, "ind", "Group", "Time", 1, 3)
+            _validate_input_values(md, "Value", "ind", "Group", "Time", 1, 3)
         with self.assertRaisesRegex(ValueError, "not a column"):
-            _validate_input_values(md, "ind", "Group", "Days", 1, 2)
+            _validate_input_values(md, "Value", "ind", "Group", "Days", 1, 2)
         with self.assertRaisesRegex(ValueError, "not a column"):
-            _validate_input_columns(md, "ind", ["Group", "More stuff"], "Time")
+            _validate_input_columns(md, "ind", ["Group", "More stuff"], "Time",
+                                    "Value")
+        with self.assertRaisesRegex(ValueError, "unique values"):
+            _validate_input_columns(md, "ind", "Time", "Time", "Value")
+        with self.assertRaisesRegex(ValueError, "state_column must contain"):
+            _validate_input_columns(
+                md[md['Time'] == 1], "ind", "Group", "Time", "Value")
         dropped = md.drop(['9', '10', '11'])
         with self.assertRaisesRegex(ValueError, "not represented"):
-            _validate_input_values(dropped, "ind", "Group", "Time", 1, 2)
+            _validate_input_values(
+                dropped, "Value", "ind", "Group", "Time", 1, 2)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             pairwise_differences(
                 output_dir=self.temp_dir.name, table=None,
@@ -243,6 +247,11 @@ class longitudinalTests(longitudinalTestPluginBase):
                 state_column='month', state_1=0, state_2=0,
                 individual_id_column='studyid', metric='observed_otus',
                 replicate_handling='drop')
+        with self.assertRaisesRegex(ValueError, "Detected replicate samples"):
+            _get_group_pairs(
+                md_dup, 'a', individual_id_column='ind', group_column='Group',
+                state_column='Time', state_values=[1, 2],
+                replicate_handling='error')
 
     def test_pairwise_differences(self):
         pairwise_differences(
@@ -314,6 +323,178 @@ class longitudinalTests(longitudinalTestPluginBase):
             nmit(table=self.table_taxa_fp, metadata=md,
                  individual_id_column='studyid')
 
+    def test_first_differences(self):
+        exp = pd.Series([0.08, 0.06, 0.07999999999999999, 0.12, 0.14,
+                         0.14999999999999997],
+                        index=['3', '4', '5', '9', '10', '11'],
+                        name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md), state_column='Time',
+            individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs.sort_index(), exp.sort_index())
+
+    # what if nothing changes between time points?
+    def test_first_differences_static(self):
+        exp = pd.Series([0., 0., 0., 0., 0., 0.],
+                        index=['3', '4', '5', '9', '10', '11'],
+                        name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_static), state_column='Time',
+            individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs.sort_index(), exp.sort_index())
+
+    def test_first_differences_drop_duplicates(self):
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_dup), state_column='Time',
+            individual_id_column='ind',
+            metric='Value', replicate_handling='random')
+        # The first diff of individual 2 is subject to random rep handling
+        mystery_number = obs.iloc[1]
+        if mystery_number < 0.051:
+            self.assertAlmostEqual(mystery_number, 0.05)
+        else:
+            self.assertAlmostEqual(mystery_number, 0.06)
+
+        # but other values are constant, so we will just drop in the mystery
+        # value and the exp/obs series should match.
+        exp = pd.Series([0.08, mystery_number, 0.12, 0.14,
+                         0.14999999999999997],
+                        index=['3', '4', '9', '10', '11'], name='Difference')
+        exp.index.name = '#SampleID'
+        pdt.assert_series_equal(obs.sort_index(), exp.sort_index())
+
+    def test_first_differences_single_state(self):
+        single_state = qiime2.Metadata(md[md['Time'] == 1])
+        with self.assertRaisesRegex(ValueError, "state_column must contain"):
+            first_differences(
+                metadata=single_state, state_column='Time',
+                individual_id_column='ind',
+                metric='Value', replicate_handling='drop')
+
+    def test_first_differences_single_individual(self):
+        exp = pd.Series([0.08],
+                        index=['3'],
+                        name='Difference')
+        exp.index.name = '#SampleID'
+        single_ind = qiime2.Metadata(md[md['ind'] == 1])
+        obs = first_differences(
+                metadata=single_ind, state_column='Time',
+                individual_id_column='ind',
+                metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs.sort_index(), exp.sort_index())
+
+    def test_first_differences_single_sample(self):
+        single_sam = qiime2.Metadata(md[(md['ind'] == 1) & (md['Time'] == 1)])
+        with self.assertRaisesRegex(ValueError, "state_column must contain"):
+            first_differences(
+                metadata=single_sam, state_column='Time',
+                individual_id_column='ind',
+                metric='Value', replicate_handling='drop')
+
+    def test_first_differences_empty(self):
+        with self.assertRaisesRegex(ValueError, "Metadata is empty"):
+            first_differences(
+                metadata=(qiime2.Metadata(pd.DataFrame({'a': [], 'b': []}))),
+                state_column='Time', individual_id_column='ind',
+                metric='Value', replicate_handling='drop')
+
+    def test_first_differences_nonnumeric_metric_error(self):
+        with self.assertRaisesRegex(ValueError, "not a numeric"):
+            first_differences(
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                metric='delivery', replicate_handling='drop')
+
+    def test_first_differences_taxa(self):
+        exp = pd.read_csv(self.get_data_path(
+            'ecam-taxa-first-differences.tsv'),
+            sep='\t', squeeze=True, index_col=0)
+        obs = first_differences(
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            metric='e2c3ff4f647112723741aa72087f1bfa',
+            replicate_handling='drop', table=self.table_ecam_fp)
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_differences_one_subject_many_times(self):
+        exp = pd.Series(
+            [-0.01, 0.01, 0.01, 0.06, -0.01, 0.03, -0.02, 0.03, 0.05, -0.03,
+             0.04],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_numeric_values_represented_as_strings(self):
+        numeric_values_represented_as_strings = pd.DataFrame(
+            [('0', '0.18', '1'), ('1', '0.21', '1')],
+            columns=['Time', 'Value', 'ind'],
+            index=['0', '1'])
+        exp = pd.Series([0.03], index=['1'], name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(numeric_values_represented_as_strings),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances(self):
+        exp = pd.Series([0.1, 0.1, 0.3, 0.1, 0.2, 0.4],
+                        index=['3', '4', '5', '9', '10', '11'],
+                        name='Distance')
+        exp.index.name = '#SampleID'
+        obs = first_distances(
+            distance_matrix=dm, metadata=qiime2.Metadata(md),
+            state_column='Time', individual_id_column='ind',
+            replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_single_sample(self):
+        with self.assertRaisesRegex(RuntimeError, "Output is empty"):
+            first_distances(
+                distance_matrix=dm_single_sample, metadata=qiime2.Metadata(md),
+                state_column='Time', individual_id_column='ind',
+                replicate_handling='drop')
+
+    def test_first_distances_one_subject_many_times(self):
+        exp = pd.Series(
+            [0.3, 0.9, 0.3, 0.2, 0.4, 0.4, 0.5, 0.8, 0.3, 0.4, 0.6],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Distance')
+        exp.index.name = '#SampleID'
+        obs = first_distances(
+            distance_matrix=dm,
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_ecam(self):
+        exp = pd.read_csv(self.get_data_path(
+            'ecam-first-distances.tsv'), sep='\t', squeeze=True, index_col=0)
+        obs = first_distances(
+            distance_matrix=self.md_ecam_dm, metadata=self.md_ecam_fp,
+            state_column='month', individual_id_column='studyid',
+            replicate_handling='drop')
+        pdt.assert_series_equal(obs, exp)
+
+    def test_validate_metadata_is_superset_df(self):
+        with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
+            _validate_metadata_is_superset(md[md['Time'] == 1], md_dup)
+
+    def test_validate_metadata_is_superset_distance_matrix(self):
+        with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
+            _validate_metadata_is_superset(
+                md[md['Time'] == 1], _tabulate_matrix_ids(dm))
+
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                    (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),
@@ -322,6 +503,22 @@ md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                   columns=['Time', 'Group', 'Value', 'ind'],
                   index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                          '10', '11'])
+
+md_one_subject_many_times = pd.DataFrame(
+    [(5, 0.18, 1), (6, 0.21, 1), (7, 0.19, 1), (8, 0.22, 1), (9, 0.27, 1),
+     (0, 0.12, 1), (1, 0.11, 1), (2, 0.12, 1), (3, 0.13, 1), (4, 0.19, 1),
+     (10, 0.24, 1), (11, 0.28, 1)],
+    columns=['Time', 'Value', 'ind'],
+    index=['5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '10', '11'])
+
+md_static = pd.DataFrame(
+    [(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
+     (2, 'a', 0.11, 1), (2, 'a', 0.12, 2), (2, 'a', 0.13, 3),
+     (1, 'b', 0.14, 4), (1, 'b', 0.13, 5), (1, 'b', 0.14, 6),
+     (2, 'b', 0.14, 4), (2, 'b', 0.13, 5), (2, 'b', 0.14, 6)],
+    columns=['Time', 'Group', 'Value', 'ind'],
+    index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+           '10', '11'])
 
 md_dup = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 2),
                        (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),
@@ -332,7 +529,7 @@ md_dup = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 2),
                       index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                              '10', '11'])
 
-dm = DistanceMatrix.read(StringIO(
+dm = skbio.DistanceMatrix.read(StringIO(
     "\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\n"
     "0\t0.0\t0.3\t1.0\t0.1\t0.1\t0.3\t0.4\t0.5\t0.6\t0.1\t0.2\t0.3\n"
     "1\t0.3\t0.0\t0.9\t0.2\t0.1\t0.4\t0.2\t0.6\t0.5\t0.2\t0.3\t0.4\n"
@@ -346,6 +543,11 @@ dm = DistanceMatrix.read(StringIO(
     "9\t0.1\t0.2\t0.3\t0.4\t0.1\t0.2\t0.1\t0.1\t0.3\t0.0\t0.4\t0.5\n"
     "10\t0.2\t0.3\t0.3\t0.2\t0.5\t0.4\t0.3\t0.2\t0.5\t0.4\t0.0\t0.6\n"
     "11\t0.3\t0.4\t0.4\t0.3\t0.3\t0.2\t0.1\t0.3\t0.4\t0.5\t0.6\t0.0\n"
+    ))
+
+dm_single_sample = skbio.DistanceMatrix.read(StringIO(
+    "\t0\n"
+    "0\t0.0\n"
     ))
 
 groups = {'a': [1, 2, 3, 2, 3, 1.5, 2.5, 2.7, 3, 2, 1, 1.5],
@@ -374,3 +576,7 @@ exp_tc = pd.DataFrame({(1, 'o1'): [1., 0., -1.], (1, 'o2'): [0., 1., 0.],
                        (3, 'o3'): [0., -1., 1.]}, index=['o1', 'o2', 'o3']).T
 
 exp_td = np.array([[0., 2., 2.], [2., 0., 2.], [2., 2., 0.]])
+
+
+if __name__ == '__main__':
+    unittest.main()
