@@ -25,7 +25,8 @@ from q2_longitudinal._utilities import (
     _calculate_variability, _multiple_tests_correction,
     _add_sample_size_to_xtick_labels, _temporal_corr, _temporal_distance,
     _nmit, _validate_is_numeric_column, _tabulate_matrix_ids,
-    _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels)
+    _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels,
+    _adjust_xticks, _pointplot_from_dataframe)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
@@ -185,6 +186,32 @@ class TestUtilities(TestPluginBase):
                 xtick_md, 'time', np.arange(*n_states), interval)
             self.assertEqual(labels, exp)
 
+    def test_adjust_xticks_no_adjustment(self):
+        time_data = pd.DataFrame(
+            {'time': [0, 1, 2, 3, 4]}, index=['a', 'b', 'c', 'e', 'f'])
+        exp = pd.Series(
+            [0, 1, 2, 3, 4], index=['a', 'b', 'c', 'e', 'f'], name='time')
+        adjusted_states = _adjust_xticks(time_data, 'time', None)
+        pdt.assert_series_equal(adjusted_states, exp)
+
+    def test_adjust_xticks_adjusted(self):
+        time_data = pd.DataFrame(
+            {'time': [0, 3, 7, 9, 12]}, index=['a', 'b', 'c', 'e', 'f'])
+        states = [0, 3, 7, 9, 12]
+        exp = pd.Series(
+            [0, 1, 2, 3, 4], index=['a', 'b', 'c', 'e', 'f'], name='time')
+        adjusted_states = _adjust_xticks(time_data, 'time', states)
+        pdt.assert_series_equal(adjusted_states, exp)
+
+    def test_adjust_xticks_adjusted_states_not_in_input(self):
+        time_data = pd.DataFrame(
+            {'time': [0, 3, 7, 9, 12]}, index=['a', 'b', 'c', 'e', 'f'])
+        states = [0, 1, 2, 3, 4, 7, 9, 11, 12, 18, 19]
+        exp = pd.Series(
+            [0, 3, 5, 6, 8], index=['a', 'b', 'c', 'e', 'f'], name='time')
+        adjusted_states = _adjust_xticks(time_data, 'time', states)
+        pdt.assert_series_equal(adjusted_states, exp)
+
 
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
@@ -222,6 +249,7 @@ class TestLongitudinal(TestPluginBase):
         # should not raise error
         _validate_input_columns(md, "ind", "Group", "Time", None)
         _validate_input_columns(md, "ind", None, None, None)
+        _validate_input_values(md, "Value", "ind", "Group", "Time", None, None)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             _validate_input_values(md, "Value", "ind", "Group", "Time", 1, 1)
         with self.assertRaisesRegex(ValueError, "not present"):
@@ -305,6 +333,35 @@ class TestLongitudinal(TestPluginBase):
             metric='observed_otus', group_column='delivery',
             state_column='month', individual_id_column='studyid',
             spaghetti=True)
+
+    def test_volatility_no_spaghetti_no_control(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='observed_otus', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti=False, plot_control_limits=False)
+
+    def test_pointplot_from_dataframe(self):
+        plot_this = pd.DataFrame(
+            {'time': [0, 1, 2], 'metric': [2, 3, 4]}, index=['a', 'b', 'c'])
+        _pointplot_from_dataframe(
+            'time', 'metric', plot_this, None, ci=95, palette='Set1', ax=None,
+            legend=True, color=None, xtick_interval=None)
+
+    def test_volatility_table_data(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='e2c3ff4f647112723741aa72087f1bfa', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti=True, table=self.table_ecam_fp)
+
+    def test_volatility_table_data_invalid_metric(self):
+        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='invalid_metric', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti=True, table=self.table_ecam_fp)
 
     def test_linear_mixed_effects_singular_matrix_error(self):
         with self.assertRaisesRegex(ValueError, "singular matrix error"):

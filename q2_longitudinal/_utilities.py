@@ -368,15 +368,6 @@ def _add_sample_size_to_xtick_labels(groups):
     return x_tick_labels
 
 
-def _lmplot_from_dataframe(state_column, metric, metadata, group_by,
-                           lowess=False, ci=95, palette='Set1'):
-    g = sns.lmplot(state_column, metric, data=metadata, hue=group_by,
-                   fit_reg=True, scatter_kws={"marker": ".", "s": 100},
-                   legend=False, lowess=lowess, ci=ci, palette=palette)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    return g
-
-
 def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
@@ -455,15 +446,20 @@ def _make_spaghetti(metadata, state_column, metric, individual_id_column,
         # Adjust xticks on so that it follows a pseudo-categorical scale
         # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
         # so that spaghetti aligns with seaborn pointplot x axis.
-        if states is not None:
-            altered_states = ind_data[state_column].apply(
-                lambda x: states.index(x))
-        else:
-            altered_states = ind_data[state_column]
+        altered_states = _adjust_xticks(ind_data, state_column, states)
 
         ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
                 label='_nolegend_')
     return ax
+
+
+def _adjust_xticks(ind_data, state_column, states):
+    if states is not None:
+        altered_states = ind_data[state_column].apply(
+            lambda x: states.index(x))
+    else:
+        altered_states = ind_data[state_column]
+    return altered_states
 
 
 def _set_xtick_interval(xtick_interval, states):
@@ -524,15 +520,13 @@ def _calculate_variability(metadata, metric):
             lower_warning)
 
 
-def _multiple_tests_correction(df, method='fdr_bh', sort=True):
+def _multiple_tests_correction(df, method='fdr_bh'):
     try:
         df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
     # zero division error will occur if the P-value series is empty. Ignore.
     except ZeroDivisionError:
         pass
-    if sort:
-        df.sort_index(inplace=True)
-    return df
+    return df.sort_index()
 
 
 def _control_chart(state_column, metric, metadata, group_by, ci=95,
