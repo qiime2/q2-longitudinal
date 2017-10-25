@@ -332,14 +332,21 @@ class TestLongitudinal(TestPluginBase):
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             metric='observed_otus', group_column='delivery',
             state_column='month', individual_id_column='studyid',
-            spaghetti=True)
+            spaghetti='yes')
 
     def test_volatility_no_spaghetti_no_control(self):
         volatility(
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             metric='observed_otus', group_column='delivery',
             state_column='month', individual_id_column='studyid',
-            spaghetti=False, plot_control_limits=False)
+            spaghetti='no', plot_control_limits=False)
+
+    def test_volatility_mean_spaghetti(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='observed_otus', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti='mean')
 
     def test_pointplot_from_dataframe(self):
         plot_this = pd.DataFrame(
@@ -353,7 +360,7 @@ class TestLongitudinal(TestPluginBase):
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             metric='e2c3ff4f647112723741aa72087f1bfa', group_column='delivery',
             state_column='month', individual_id_column='studyid',
-            spaghetti=True, table=self.table_ecam_fp)
+            spaghetti='yes', table=self.table_ecam_fp)
 
     def test_volatility_table_data_invalid_metric(self):
         with self.assertRaisesRegex(ValueError, "metric must be a valid"):
@@ -361,7 +368,7 @@ class TestLongitudinal(TestPluginBase):
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 metric='invalid_metric', group_column='delivery',
                 state_column='month', individual_id_column='studyid',
-                spaghetti=True, table=self.table_ecam_fp)
+                spaghetti='yes', table=self.table_ecam_fp)
 
     def test_volatility_must_use_unique_columns(self):
         with self.assertRaisesRegex(ValueError, "set to unique values"):
@@ -369,7 +376,7 @@ class TestLongitudinal(TestPluginBase):
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 metric='observed_otus', group_column='studyid',
                 state_column='month', individual_id_column='studyid',
-                spaghetti=True)
+                spaghetti='yes')
 
     def test_volatility_invalid_columns(self):
         with self.assertRaisesRegex(ValueError, "peanut is not a column"):
@@ -377,7 +384,7 @@ class TestLongitudinal(TestPluginBase):
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 metric='observed_otus', group_column='peanut',
                 state_column='month', individual_id_column='studyid',
-                spaghetti=True)
+                spaghetti='yes')
 
     def test_volatility_invalid_metric(self):
         with self.assertRaisesRegex(ValueError, "metric must be a valid"):
@@ -385,7 +392,7 @@ class TestLongitudinal(TestPluginBase):
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 metric='peanut', group_column='delivery',
                 state_column='month', individual_id_column='studyid',
-                spaghetti=True)
+                spaghetti='yes')
 
     def test_volatility_single_state(self):
         single_state = self.md_ecam_fp.to_dataframe()
@@ -397,7 +404,7 @@ class TestLongitudinal(TestPluginBase):
                 metadata=qiime2.Metadata(single_state),
                 metric='observed_otus', group_column='delivery',
                 state_column='month', individual_id_column='studyid',
-                spaghetti=True)
+                spaghetti='yes')
 
     def test_linear_mixed_effects_singular_matrix_error(self):
         with self.assertRaisesRegex(ValueError, "singular matrix error"):

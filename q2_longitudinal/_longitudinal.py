@@ -156,7 +156,7 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
                plot_control_limits: bool=True, xtick_interval: int=None,
-               yscale: str='linear',  spaghetti: bool=False) -> None:
+               yscale: str='linear',  spaghetti: str='no') -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)

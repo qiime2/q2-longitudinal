@@ -393,7 +393,7 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
 def _control_chart_subplots(state_column, metric, metadata, group_column,
                             individual_id_column, ci=95, palette='Set1',
                             plot_control_limits=True, xtick_interval=None,
-                            yscale='linear', spaghetti=False):
+                            yscale='linear', spaghetti='no'):
 
     groups = metadata[group_column].unique()
     states = sorted(metadata[state_column].unique())
@@ -416,12 +416,13 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
             color=color, plot_control_limits=True, ax=axes[num],
             palette=None, xtick_interval=xtick_interval)
         c.set_title('{0}: {1}'.format(group_column, group))
-        if spaghetti:
+        if spaghetti != 'no':
             # plot group's sphaghetti on main plot and current subplot
             for ax in [0, num]:
                 c = _make_spaghetti(
                     group_md, state_column, metric, individual_id_column,
-                    states, ax=axes[ax], color=color, alpha=0.3)
+                    states, ax=axes[ax], color=color, alpha=0.3,
+                    spaghetti=spaghetti)
         c = _set_xticks(c, group_md, state_column, states, xtick_interval)
         num += 1
 
@@ -441,8 +442,13 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 
 
 def _make_spaghetti(metadata, state_column, metric, individual_id_column,
-                    states, ax, color=None, alpha=1.0):
+                    states, ax, color=None, alpha=1.0, spaghetti='no'):
     for ind, ind_data in metadata.groupby(individual_id_column):
+        # optionally plot mean of replicates
+        if spaghetti == 'mean':
+            ind_data = ind_data.groupby(state_column).mean()
+            # add state_column back into dataframe since we use it for plotting
+            ind_data[state_column] = ind_data.index
         # Adjust xticks on so that it follows a pseudo-categorical scale
         # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
         # so that spaghetti aligns with seaborn pointplot x axis.
