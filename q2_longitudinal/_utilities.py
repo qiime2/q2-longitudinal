@@ -714,7 +714,8 @@ def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
 
 
 def _first_differences(metadata, state_column, individual_id_column, metric,
-                       replicate_handling='error', distance_matrix=None):
+                       replicate_handling='error', baseline=None,
+                       distance_matrix=None):
 
     # let's force states to be numeric
     _validate_is_numeric_column(metadata, state_column)
@@ -728,14 +729,34 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
     pairs_summary = pd.DataFrame()
     errors = []
     states = sorted(metadata[state_column].unique())
+
+    # if calculating static differences, validate baseline as a valid state
+    if baseline is not None:
+        # validate baseline state
+        if baseline not in states:
+            raise ValueError(
+                'baseline must be a valid state: {0} is not in {1}'.format(
+                    baseline, states))
+        # otherwise splice out baseline state and peg to start of states list
+        # to make iterating over the list easier.
+        else:
+            states.remove(baseline)
+            states.insert(0, baseline)
+
     # iterate over range of sorted states in order to compare sequential states
     for s in range(len(states) - 1):
+        # define whether to calculate first-differences (dY(t) = Y(t) - Y(t-1))
+        # or calculate static differences (dY(t) = Y(t) - Y(baseline))
+        if baseline is not None:
+            state_1 = 0
+        else:
+            state_1 = s
         # get pairs of samples at each sequential state
         group_pairs, error = _get_group_pairs(
             metadata, group_value='null',
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
-            state_values=[states[s], states[s + 1]],
+            state_values=[states[state_1], states[s + 1]],
             replicate_handling=replicate_handling)
         # compute distance between pairs
         if distance_matrix is not None:
