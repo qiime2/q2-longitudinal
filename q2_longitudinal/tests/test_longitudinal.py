@@ -284,6 +284,28 @@ class TestLongitudinal(TestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid', metric='observed_otus')
 
+    def test_linear_mixed_effects_no_group_categories(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', metric='observed_otus')
+
+    def test_linear_mixed_effects_with_random_effects(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_categories='delivery,diet,antiexposedall',
+            random_effects='month',
+            individual_id_column='studyid', metric='observed_otus')
+
+    def test_linear_mixed_effects_with_multiple_random_effects(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_categories='delivery,diet,antiexposedall',
+            random_effects='month,studyid',
+            individual_id_column='studyid', metric='observed_otus')
+
     def test_linear_mixed_effects_one_variable(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
