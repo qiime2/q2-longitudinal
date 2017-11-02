@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
 from statsmodels.formula.api import mixedlm
-from patsy import PatsyError
 from skbio import DistanceMatrix
 from skbio.stats.distance import MissingIDError
 import q2templates
