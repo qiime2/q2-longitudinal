@@ -424,7 +424,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
                     states, ax=axes[ax], color=color, alpha=0.3,
                     spaghetti=spaghetti)
         c = _set_xticks(c, group_md, state_column, states, xtick_interval)
-        axes[ax].set_yscale(yscale)
+        axes[num].set_yscale(yscale)
         num += 1
 
     # plot all groups together, compare variances
