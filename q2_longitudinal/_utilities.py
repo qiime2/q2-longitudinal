@@ -317,7 +317,9 @@ def _linear_effects(metadata, metric, state_column, group_categories,
     # semicolon-delimited taxonomies cause an error; copy to new metric column
     if ';' in metric:
         # generate random column name but remove hyphens (patsy error)
-        new_metric = _generate_column_name(metadata).replace("-", "")
+        # and prepend word character (otherwise patsy splits strings starting
+        # with numeral!)
+        new_metric = 'f' + _generate_column_name(metadata).replace("-", "")
         metadata[new_metric] = metadata[metric]
         metric = new_metric
 
