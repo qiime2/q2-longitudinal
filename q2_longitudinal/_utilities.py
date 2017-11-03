@@ -314,14 +314,15 @@ def _linear_effects(metadata, metric, state_column, group_categories,
         # fit random intercept by default
         random_effects = None
 
-    # format formula
-    formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
-
     # semicolon-delimited taxonomies cause an error; copy to new metric column
     if ';' in metric:
-        new_metric = _generate_column_name(metadata)
+        # generate random column name but remove hyphens (patsy error)
+        new_metric = _generate_column_name(metadata).replace("-", "")
         metadata[new_metric] = metadata[metric]
         metric = new_metric
+
+    # format formula
+    formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
 
     # generate model
     mlm = mixedlm(
