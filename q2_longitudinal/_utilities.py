@@ -413,7 +413,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
         cmap[group] = color
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
-            color=color, plot_control_limits=True, ax=axes[num],
+            color=color, plot_control_limits=plot_control_limits, ax=axes[num],
             palette=None, xtick_interval=xtick_interval)
         c.set_title('{0}: {1}'.format(group_column, group))
         if spaghetti != 'no':
@@ -424,6 +424,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
                     states, ax=axes[ax], color=color, alpha=0.3,
                     spaghetti=spaghetti)
         c = _set_xticks(c, group_md, state_column, states, xtick_interval)
+        axes[ax].set_yscale(yscale)
         num += 1
 
     # plot all groups together, compare variances
@@ -434,7 +435,7 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     c.set_title('Group volatility comparison plot')
     c = _set_xticks(c, metadata, state_column, states, xtick_interval)
 
-    plt.yscale(yscale)
+    c.set_yscale(yscale)
 
     plt.tight_layout()
 
