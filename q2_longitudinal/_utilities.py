@@ -732,6 +732,8 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
 
     # if calculating static differences, validate baseline as a valid state
     if baseline is not None:
+        # cast baseline to same type as states
+        baseline = metadata[state_column].dtype.type(baseline)
         # validate baseline state
         if baseline not in states:
             raise ValueError(
