@@ -6,6 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 import unittest
 from io import StringIO
 from warnings import filterwarnings
@@ -283,12 +284,26 @@ class TestLongitudinal(TestPluginBase):
             metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_no_group_categories(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_no_group_categories.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_with_random_effects(self):
         linear_mixed_effects(
@@ -297,6 +312,13 @@ class TestLongitudinal(TestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             random_effects='month',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_with_random_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_with_multiple_random_effects(self):
         linear_mixed_effects(
@@ -305,6 +327,13 @@ class TestLongitudinal(TestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             random_effects='month,studyid',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(self.get_data_path(
+            'linear_mixed_effects_with_multiple_random_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_one_variable(self):
         linear_mixed_effects(
@@ -312,6 +341,13 @@ class TestLongitudinal(TestPluginBase):
             metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_one_variable.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_taxa(self):
         linear_mixed_effects(
@@ -320,6 +356,13 @@ class TestLongitudinal(TestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_taxa.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_volatility(self):
         volatility(

@@ -309,7 +309,7 @@ def _linear_effects(metadata, metric, state_column, group_categories,
     # Assemble random_effects
     if random_effects is not None:
         # fit random slope to state_column
-        random_effects = "~{0}".format(" * ".join(random_effects))
+        random_effects = "~{0}".format(" + ".join(random_effects))
     else:
         # fit random intercept by default
         random_effects = None
