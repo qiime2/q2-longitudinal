@@ -209,7 +209,7 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
 
 def first_differences(metadata: qiime2.Metadata, state_column: str,
                       individual_id_column: str, metric: str,
-                      replicate_handling: str='error', baseline: str=None,
+                      replicate_handling: str='error', baseline: float=None,
                       table: pd.DataFrame=None) -> pd.Series:
 
     # find metric in metadata or derive from table and merge into metadata
@@ -231,7 +231,7 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
 
 def first_distances(distance_matrix: skbio.DistanceMatrix,
                     metadata: qiime2.Metadata, state_column: str,
-                    individual_id_column: str, baseline: str=None,
+                    individual_id_column: str, baseline: float=None,
                     replicate_handling: str='error') -> pd.Series:
 
     # load and validate metadata

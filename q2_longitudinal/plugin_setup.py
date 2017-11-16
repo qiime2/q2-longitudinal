@@ -267,12 +267,13 @@ plugin.methods.register_function(
         **shared_parameter_descriptions,
         'metric': 'Numerical metadata or artifact column to test.',
         'baseline': (
-            'Toggle calculation of static differences instead of first '
-            'differences. If a "baseline" value is provided, sample '
-            'differences at each state are compared against the baseline '
-            'state, instead of the previous state. Must be a value listed in '
-            'the state_column that designates a baseline state against which '
-            'all other states should be compared.')
+            'A value listed in the state_column metadata column against which '
+            'all other states should be compared. Toggles calculation of '
+            'static differences instead of first differences (which are '
+            'calculated if no value is given for baseline). If a "baseline" '
+            'value is provided, sample differences at each state are compared '
+            'against the baseline state, instead of the previous state. Must '
+            'be a value listed in the state_column.')
     },
     output_descriptions={'first_differences': 'Series of first differences.'},
     name=('Compute first differences or difference from baseline between '
@@ -299,7 +300,7 @@ plugin.methods.register_function(
     inputs={'distance_matrix': DistanceMatrix},
     parameters={**miscellaneous_parameters,
                 **shared_parameters,
-                'baseline': Str},
+                'baseline': Float},
     outputs=[('first_distances', SampleData[FirstDifferences])],
     input_descriptions={
         'distance_matrix': 'Matrix of distances between pairs of samples.'},
@@ -307,12 +308,13 @@ plugin.methods.register_function(
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
         'baseline': (
-            'Toggle calculation of static distances instead of first '
-            'distances. If a "baseline" value is provided, sample '
-            'distances at each state are compared against the baseline '
-            'state, instead of the previous state. Must be a value listed in '
-            'the state_column that designates a baseline state against which '
-            'all other states should be compared.')
+            'A value listed in the state_column metadata column against which '
+            'all other states should be compared. Toggles calculation of '
+            'static distances instead of first distances (which are '
+            'calculated if no value is given for baseline). If a "baseline" '
+            'value is provided, sample distances at each state are compared '
+            'against the baseline state, instead of the previous state. Must '
+            'be a value listed in the state_column.')
     },
     output_descriptions={'first_distances': 'Series of first distances.'},
     name=('Compute first distances or distance from baseline between '
