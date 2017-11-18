@@ -257,7 +257,7 @@ plugin.methods.register_function(
     parameters={**miscellaneous_parameters,
                 **shared_parameters,
                 'metric': Str,
-                'baseline': Str},
+                'baseline': Float},
     outputs=[('first_differences', SampleData[FirstDifferences])],
     input_descriptions={
         'table': ('Feature table to optionally use for computing first '
