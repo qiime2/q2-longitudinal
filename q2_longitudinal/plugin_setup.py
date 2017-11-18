@@ -169,6 +169,7 @@ plugin.visualizers.register_function(
     parameters={**base_parameters,
                 'metric': Str,
                 'group_categories': Str,
+                'random_effects': Str,
                 'lowess': Bool,
                 'ci': Float % Range(0, 100)},
     input_descriptions={'table': (
@@ -181,6 +182,13 @@ plugin.visualizers.register_function(
             'Comma-separated list (without spaces) of metadata categories to '
             'use as independent covariates used to determine mean structure '
             'of "metric".'),
+        'random_effects': (
+            'Comma-separated list (without spaces) of metadata categories to '
+            'use as independent covariates used to determine the variance and '
+            'covariance structure (random effects) of "metric". To add a '
+            'random slope, the same value passed to "state_column" should '
+            'be passed here. A random intercept for each individual is set '
+            'by default and does not need to be passed here.'),
         'lowess': ('Estimate locally weighted scatterplot smoothing. Note '
                    'that this will eliminate confidence interval plotting.'),
         'ci': 'Size of the confidence interval for the regression estimate.',
@@ -188,10 +196,11 @@ plugin.visualizers.register_function(
     name='Linear mixed effects modeling',
     description=(
         'Linear mixed effects models evaluate the contribution of exogenous '
-        'covariates "group_categories" to a single dependent variable, '
-        '"metric". Perform LME and plot line plots of each group column. A '
-        'feature table artifact is required input, though whether "metric" is '
-        'derived from the feature table or metadata is optional.')
+        'covariates "group_categories" and "random_effects" to a single '
+        'dependent variable, "metric". Perform LME and plot line plots of '
+        'each group column. A feature table artifact is required input, '
+        'though whether "metric" is derived from the feature table or '
+        'metadata is optional.')
 )
 
 
