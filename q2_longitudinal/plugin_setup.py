@@ -265,7 +265,8 @@ plugin.methods.register_function(
     inputs={'table': FeatureTable[RelativeFrequency]},
     parameters={**miscellaneous_parameters,
                 **shared_parameters,
-                'metric': Str},
+                'metric': Str,
+                'baseline': Float},
     outputs=[('first_differences', SampleData[FirstDifferences])],
     input_descriptions={
         'table': ('Feature table to optionally use for computing first '
@@ -274,9 +275,18 @@ plugin.methods.register_function(
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
         'metric': 'Numerical metadata or artifact column to test.',
+        'baseline': (
+            'A value listed in the state_column metadata column against which '
+            'all other states should be compared. Toggles calculation of '
+            'static differences instead of first differences (which are '
+            'calculated if no value is given for baseline). If a "baseline" '
+            'value is provided, sample differences at each state are compared '
+            'against the baseline state, instead of the previous state. Must '
+            'be a value listed in the state_column.')
     },
     output_descriptions={'first_differences': 'Series of first differences.'},
-    name='First difference computation between sequential states',
+    name=('Compute first differences or difference from baseline between '
+          'sequential states'),
     description=(
         'Calculates first differences in "metric" between sequential states '
         'for samples collected from individual subjects sampled repeatedly at '
@@ -289,7 +299,8 @@ plugin.methods.register_function(
         'labeled by the SampleIDs at time 1). This file can be used as input '
         'to linear mixed effects models or other longitudinal or diversity '
         'methods to compare changes in first differences across time or among '
-        'groups of subjects.')
+        'groups of subjects. Also supports differences from baseline (or '
+        'other static comparison state) by setting the "baseline" parameter.')
 )
 
 
@@ -297,16 +308,26 @@ plugin.methods.register_function(
     function=first_distances,
     inputs={'distance_matrix': DistanceMatrix},
     parameters={**miscellaneous_parameters,
-                **shared_parameters},
+                **shared_parameters,
+                'baseline': Float},
     outputs=[('first_distances', SampleData[FirstDifferences])],
     input_descriptions={
         'distance_matrix': 'Matrix of distances between pairs of samples.'},
     parameter_descriptions={
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
+        'baseline': (
+            'A value listed in the state_column metadata column against which '
+            'all other states should be compared. Toggles calculation of '
+            'static distances instead of first distances (which are '
+            'calculated if no value is given for baseline). If a "baseline" '
+            'value is provided, sample distances at each state are compared '
+            'against the baseline state, instead of the previous state. Must '
+            'be a value listed in the state_column.')
     },
     output_descriptions={'first_distances': 'Series of first distances.'},
-    name='First distance computation between sequential states',
+    name=('Compute first distances or distance from baseline between '
+          'sequential states'),
     description=(
         'Calculates first distances between sequential states for samples '
         'collected from individual subjects sampled repeatedly at two or more '
@@ -319,7 +340,8 @@ plugin.methods.register_function(
         'labeled by the SampleIDs at time 1). This file can be used as input '
         'to linear mixed effects models or other longitudinal or diversity '
         'methods to compare changes in first distances across time or among '
-        'groups of subjects.')
+        'groups of subjects. Also supports distance from baseline (or '
+        'other static comparison state) by setting the "baseline" parameter.')
 )
 
 importlib.import_module('q2_longitudinal._transformer')
