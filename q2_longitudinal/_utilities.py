@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
 from statsmodels.formula.api import mixedlm
-from patsy import PatsyError
 from skbio import DistanceMatrix
 from skbio.stats.distance import MissingIDError
 import q2templates
@@ -300,24 +299,37 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
 
 
 def _linear_effects(metadata, metric, state_column, group_categories,
-                    individual_id_column):
+                    individual_id_column, random_effects):
+    # Assemble fixed_effects
+    if group_categories is not None:
+        fixed_effects = [state_column] + group_categories
+    else:
+        fixed_effects = [state_column]
+
+    # Assemble random_effects
+    if random_effects is not None:
+        # fit random slope to state_column
+        random_effects = "~{0}".format(" + ".join(random_effects))
+    else:
+        # fit random intercept by default
+        random_effects = None
+
+    # semicolon-delimited taxonomies cause an error; copy to new metric column
+    if ';' in metric:
+        # generate random column name but remove hyphens (patsy error)
+        # and prepend word character (otherwise patsy splits strings starting
+        # with numeral!)
+        new_metric = 'f' + _generate_column_name(metadata).replace("-", "")
+        metadata[new_metric] = metadata[metric]
+        metric = new_metric
+
     # format formula
-    formula = "{0} ~ {1} * {2}".format(
-        metric, state_column, " * ".join(group_categories))
+    formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
 
     # generate model
-    try:
-        mlm = mixedlm(
-            formula, metadata, groups=metadata[individual_id_column])
-
-    # semicolon-delimited taxonomies cause an error; rename and run
-    except (SyntaxError, PatsyError):
-        new_metric = metric.split(';')[-1]
-        metadata[new_metric] = metadata[metric]
-        formula = "{0} ~ {1} * {2}".format(
-            new_metric, state_column, " * ".join(group_categories))
-        mlm = mixedlm(
-            formula, metadata, groups=metadata[individual_id_column])
+    mlm = mixedlm(
+        formula, metadata, groups=metadata[individual_id_column],
+        re_formula=random_effects)
 
     # numpy.linalg.linalg.LinAlgError appears to raise
     # See https://github.com/qiime2/q2-longitudinal/issues/39
@@ -372,19 +384,21 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
     '''plot a single regplot for each group in group_by.'''
+    if group_by is None:
+        # create dummy group column in metadata so we can squeeze into a
+        # plotting function that is designed to split on at least one column.
+        group_by = [_generate_column_name(metadata)]
+        metadata[group_by[0]] = ''
+
     num_groups = len(group_by)
     height = 6 * num_groups
-    f, axes = plt.subplots(num_groups, figsize=(6, height))
-    for num in range(num_groups):
-        if num_groups > 1:
-            ax = axes[num]
-        else:
-            ax = axes
+    f, axes = plt.subplots(num_groups, figsize=(6, height), squeeze=False)
+    for num, group_column in enumerate(group_by):
+        ax = axes[num][0]
         sns.set_palette(palette)
-        for group in metadata[group_by[num]].unique():
-            subset = metadata[metadata[group_by[num]] == group]
-            sns.regplot(state_column, metric, data=subset, fit_reg=True,
-                        scatter_kws={"marker": ".", "s": 100}, label=group,
+        for name, group_data in metadata.groupby(group_column):
+            sns.regplot(state_column, metric, data=group_data, fit_reg=True,
+                        scatter_kws={"marker": ".", "s": 100}, label=name,
                         ax=ax, lowess=lowess, ci=ci)
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
@@ -747,7 +761,8 @@ def _nmit(table, sample_md, individual_id_column, corr_method="kendall",
 
 
 def _first_differences(metadata, state_column, individual_id_column, metric,
-                       replicate_handling='error', distance_matrix=None):
+                       replicate_handling='error', baseline=None,
+                       distance_matrix=None):
 
     # let's force states to be numeric
     _validate_is_numeric_column(metadata, state_column)
@@ -761,14 +776,36 @@ def _first_differences(metadata, state_column, individual_id_column, metric,
     pairs_summary = pd.DataFrame()
     errors = []
     states = sorted(metadata[state_column].unique())
+
+    # if calculating static differences, validate baseline as a valid state
+    if baseline is not None:
+        # cast baseline to same type as states
+        baseline = metadata[state_column].dtype.type(baseline)
+        # validate baseline state
+        if baseline not in states:
+            raise ValueError(
+                'baseline must be a valid state: {0} is not in {1}'.format(
+                    baseline, states))
+        # otherwise splice out baseline state and peg to start of states list
+        # to make iterating over the list easier.
+        else:
+            states.remove(baseline)
+            states.insert(0, baseline)
+
     # iterate over range of sorted states in order to compare sequential states
     for s in range(len(states) - 1):
+        # define whether to calculate first-differences (dY(t) = Y(t) - Y(t-1))
+        # or calculate static differences (dY(t) = Y(t) - Y(baseline))
+        if baseline is not None:
+            state_1 = 0
+        else:
+            state_1 = s
         # get pairs of samples at each sequential state
         group_pairs, error = _get_group_pairs(
             metadata, group_value='null',
             individual_id_column=individual_id_column,
             group_column=group_column, state_column=state_column,
-            state_values=[states[s], states[s + 1]],
+            state_values=[states[state_1], states[s + 1]],
             replicate_handling=replicate_handling)
         # compute distance between pairs
         if distance_matrix is not None:

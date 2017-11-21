@@ -6,6 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 import unittest
 from io import StringIO
 from warnings import filterwarnings
@@ -311,6 +312,56 @@ class TestLongitudinal(TestPluginBase):
             metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_no_group_categories(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_no_group_categories.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_with_random_effects(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_categories='delivery,diet,antiexposedall',
+            random_effects='month',
+            individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_with_random_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_with_multiple_random_effects(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_categories='delivery,diet,antiexposedall',
+            random_effects='month,studyid',
+            individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(self.get_data_path(
+            'linear_mixed_effects_with_multiple_random_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_one_variable(self):
         linear_mixed_effects(
@@ -318,6 +369,13 @@ class TestLongitudinal(TestPluginBase):
             metadata=self.md_ecam_fp, state_column='month',
             group_categories='delivery',
             individual_id_column='studyid', metric='observed_otus')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_one_variable.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_taxa(self):
         linear_mixed_effects(
@@ -326,6 +384,13 @@ class TestLongitudinal(TestPluginBase):
             group_categories='delivery,diet,antiexposedall',
             individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_taxa.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
 
     def test_volatility(self):
         volatility(
@@ -521,6 +586,38 @@ class TestLongitudinal(TestPluginBase):
             replicate_handling='drop', table=self.table_ecam_fp)
         pdt.assert_series_equal(obs, exp)
 
+    def test_first_differences_baseline(self):
+        exp = pd.Series(
+            [-0.01, 0., 0.01, 0.07, 0.06, 0.09, 0.07, 0.1, 0.15, 0.12, 0.16],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop', baseline=0)
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_differences_baseline_is_not_state_0(self):
+        exp = pd.Series(
+            [-0.01, -0.02, -0.01, 0.06, 0.05, 0.08, 0.06, 0.09, 0.14, 0.11,
+             0.15],
+            index=['0', '1', '2', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Difference')
+        exp.index.name = '#SampleID'
+        obs = first_differences(
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            metric='Value', replicate_handling='drop', baseline=3)
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_differences_baseline_invalid_baseline(self):
+        with self.assertRaisesRegex(ValueError, "must be a valid state"):
+            first_differences(
+                metadata=qiime2.Metadata(md_one_subject_many_times),
+                state_column='Time', individual_id_column='ind',
+                metric='Value', replicate_handling='drop', baseline=27)
+
     def test_first_differences_one_subject_many_times(self):
         exp = pd.Series(
             [-0.01, 0.01, 0.01, 0.06, -0.01, 0.03, -0.02, 0.03, 0.05, -0.03,
@@ -564,6 +661,40 @@ class TestLongitudinal(TestPluginBase):
                 distance_matrix=dm_single_sample, metadata=qiime2.Metadata(md),
                 state_column='Time', individual_id_column='ind',
                 replicate_handling='drop')
+
+    def test_first_distances_baseline(self):
+        exp = pd.Series(
+            [0.3, 1.0, 0.1, 0.1, 0.3, 0.4, 0.5, 0.6, 0.1, 0.2, 0.3],
+            index=['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11'],
+            name='Distance')
+        exp.index.name = '#SampleID'
+        obs = first_distances(
+            distance_matrix=dm,
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            replicate_handling='drop', baseline=0)
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_baseline_is_not_state_0(self):
+        exp = pd.Series(
+            [0.5, 0.6, 0.6, 0.5, 0.4, 0.3, 0.5, 0.8, 0.1, 0.2, 0.3],
+            index=['0', '1', '2', '3', '4', '5', '6', '8', '9', '10', '11'],
+            name='Distance')
+        exp.index.name = '#SampleID'
+        obs = first_distances(
+            distance_matrix=dm,
+            metadata=qiime2.Metadata(md_one_subject_many_times),
+            state_column='Time', individual_id_column='ind',
+            replicate_handling='drop', baseline=7)
+        pdt.assert_series_equal(obs, exp)
+
+    def test_first_distances_baseline_invalid_baseline(self):
+        with self.assertRaisesRegex(ValueError, "must be a valid state"):
+            first_distances(
+                distance_matrix=dm,
+                metadata=qiime2.Metadata(md_one_subject_many_times),
+                state_column='Time', individual_id_column='ind',
+                replicate_handling='drop', baseline=27)
 
     def test_first_distances_one_subject_many_times(self):
         exp = pd.Series(

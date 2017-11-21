@@ -108,19 +108,30 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
 
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
-                         group_categories: str, metric: str, state_column: str,
-                         individual_id_column: str, table: pd.DataFrame=None,
+                         metric: str, state_column: str,
+                         individual_id_column: str, group_categories: str=None,
+                         random_effects: str=None, table: pd.DataFrame=None,
                          palette: str='Set1', lowess: bool=False, ci: int=95
                          ) -> None:
 
+    raw_data_columns = [metric, state_column, individual_id_column]
+
     # split group_categories into list of categories
-    group_categories = group_categories.split(",")
+    if group_categories is not None:
+        group_categories = group_categories.split(",")
+        raw_data_columns.extend(group_categories)
+    if random_effects is not None:
+        random_effects = random_effects.split(",")
+        raw_data_columns.extend(random_effects)
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
     _validate_input_columns(metadata, individual_id_column, group_categories,
                             state_column, metric)
+    # separately validate random_effects, since these can recycle state_column
+    # and individual_id_column and group_column values, but not metric
+    _validate_input_columns(metadata, None, random_effects, None, metric)
 
     # let's force states to be numeric
     _validate_is_numeric_column(metadata, state_column)
@@ -128,7 +139,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     # Generate LME model summary
     model_summary, model_results = _linear_effects(
         metadata, metric, state_column, group_categories,
-        individual_id_column)
+        individual_id_column, random_effects=random_effects)
 
     # Plot dependent variable as function of independent variables
     g = _regplot_subplots_from_dataframe(
@@ -137,14 +148,13 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 
     # summarize parameters and visualize
     summary = pd.Series(
-        [metric, ", ".join(group_categories), state_column,
-         individual_id_column],
+        [metric, group_categories, state_column,
+         individual_id_column, random_effects],
         index=['Metric', 'Group column', 'State column',
-               'Individual ID column'],
+               'Individual ID column', 'Random effects'],
         name='Linear mixed effects parameters')
 
-    raw_data = metadata[[
-        metric, state_column, individual_id_column, *group_categories]]
+    raw_data = metadata[list(set(raw_data_columns))]
 
     _visualize(output_dir, model_summary=model_summary,
                model_results=model_results, plot=g, summary=summary,
@@ -211,7 +221,7 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
 
 def first_differences(metadata: qiime2.Metadata, state_column: str,
                       individual_id_column: str, metric: str,
-                      replicate_handling: str='error',
+                      replicate_handling: str='error', baseline: float=None,
                       table: pd.DataFrame=None) -> pd.Series:
 
     # find metric in metadata or derive from table and merge into metadata
@@ -228,12 +238,12 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
 
     return _first_differences(
         metadata, state_column, individual_id_column, metric,
-        replicate_handling, distance_matrix=None)
+        replicate_handling, baseline=baseline, distance_matrix=None)
 
 
 def first_distances(distance_matrix: skbio.DistanceMatrix,
                     metadata: qiime2.Metadata, state_column: str,
-                    individual_id_column: str,
+                    individual_id_column: str, baseline: float=None,
                     replicate_handling: str='error') -> pd.Series:
 
     # load and validate metadata
@@ -248,4 +258,5 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
 
     return _first_differences(
         metadata, state_column, individual_id_column, metric=None,
-        replicate_handling=replicate_handling, distance_matrix=distance_matrix)
+        replicate_handling=replicate_handling, baseline=baseline,
+        distance_matrix=distance_matrix)
