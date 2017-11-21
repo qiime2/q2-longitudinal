@@ -27,7 +27,7 @@ from q2_longitudinal._utilities import (
     _add_sample_size_to_xtick_labels, _temporal_corr, _temporal_distance,
     _nmit, _validate_is_numeric_column, _tabulate_matrix_ids,
     _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels,
-    _adjust_xticks, _pointplot_from_dataframe)
+    _get_xticks, _pointplot_from_dataframe)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
@@ -187,30 +187,30 @@ class TestUtilities(TestPluginBase):
                 xtick_md, 'time', np.arange(*n_states), interval)
             self.assertEqual(labels, exp)
 
-    def test_adjust_xticks_no_adjustment(self):
+    def test_get_xticks_no_adjustment(self):
         time_data = pd.DataFrame(
             {'time': [0, 1, 2, 3, 4]}, index=['a', 'b', 'c', 'e', 'f'])
         exp = pd.Series(
             [0, 1, 2, 3, 4], index=['a', 'b', 'c', 'e', 'f'], name='time')
-        adjusted_states = _adjust_xticks(time_data, 'time', None)
+        adjusted_states = _get_xticks(time_data, 'time', None)
         pdt.assert_series_equal(adjusted_states, exp)
 
-    def test_adjust_xticks_adjusted(self):
+    def test_get_xticks_adjusted(self):
         time_data = pd.DataFrame(
             {'time': [0, 3, 7, 9, 12]}, index=['a', 'b', 'c', 'e', 'f'])
         states = [0, 3, 7, 9, 12]
         exp = pd.Series(
             [0, 1, 2, 3, 4], index=['a', 'b', 'c', 'e', 'f'], name='time')
-        adjusted_states = _adjust_xticks(time_data, 'time', states)
+        adjusted_states = _get_xticks(time_data, 'time', states)
         pdt.assert_series_equal(adjusted_states, exp)
 
-    def test_adjust_xticks_adjusted_states_not_in_input(self):
+    def test_get_xticks_adjusted_states_not_in_input(self):
         time_data = pd.DataFrame(
             {'time': [0, 3, 7, 9, 12]}, index=['a', 'b', 'c', 'e', 'f'])
         states = [0, 1, 2, 3, 4, 7, 9, 11, 12, 18, 19]
         exp = pd.Series(
             [0, 3, 5, 6, 8], index=['a', 'b', 'c', 'e', 'f'], name='time')
-        adjusted_states = _adjust_xticks(time_data, 'time', states)
+        adjusted_states = _get_xticks(time_data, 'time', states)
         pdt.assert_series_equal(adjusted_states, exp)
 
 

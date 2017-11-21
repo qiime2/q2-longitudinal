@@ -412,19 +412,16 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     groups = metadata[group_column].unique()
     states = sorted(metadata[state_column].unique())
     fig_count = len(groups) + 1
-    fig_height = fig_count * 6
-    chart, axes = plt.subplots(fig_count, figsize=(6, fig_height))
+    chart, axes = plt.subplots(fig_count, figsize=(6, fig_count * 6))
 
     # determine x tick interval: autoscale so that ≤ 30 labels appear
     xtick_interval = _set_xtick_interval(xtick_interval, states)
 
     # plot individual groups' control charts
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    cmap = {}
-    num = 1
-    for group, group_md in metadata.groupby(group_column):
+    cmap = dict(zip(groups, sns.color_palette(palette, n_colors=len(groups))))
+    for num, (group, group_md) in enumerate(metadata.groupby(group_column), 1):
         color = next(colors)
-        cmap[group] = color
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
             color=color, plot_control_limits=plot_control_limits, ax=axes[num],
@@ -467,14 +464,14 @@ def _make_spaghetti(metadata, state_column, metric, individual_id_column,
         # Adjust xticks on so that it follows a pseudo-categorical scale
         # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
         # so that spaghetti aligns with seaborn pointplot x axis.
-        altered_states = _adjust_xticks(ind_data, state_column, states)
+        altered_states = _get_xticks(ind_data, state_column, states)
 
         ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
                 label='_nolegend_')
     return ax
 
 
-def _adjust_xticks(ind_data, state_column, states):
+def _get_xticks(ind_data, state_column, states):
     if states is not None:
         altered_states = ind_data[state_column].apply(
             lambda x: states.index(x))
