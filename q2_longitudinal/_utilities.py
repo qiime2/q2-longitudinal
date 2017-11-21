@@ -419,9 +419,10 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
 
     # plot individual groups' control charts
     colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    cmap = dict(zip(groups, sns.color_palette(palette, n_colors=len(groups))))
+    cmap = {}
     for num, (group, group_md) in enumerate(metadata.groupby(group_column), 1):
         color = next(colors)
+        cmap[group] = color
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
             color=color, plot_control_limits=plot_control_limits, ax=axes[num],
