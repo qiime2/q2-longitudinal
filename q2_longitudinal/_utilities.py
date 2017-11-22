@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from itertools import combinations, cycle
+from itertools import combinations
 from math import ceil
 import os.path
 import pkg_resources
@@ -418,22 +418,19 @@ def _control_chart_subplots(state_column, metric, metadata, group_column,
     xtick_interval = _set_xtick_interval(xtick_interval, states)
 
     # plot individual groups' control charts
-    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    cmap = {}
+    cmap = dict(zip(groups, sns.color_palette(palette, n_colors=len(groups))))
     for num, (group, group_md) in enumerate(metadata.groupby(group_column), 1):
-        color = next(colors)
-        cmap[group] = color
         c, gm, gs = _control_chart(
             state_column, metric, group_md, None, ci=ci, legend=False,
-            color=color, plot_control_limits=plot_control_limits, ax=axes[num],
-            palette=None, xtick_interval=xtick_interval)
+            color=cmap[group], plot_control_limits=plot_control_limits,
+            ax=axes[num], palette=None, xtick_interval=xtick_interval)
         c.set_title('{0}: {1}'.format(group_column, group))
         if spaghetti != 'no':
             # plot group's sphaghetti on main plot and current subplot
             for ax in [0, num]:
                 c = _make_spaghetti(
                     group_md, state_column, metric, individual_id_column,
-                    states, ax=axes[ax], color=color, alpha=0.3,
+                    states, ax=axes[ax], color=cmap[group], alpha=0.3,
                     spaghetti=spaghetti)
         c = _set_xticks(c, group_md, state_column, states, xtick_interval)
         axes[num].set_yscale(yscale)
@@ -460,25 +457,17 @@ def _make_spaghetti(metadata, state_column, metric, individual_id_column,
         # optionally plot mean of replicates
         if spaghetti == 'mean':
             ind_data = ind_data.groupby(state_column).mean()
-            # add state_column back into dataframe since we use it for plotting
             ind_data[state_column] = ind_data.index
-        # Adjust xticks on so that it follows a pseudo-categorical scale
+        altered_states = ind_data[state_column]
+        # Adjust xticks so that it follows a pseudo-categorical scale
         # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
         # so that spaghetti aligns with seaborn pointplot x axis.
-        altered_states = _get_xticks(ind_data, state_column, states)
+        if states is not None:
+            altered_states = altered_states.apply(states.index)
 
         ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
                 label='_nolegend_')
     return ax
-
-
-def _get_xticks(ind_data, state_column, states):
-    if states is not None:
-        altered_states = ind_data[state_column].apply(
-            lambda x: states.index(x))
-    else:
-        altered_states = ind_data[state_column]
-    return altered_states
 
 
 def _set_xtick_interval(xtick_interval, states):
