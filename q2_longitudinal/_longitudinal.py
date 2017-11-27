@@ -165,7 +165,8 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
                metric: str, state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits: bool=True, xtick_interval: int=None):
+               plot_control_limits: bool=True, xtick_interval: int=None,
+               yscale: str='linear',  spaghetti: str='no') -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -178,8 +179,9 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
     # plot control charts
     chart, global_mean, global_std = _control_chart_subplots(
-        state_column, metric, metadata, group_column, ci=ci, palette=palette,
-        plot_control_limits=plot_control_limits, xtick_interval=xtick_interval)
+        state_column, metric, metadata, group_column, individual_id_column,
+        ci=ci, palette=palette, plot_control_limits=plot_control_limits,
+        xtick_interval=xtick_interval, yscale=yscale, spaghetti=spaghetti)
 
     # summarize parameters and visualize
     summary = pd.Series(

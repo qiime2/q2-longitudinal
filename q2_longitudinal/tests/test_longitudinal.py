@@ -26,7 +26,8 @@ from q2_longitudinal._utilities import (
     _calculate_variability, _multiple_tests_correction,
     _add_sample_size_to_xtick_labels, _temporal_corr, _temporal_distance,
     _nmit, _validate_is_numeric_column, _tabulate_matrix_ids,
-    _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels)
+    _validate_metadata_is_superset, _set_xtick_interval, _set_xtick_labels,
+    _pointplot_from_dataframe)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
@@ -223,6 +224,7 @@ class TestLongitudinal(TestPluginBase):
         # should not raise error
         _validate_input_columns(md, "ind", "Group", "Time", None)
         _validate_input_columns(md, "ind", None, None, None)
+        _validate_input_values(md, "Value", "ind", "Group", "Time", None, None)
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             _validate_input_values(md, "Value", "ind", "Group", "Time", 1, 1)
         with self.assertRaisesRegex(ValueError, "not present"):
@@ -368,7 +370,80 @@ class TestLongitudinal(TestPluginBase):
         volatility(
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             metric='observed_otus', group_column='delivery',
-            state_column='month', individual_id_column='studyid')
+            state_column='month', individual_id_column='studyid',
+            spaghetti='yes')
+
+    def test_volatility_no_spaghetti_no_control(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='observed_otus', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti='no', plot_control_limits=False)
+
+    def test_volatility_mean_spaghetti(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='observed_otus', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti='mean')
+
+    def test_pointplot_from_dataframe(self):
+        plot_this = pd.DataFrame(
+            {'time': [0, 1, 2], 'metric': [2, 3, 4]}, index=['a', 'b', 'c'])
+        _pointplot_from_dataframe(
+            'time', 'metric', plot_this, None, ci=95, palette='Set1', ax=None,
+            legend=True, color=None, xtick_interval=None)
+
+    def test_volatility_table_data(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            metric='e2c3ff4f647112723741aa72087f1bfa', group_column='delivery',
+            state_column='month', individual_id_column='studyid',
+            spaghetti='yes', table=self.table_ecam_fp)
+
+    def test_volatility_table_data_invalid_metric(self):
+        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='invalid_metric', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti='yes', table=self.table_ecam_fp)
+
+    def test_volatility_must_use_unique_columns(self):
+        with self.assertRaisesRegex(ValueError, "set to unique values"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='observed_otus', group_column='studyid',
+                state_column='month', individual_id_column='studyid',
+                spaghetti='yes')
+
+    def test_volatility_invalid_columns(self):
+        with self.assertRaisesRegex(ValueError, "peanut is not a column"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='observed_otus', group_column='peanut',
+                state_column='month', individual_id_column='studyid',
+                spaghetti='yes')
+
+    def test_volatility_invalid_metric(self):
+        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                metric='peanut', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti='yes')
+
+    def test_volatility_single_state(self):
+        single_state = self.md_ecam_fp.to_dataframe()
+        single_state = single_state[single_state['month'] == 0]
+        # state_column must contain at least two unique values...
+        with self.assertRaisesRegex(ValueError, "state_column must contain"):
+            volatility(
+                output_dir=self.temp_dir.name,
+                metadata=qiime2.Metadata(single_state),
+                metric='observed_otus', group_column='delivery',
+                state_column='month', individual_id_column='studyid',
+                spaghetti='yes')
 
     def test_linear_mixed_effects_singular_matrix_error(self):
         with self.assertRaisesRegex(ValueError, "singular matrix error"):

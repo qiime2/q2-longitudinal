@@ -6,7 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
-from itertools import combinations, cycle
+from itertools import combinations
 from math import ceil
 import os.path
 import pkg_resources
@@ -380,15 +380,6 @@ def _add_sample_size_to_xtick_labels(groups):
     return x_tick_labels
 
 
-def _lmplot_from_dataframe(state_column, metric, metadata, group_by,
-                           lowess=False, ci=95, palette='Set1'):
-    g = sns.lmplot(state_column, metric, data=metadata, hue=group_by,
-                   fit_reg=True, scatter_kws={"marker": ".", "s": 100},
-                   legend=False, lowess=lowess, ci=ci, palette=palette)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    return g
-
-
 def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
                                      palette='Set1'):
@@ -414,38 +405,69 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
 
 
 def _control_chart_subplots(state_column, metric, metadata, group_column,
-                            ci=95, palette='Set1', plot_control_limits=True,
-                            xtick_interval=None):
+                            individual_id_column, ci=95, palette='Set1',
+                            plot_control_limits=True, xtick_interval=None,
+                            yscale='linear', spaghetti='no'):
 
     groups = metadata[group_column].unique()
-    states = metadata[state_column].unique()
-    chart, axes = plt.subplots(len(groups) + 1, figsize=(6, 18))
+    states = sorted(metadata[state_column].unique())
+    fig_count = len(groups) + 1
+    chart, axes = plt.subplots(fig_count, figsize=(6, fig_count * 6))
 
     # determine x tick interval: autoscale so that ≤ 30 labels appear
     xtick_interval = _set_xtick_interval(xtick_interval, states)
 
+    # plot individual groups' control charts
+    cmap = dict(zip(groups, sns.color_palette(palette, n_colors=len(groups))))
+    for num, (group, group_md) in enumerate(metadata.groupby(group_column), 1):
+        c, gm, gs = _control_chart(
+            state_column, metric, group_md, None, ci=ci, legend=False,
+            color=cmap[group], plot_control_limits=plot_control_limits,
+            ax=axes[num], palette=None, xtick_interval=xtick_interval)
+        c.set_title('{0}: {1}'.format(group_column, group))
+        if spaghetti != 'no':
+            # plot group's sphaghetti on main plot and current subplot
+            for ax in [0, num]:
+                c = _make_spaghetti(
+                    group_md, state_column, metric, individual_id_column,
+                    states, ax=axes[ax], color=cmap[group], alpha=0.3,
+                    spaghetti=spaghetti)
+        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
+        axes[num].set_yscale(yscale)
+        num += 1
+
     # plot all groups together, compare variances
     c, global_mean, global_std = _control_chart(
-        state_column, metric, metadata, group_column, ci=ci, palette=palette,
+        state_column, metric, metadata, group_column, ci=ci, palette=cmap,
         plot_control_limits=plot_control_limits, ax=axes[0],
         xtick_interval=xtick_interval)
     c.set_title('Group volatility comparison plot')
     c = _set_xticks(c, metadata, state_column, states, xtick_interval)
 
-    # plot individual groups' control charts
-    colors = cycle(sns.color_palette(palette, n_colors=len(groups)))
-    for num in range(len(groups)):
-        group = groups[num]
-        group_md = metadata[metadata[group_column] == group]
-        c, gm, gs = _control_chart(
-            state_column, metric, group_md, None, ci=ci, legend=False,
-            color=next(colors), plot_control_limits=True, ax=axes[num + 1],
-            palette=None, xtick_interval=xtick_interval)
-        c.set_title('{0}: {1}'.format(group_column, group))
-        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
+    c.set_yscale(yscale)
+
     plt.tight_layout()
 
     return chart, global_mean, global_std
+
+
+def _make_spaghetti(metadata, state_column, metric, individual_id_column,
+                    states, ax, color=None, alpha=1.0, spaghetti='no'):
+    for ind, ind_data in metadata.groupby(individual_id_column):
+        # optionally plot mean of replicates
+        if spaghetti == 'mean':
+            ind_data = ind_data.groupby(state_column).mean()
+            ind_data[state_column] = ind_data.index
+        altered_states = ind_data[state_column]
+        # Adjust xticks so that it follows a pseudo-categorical scale
+        # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
+        # so that spaghetti aligns with seaborn pointplot x axis.
+        if states is not None:
+            altered_states = altered_states.apply(states.index)
+
+        ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
+                label='_nolegend_')
+    return ax
 
 
 def _set_xtick_interval(xtick_interval, states):
@@ -484,7 +506,7 @@ def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
                               color=None, xtick_interval=None):
 
     g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
-                      ci=ci, palette=palette, color=color, ax=ax)
+                      ci=ci, palette=palette, color=color, ax=ax, markers=".")
 
     # place legend to right side of plot
     if legend:
@@ -506,15 +528,13 @@ def _calculate_variability(metadata, metric):
             lower_warning)
 
 
-def _multiple_tests_correction(df, method='fdr_bh', sort=True):
+def _multiple_tests_correction(df, method='fdr_bh'):
     try:
         df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
     # zero division error will occur if the P-value series is empty. Ignore.
     except ZeroDivisionError:
         pass
-    if sort:
-        df.sort_index(inplace=True)
-    return df
+    return df.sort_index()
 
 
 def _control_chart(state_column, metric, metadata, group_by, ci=95,
