@@ -35,7 +35,7 @@ plugin = Plugin(
     citation_text=("q2-longitudinal: a QIIME 2 plugin for longitudinal and "
                    "paired-sample analyses of microbiome data. Nicholas "
                    "Bokulich, Yilong Zhang, Matthew Dillon, Jai Ram Rideout, "
-                   "Evan Bolyen, Huilin Li, Paul Albert, James Gregory "
+                   "Evan Bolyen, Huilin Li, Paul Albert, J Gregory "
                    "Caporaso. bioRxiv 223974; doi: "
                    "https://doi.org/10.1101/223974")
 )
