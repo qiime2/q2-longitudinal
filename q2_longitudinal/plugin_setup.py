@@ -31,7 +31,13 @@ plugin = Plugin(
         'This QIIME 2 plugin supports methods for analysis of time series '
         'analysis, involving either paired sample comparisons or longitudinal '
         'study designs.'),
-    short_description='Plugin for paired sample and time series analyses.'
+    short_description='Plugin for paired sample and time series analyses.',
+    citation_text=("q2-longitudinal: a QIIME 2 plugin for longitudinal and "
+                   "paired-sample analyses of microbiome data. Nicholas "
+                   "Bokulich, Yilong Zhang, Matthew Dillon, Jai Ram Rideout, "
+                   "Evan Bolyen, Huilin Li, Paul Albert, J Gregory "
+                   "Caporaso. bioRxiv 223974; doi: "
+                   "https://doi.org/10.1101/223974")
 )
 
 plugin.register_semantic_types(FirstDifferences)
