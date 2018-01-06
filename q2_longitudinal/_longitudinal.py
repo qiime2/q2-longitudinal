@@ -109,17 +109,17 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                          metric: str, state_column: str,
-                         individual_id_column: str, group_categories: str=None,
+                         individual_id_column: str, group_columns: str=None,
                          random_effects: str=None, table: pd.DataFrame=None,
                          palette: str='Set1', lowess: bool=False, ci: int=95
                          ) -> None:
 
     raw_data_columns = [metric, state_column, individual_id_column]
 
-    # split group_categories into list of categories
-    if group_categories is not None:
-        group_categories = group_categories.split(",")
-        raw_data_columns.extend(group_categories)
+    # split group_columns into list of columns
+    if group_columns is not None:
+        group_columns = group_columns.split(",")
+        raw_data_columns.extend(group_columns)
     if random_effects is not None:
         random_effects = random_effects.split(",")
         raw_data_columns.extend(random_effects)
@@ -127,7 +127,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
 
-    _validate_input_columns(metadata, individual_id_column, group_categories,
+    _validate_input_columns(metadata, individual_id_column, group_columns,
                             state_column, metric)
     # separately validate random_effects, since these can recycle state_column
     # and individual_id_column and group_column values, but not metric
@@ -138,17 +138,17 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 
     # Generate LME model summary
     model_summary, model_results = _linear_effects(
-        metadata, metric, state_column, group_categories,
+        metadata, metric, state_column, group_columns,
         individual_id_column, random_effects=random_effects)
 
     # Plot dependent variable as function of independent variables
     g = _regplot_subplots_from_dataframe(
-        state_column, metric, metadata, group_categories, lowess=lowess,
+        state_column, metric, metadata, group_columns, lowess=lowess,
         ci=ci, palette=palette)
 
     # summarize parameters and visualize
     summary = pd.Series(
-        [metric, group_categories, state_column,
+        [metric, group_columns, state_column,
          individual_id_column, random_effects],
         index=['Metric', 'Group column', 'State column',
                'Individual ID column', 'Random effects'],

@@ -203,12 +203,6 @@ class TestLongitudinal(TestPluginBase):
             table = table.view(pd.DataFrame)
             return table
 
-        def _load_md(md_fp):
-            md_fp = self.get_data_path(md_fp)
-            md = pd.DataFrame.from_csv(md_fp, sep='\t')
-            md = qiime2.Metadata(md)
-            return md
-
         def _load_dm(dm_fp):
             dm_fp = self.get_data_path(dm_fp)
             dm = qiime2.Artifact.load(dm_fp)
@@ -217,7 +211,8 @@ class TestLongitudinal(TestPluginBase):
 
         self.table_ecam_fp = _load_features('ecam-table-maturity.qza')
         self.table_taxa_fp = _load_features('ecam-table-small.qza')
-        self.md_ecam_fp = _load_md('ecam_map_maturity.txt')
+        self.md_ecam_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_map_maturity.txt'))
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
     def test_validate_input_values(self):
@@ -284,7 +279,7 @@ class TestLongitudinal(TestPluginBase):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
-            group_categories='delivery,diet,antiexposedall',
+            group_columns='delivery,diet,antiexposedall',
             individual_id_column='studyid', metric='observed_otus')
         obs = pd.read_csv(
             os.path.join(self.temp_dir.name, 'model_results.tsv'),
@@ -294,7 +289,7 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
-    def test_linear_mixed_effects_no_group_categories(self):
+    def test_linear_mixed_effects_no_group_columns(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
@@ -303,7 +298,7 @@ class TestLongitudinal(TestPluginBase):
             os.path.join(self.temp_dir.name, 'model_results.tsv'),
             sep='\t', index_col=0)
         exp = pd.read_csv(
-            self.get_data_path('linear_mixed_effects_no_group_categories.tsv'),
+            self.get_data_path('linear_mixed_effects_no_group_columns.tsv'),
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
@@ -311,7 +306,7 @@ class TestLongitudinal(TestPluginBase):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
-            group_categories='delivery,diet,antiexposedall',
+            group_columns='delivery,diet,antiexposedall',
             random_effects='month',
             individual_id_column='studyid', metric='observed_otus')
         obs = pd.read_csv(
@@ -326,7 +321,7 @@ class TestLongitudinal(TestPluginBase):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
-            group_categories='delivery,diet,antiexposedall',
+            group_columns='delivery,diet,antiexposedall',
             random_effects='month,studyid',
             individual_id_column='studyid', metric='observed_otus')
         obs = pd.read_csv(
@@ -341,7 +336,7 @@ class TestLongitudinal(TestPluginBase):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
-            group_categories='delivery',
+            group_columns='delivery',
             individual_id_column='studyid', metric='observed_otus')
         obs = pd.read_csv(
             os.path.join(self.temp_dir.name, 'model_results.tsv'),
@@ -355,7 +350,7 @@ class TestLongitudinal(TestPluginBase):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
             metadata=self.md_ecam_fp, state_column='month',
-            group_categories='delivery,diet,antiexposedall',
+            group_columns='delivery,diet,antiexposedall',
             individual_id_column='studyid',
             metric='e2c3ff4f647112723741aa72087f1bfa')
         obs = pd.read_csv(
@@ -450,7 +445,7 @@ class TestLongitudinal(TestPluginBase):
             linear_mixed_effects(
                 output_dir=self.temp_dir.name, table=None,
                 metadata=self.md_ecam_fp, state_column='month',
-                group_categories='diet,diet_3',
+                group_columns='diet,diet_3',
                 individual_id_column='studyid', metric='observed_otus')
 
     def test_nmit(self):
@@ -458,7 +453,8 @@ class TestLongitudinal(TestPluginBase):
              individual_id_column='studyid')
 
     def test_nmit_missing_table_ids(self):
-        md = qiime2.Metadata(pd.DataFrame([[1]], columns=['i'], index=['20']))
+        md = qiime2.Metadata(pd.DataFrame([[1]], columns=['i'],
+                             index=pd.Index(['20'], name='id')))
         with self.assertRaisesRegex(ValueError, 'Missing samples'):
             nmit(table=self.table_taxa_fp, metadata=md,
                  individual_id_column='studyid')
@@ -535,13 +531,6 @@ class TestLongitudinal(TestPluginBase):
                 individual_id_column='ind',
                 metric='Value', replicate_handling='drop')
 
-    def test_first_differences_empty(self):
-        with self.assertRaisesRegex(ValueError, "Metadata is empty"):
-            first_differences(
-                metadata=(qiime2.Metadata(pd.DataFrame({'a': [], 'b': []}))),
-                state_column='Time', individual_id_column='ind',
-                metric='Value', replicate_handling='drop')
-
     def test_first_differences_nonnumeric_metric_error(self):
         with self.assertRaisesRegex(ValueError, "not a numeric"):
             first_differences(
@@ -601,19 +590,6 @@ class TestLongitudinal(TestPluginBase):
         exp.index.name = '#SampleID'
         obs = first_differences(
             metadata=qiime2.Metadata(md_one_subject_many_times),
-            state_column='Time', individual_id_column='ind',
-            metric='Value', replicate_handling='drop')
-        pdt.assert_series_equal(obs, exp)
-
-    def test_first_distances_numeric_values_represented_as_strings(self):
-        numeric_values_represented_as_strings = pd.DataFrame(
-            [('0', '0.18', '1'), ('1', '0.21', '1')],
-            columns=['Time', 'Value', 'ind'],
-            index=['0', '1'])
-        exp = pd.Series([0.03], index=['1'], name='Difference')
-        exp.index.name = '#SampleID'
-        obs = first_differences(
-            metadata=qiime2.Metadata(numeric_values_represented_as_strings),
             state_column='Time', individual_id_column='ind',
             metric='Value', replicate_handling='drop')
         pdt.assert_series_equal(obs, exp)
@@ -707,15 +683,16 @@ md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                    (1, 'b', 0.14, 4), (1, 'b', 0.13, 5), (1, 'b', 0.14, 6),
                    (2, 'b', 0.26, 4), (2, 'b', 0.27, 5), (2, 'b', 0.29, 6)],
                   columns=['Time', 'Group', 'Value', 'ind'],
-                  index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                         '10', '11'])
+                  index=pd.Index(['0', '1', '2', '3', '4', '5',
+                                  '6', '7', '8', '9', '10', '11'], name='id'))
 
 md_one_subject_many_times = pd.DataFrame(
     [(5, 0.18, 1), (6, 0.21, 1), (7, 0.19, 1), (8, 0.22, 1), (9, 0.27, 1),
      (0, 0.12, 1), (1, 0.11, 1), (2, 0.12, 1), (3, 0.13, 1), (4, 0.19, 1),
      (10, 0.24, 1), (11, 0.28, 1)],
     columns=['Time', 'Value', 'ind'],
-    index=['5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '10', '11'])
+    index=pd.Index(['5', '6', '7', '8', '9', '0', '1', '2', '3',
+                    '4', '10', '11'], name='id'))
 
 md_static = pd.DataFrame(
     [(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
@@ -723,8 +700,8 @@ md_static = pd.DataFrame(
      (1, 'b', 0.14, 4), (1, 'b', 0.13, 5), (1, 'b', 0.14, 6),
      (2, 'b', 0.14, 4), (2, 'b', 0.13, 5), (2, 'b', 0.14, 6)],
     columns=['Time', 'Group', 'Value', 'ind'],
-    index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-           '10', '11'])
+    index=pd.Index(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                    '10', '11'], name='id'))
 
 md_dup = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 2),
                        (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),
@@ -732,8 +709,8 @@ md_dup = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 2),
                        (2, 'b', 0.26, 4), (2, 'b', 0.27, 5), (2, 'b', 0.29, 6)
                        ],
                       columns=['Time', 'Group', 'Value', 'ind'],
-                      index=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                             '10', '11'])
+                      index=pd.Index(['0', '1', '2', '3', '4', '5', '6', '7',
+                                      '8', '9', '10', '11'], name='id'))
 
 dm = skbio.DistanceMatrix.read(StringIO(
     "\t0\t1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\n"

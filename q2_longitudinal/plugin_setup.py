@@ -139,7 +139,7 @@ plugin.visualizers.register_function(
         'e.g., samples collected pre- and post-treatment; paired samples from '
         'two different timepoints (e.g., in a longitudinal study design), or '
         'identical samples receiving different two different treatments. '
-        'This action tests whether the change in a continuous metadata value '
+        'This action tests whether the change in a numeric metadata value '
         '"metric" differs from zero and differs between groups (e.g., groups '
         'of subjects receiving different treatments), and produces boxplots '
         'of paired difference distributions for each group. A feature table '
@@ -174,7 +174,7 @@ plugin.visualizers.register_function(
     inputs={'table': FeatureTable[RelativeFrequency]},
     parameters={**base_parameters,
                 'metric': Str,
-                'group_categories': Str,
+                'group_columns': Str,
                 'random_effects': Str,
                 'lowess': Bool,
                 'ci': Float % Range(0, 100)},
@@ -184,12 +184,12 @@ plugin.visualizers.register_function(
         **base_parameter_descriptions,
         'metric': ('Dependent variable column name. Must be a column '
                    'name located in the metadata or feature table files.'),
-        'group_categories': (
-            'Comma-separated list (without spaces) of metadata categories to '
+        'group_columns': (
+            'Comma-separated list (without spaces) of metadata columns to '
             'use as independent covariates used to determine mean structure '
             'of "metric".'),
         'random_effects': (
-            'Comma-separated list (without spaces) of metadata categories to '
+            'Comma-separated list (without spaces) of metadata columns to '
             'use as independent covariates used to determine the variance and '
             'covariance structure (random effects) of "metric". To add a '
             'random slope, the same value passed to "state_column" should '
@@ -202,7 +202,7 @@ plugin.visualizers.register_function(
     name='Linear mixed effects modeling',
     description=(
         'Linear mixed effects models evaluate the contribution of exogenous '
-        'covariates "group_categories" and "random_effects" to a single '
+        'covariates "group_columns" and "random_effects" to a single '
         'dependent variable, "metric". Perform LME and plot line plots of '
         'each group column. A feature table artifact is required input, '
         'though whether "metric" is derived from the feature table or '

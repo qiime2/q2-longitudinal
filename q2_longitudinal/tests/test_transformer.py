@@ -37,10 +37,8 @@ class TestFirstDifferencesTransformers(TestPluginBase):
         _, obs = self.transform_format(
             FirstDifferencesFormat, pd.Series, 'first-differences-simple.tsv')
 
-        exp_index = pd.Index(['a', 'b', 'c', 'd'], name='#SampleID',
-                             dtype=object)
         exp = pd.Series([1.0, 2.0, 3.0, 4.0], name='Difference',
-                        index=exp_index)
+                        index=pd.Index(['a', 'b', 'c', 'd'], name='#SampleID'))
 
         pdt.assert_series_equal(obs, exp)
 
@@ -50,7 +48,7 @@ class TestFirstDifferencesTransformers(TestPluginBase):
             'first-differences-simple.tsv')
 
         exp_index = pd.Index(['a', 'b', 'c', 'd'], name='#SampleID',
-                             dtype=object)
+                             dtype=str)
         exp_df = pd.DataFrame({'Difference': [1.0, 2.0, 3.0, 4.0]},
                               index=exp_index)
         exp = qiime2.Metadata(exp_df)
