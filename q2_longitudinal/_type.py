@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2017, QIIME 2 development team.
+# Copyright (c) 2017-2018, QIIME 2 development team.
 #
 # Distributed under the terms of the Modified BSD License.
 #
