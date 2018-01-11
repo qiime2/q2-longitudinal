@@ -20,6 +20,6 @@ install:
   - make install
 script:
   - make lint
-  - make test-cov
+  - travis_wait make test-cov
 after_success:
   - coveralls
