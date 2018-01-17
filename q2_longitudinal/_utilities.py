@@ -298,11 +298,11 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     return result
 
 
-def _linear_effects(metadata, metric, state_column, group_categories,
+def _linear_effects(metadata, metric, state_column, group_columns,
                     individual_id_column, random_effects):
     # Assemble fixed_effects
-    if group_categories is not None:
-        fixed_effects = [state_column] + group_categories
+    if group_columns is not None:
+        fixed_effects = [state_column] + group_columns
     else:
         fixed_effects = [state_column]
 
