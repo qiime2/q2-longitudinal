@@ -52,13 +52,22 @@ def _validate_input_values(df, metric, individual_id_column, group_column,
                 raise ValueError(
                     'State {0} not present in column {1} of metadata'.format(
                         state, state_column))
-            for group in df[group_column].unique():
-                df1 = df[df[group_column] == group]
-                if state not in df1[state_column].values:
-                    raise ValueError(
-                        'State {0} is not represented by any members of group '
-                        '{1} in metadata. Consider using a different '
-                        'group_column or state value.'.format(state, group))
+            if group_column is not None:
+                for group in df[group_column].unique():
+                    df1 = df[df[group_column] == group]
+                    _validate_state_in_dataframe(
+                        df1, state, state_column, group)
+            else:
+                _validate_state_in_dataframe(
+                    df, state, state_column, 'any')
+
+
+def _validate_state_in_dataframe(df1, state, state_column, group):
+    if state not in df1[state_column].values:
+        raise ValueError(
+            'State {0} is not represented by any members of {1} group '
+            'in metadata. Consider using a different '
+            'group_column or state value.'.format(state, group))
 
 
 def _validate_input_columns(df, individual_id_column, group_column,
@@ -92,8 +101,11 @@ def _get_group_pairs(df, group_value, individual_id_column='SubjectID',
                      state_values=['1', '2'], replicate_handling='error'):
     results = []
     errors = []
-    group_members = df[group_column] == group_value
-    group_md = df[group_members]
+    if group_column is not None:
+        group_members = df[group_column] == group_value
+        group_md = df[group_members]
+    else:
+        group_md = df
     for individual_id in set(group_md[individual_id_column]):
         result = []
         for state_value in state_values:
@@ -202,7 +214,11 @@ def _get_pairwise_differences(df, pairs, category, individual_id_column,
     pairs_summary = []
     for pre_idx, post_idx in pairs:
         individual_id = df[individual_id_column][pre_idx]
-        group = df[group_column][pre_idx]
+        # determine group membership for results summary
+        if group_column is not None:
+            group = df[group_column][pre_idx]
+        else:
+            group = 'None'
         pre_value = float(df[category][pre_idx])
         post_value = float(df[category][post_idx])
         paired_difference = post_value - pre_value
