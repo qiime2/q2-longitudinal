@@ -7,10 +7,13 @@
 # ----------------------------------------------------------------------------
 
 import os.path
+import pkg_resources
+from distutils.dir_util import copy_tree
 
 import pandas as pd
 import skbio
 import qiime2
+import q2templates
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -21,6 +24,10 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _control_chart_subplots, _nmit,
                          _validate_is_numeric_column, _tabulate_matrix_ids,
                          _first_differences)
+from ._vega import _render_volatility_spec
+
+
+TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -197,6 +204,39 @@ def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
 
     _visualize(output_dir, plot=chart, summary=summary, raw_data=raw_data,
                plot_name='Control charts')
+
+
+def volatility2(output_dir: str, metadata: qiime2.Metadata,
+                default_group_column: str, default_metric: str,
+                state_column: str, individual_id_column: str,
+                table: pd.DataFrame=None, yscale: str='linear') -> None:
+    data = _add_metric_to_metadata(table, metadata, default_metric)
+
+    _validate_input_columns(data, individual_id_column, default_group_column,
+                            state_column, default_metric)
+    _validate_is_numeric_column(data, state_column)
+
+    # Convert back to metadata so that we can save these data in a
+    # consistent way.
+    data.index.name = 'id'
+    metadata = qiime2.Metadata(data)
+    metadata.save(os.path.join(output_dir, 'data.tsv'))
+
+    categorical = metadata.filter_columns(column_type='categorical')
+    group_columns = list(categorical.columns.keys())
+    numeric = metadata.filter_columns(column_type='numeric')
+    metric_columns = list(numeric.columns.keys())
+
+    vega_spec = _render_volatility_spec(data, individual_id_column,
+                                        state_column, default_group_column,
+                                        group_columns, default_metric,
+                                        metric_columns, yscale)
+
+    # Order matters here - need to render the template *after* copying the
+    # directory tree, otherwise we will overwrite the index.html
+    copy_tree(os.path.join(TEMPLATES, 'volatility'), output_dir)
+    index = os.path.join(TEMPLATES, 'volatility', 'index.html')
+    q2templates.render(index, output_dir, context={'vega_spec': vega_spec})
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
