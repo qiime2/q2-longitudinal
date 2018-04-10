@@ -45,6 +45,13 @@ class TestUtilities(TestPluginBase):
             state_column='Time', state_values=[1, 2],
             replicate_handling='drop')
         self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5')])
+        # test operation without group_column
+        res, err = _get_group_pairs(
+            md, 'a', individual_id_column='ind', group_column=None,
+            state_column='Time', state_values=[1, 2],
+            replicate_handling='drop')
+        self.assertEqual(res, [('0', '3'), ('1', '4'), ('2', '5'),
+                               ('6', '9'), ('7', '10'), ('8', '11')])
         res, err = _get_group_pairs(
             md_dup, 'a', individual_id_column='ind', group_column='Group',
             state_column='Time', state_values=[1, 2],
@@ -220,6 +227,8 @@ class TestLongitudinal(TestPluginBase):
         _validate_input_columns(md, "ind", "Group", "Time", None)
         _validate_input_columns(md, "ind", None, None, None)
         _validate_input_values(md, "Value", "ind", "Group", "Time", None, None)
+        _validate_input_values(md, "Value", "ind", None, "Time", None, None)
+        # these will raise expected errors
         with self.assertRaisesRegex(ValueError, "state_1 and state_2"):
             _validate_input_values(md, "Value", "ind", "Group", "Time", 1, 1)
         with self.assertRaisesRegex(ValueError, "not present"):
@@ -255,6 +264,14 @@ class TestLongitudinal(TestPluginBase):
         pairwise_differences(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid', metric='observed_otus',
+            replicate_handling='drop')
+
+    def test_pairwise_differences_no_group_column(self):
+        pairwise_differences(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, group_column=None,
             state_column='month', state_1=0, state_2=3,
             individual_id_column='studyid', metric='observed_otus',
             replicate_handling='drop')
