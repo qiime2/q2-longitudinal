@@ -25,8 +25,7 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _tabulate_matrix_ids, _validate_metadata_is_superset, _set_xtick_interval,
-    _set_xtick_labels)
+    _tabulate_matrix_ids, _validate_metadata_is_superset)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances)
@@ -154,31 +153,6 @@ class TestUtilities(TestPluginBase):
         erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
         with self.assertRaisesRegex(ValueError, "is not a numeric"):
             _validate_is_numeric_column(erroneous_metadata, 'a')
-
-    def test_set_xtick_interval_long(self):
-        xtick_interval = _set_xtick_interval(None, np.arange(1, 100, 1))
-        self.assertEqual(xtick_interval, 4)
-
-    def test_set_xtick_interval_short(self):
-        xtick_interval = _set_xtick_interval(None, np.arange(1, 20, 1))
-        self.assertEqual(xtick_interval, 1)
-
-    def test_set_xtick_interval_already_set(self):
-        xtick_interval = _set_xtick_interval(8, np.arange(1, 100, 1))
-        self.assertEqual(xtick_interval, 8)
-
-    def test_set_xtick_labels(self):
-        xtick_md = pd.DataFrame({'time': np.repeat(np.arange(1, 11, 1), 3)})
-        _n_states = [(1, 11, 1), (1, 11, 1), (0, 101, 1)]
-        _exp = [['', '1 (n=3)', '2 (n=3)', '3 (n=3)', '4 (n=3)', '5 (n=3)',
-                 '6 (n=3)', '7 (n=3)', '8 (n=3)', '9 (n=3)', '10 (n=3)'],
-                ['', '1 (n=3)', '3 (n=3)', '5 (n=3)', '7 (n=3)', '9 (n=3)'],
-                ['', '0 (n=0)', '20 (n=0)', '40 (n=0)', '60 (n=0)', '80 (n=0)',
-                 '100 (n=0)']]
-        for n_states, interval, exp in zip(_n_states, [1, 2, 20], _exp):
-            labels = _set_xtick_labels(
-                xtick_md, 'time', np.arange(*n_states), interval)
-            self.assertEqual(labels, exp)
 
 
 # This test class really just makes sure that each plugin runs without error.

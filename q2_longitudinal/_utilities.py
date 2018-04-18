@@ -7,7 +7,6 @@
 # ----------------------------------------------------------------------------
 
 from itertools import combinations
-from math import ceil
 import os.path
 import pkg_resources
 from random import choice
@@ -21,7 +20,6 @@ from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 from statsmodels.sandbox.stats.multicomp import multipletests
 from statsmodels.formula.api import mixedlm
 from skbio import DistanceMatrix
@@ -402,56 +400,6 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                         ax=ax, lowess=lowess, ci=ci)
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
-
-
-def _make_spaghetti(metadata, state_column, metric, individual_id_column,
-                    states, ax, color=None, alpha=1.0, spaghetti='no'):
-    for ind, ind_data in metadata.groupby(individual_id_column):
-        # optionally plot mean of replicates
-        if spaghetti == 'mean':
-            ind_data = ind_data.groupby(state_column).mean()
-            ind_data[state_column] = ind_data.index
-        altered_states = ind_data[state_column]
-        # Adjust xticks so that it follows a pseudo-categorical scale
-        # (e.g., 0, 1, 7, 200 would be plotted at even intervals on x axis)
-        # so that spaghetti aligns with seaborn pointplot x axis.
-        if states is not None:
-            altered_states = altered_states.apply(states.index)
-
-        ax.plot(altered_states, ind_data[metric], alpha=alpha, c=color,
-                label='_nolegend_')
-    return ax
-
-
-def _set_xtick_interval(xtick_interval, states):
-    if xtick_interval is None:
-        if len(states) > 30:
-            xtick_interval = ceil(len(states) / 30)
-        else:
-            xtick_interval = 1
-    return xtick_interval
-
-
-def _set_xtick_labels(metadata, state_column, states, xtick_interval):
-    # pull x-axis labels from array of unique states, slice xtick_interval
-    x_tick_labels = {state: metadata[metadata[state_column] == state]
-                     for state in states[::xtick_interval]}
-    # sort labels by key (state), add sample size to labels.
-    # x_tick_labels[0] must be empty because this label does not appear in plot
-    x_tick_labels = [''] + [v for k, v in sorted(
-        _add_sample_size_to_xtick_labels(x_tick_labels).items())]
-    return x_tick_labels
-
-
-def _set_xticks(ax, metadata, state_column, states, xtick_interval):
-    # generate x-axis tick labels
-    x_tick_labels = _set_xtick_labels(
-        metadata, state_column, states, xtick_interval)
-    # Find tick locations at set at xtick_interval
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(xtick_interval))
-    # add new labels and rotate
-    ax.set_xticklabels(x_tick_labels, rotation=90)
-    return ax
 
 
 def _multiple_tests_correction(df, method='fdr_bh'):
