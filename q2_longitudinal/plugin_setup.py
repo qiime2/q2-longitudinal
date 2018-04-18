@@ -16,8 +16,8 @@ from q2_types.sample_data import SampleData
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects, volatility2,
-                            nmit, first_differences, first_distances)
+                            linear_mixed_effects, volatility, nmit,
+                            first_differences, first_distances)
 import q2_longitudinal
 
 
@@ -210,7 +210,7 @@ plugin.visualizers.register_function(
 
 
 plugin.visualizers.register_function(
-    function=volatility2,
+    function=volatility,
     inputs={
         'table': FeatureTable[RelativeFrequency],
     },

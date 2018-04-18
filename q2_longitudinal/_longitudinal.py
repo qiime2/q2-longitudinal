@@ -168,10 +168,10 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                plot_name='Regression scatterplots')
 
 
-def volatility2(output_dir: str, metadata: qiime2.Metadata,
-                default_group_column: str, default_metric: str,
-                state_column: str, individual_id_column: str,
-                table: pd.DataFrame=None, yscale: str='linear') -> None:
+def volatility(output_dir: str, metadata: qiime2.Metadata,
+               default_group_column: str, default_metric: str,
+               state_column: str, individual_id_column: str,
+               table: pd.DataFrame=None, yscale: str='linear') -> None:
     data = _add_metric_to_metadata(table, metadata, default_metric)
 
     _validate_input_columns(data, individual_id_column, default_group_column,
