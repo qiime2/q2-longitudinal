@@ -404,53 +404,6 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
     return f
 
 
-def _control_chart_subplots(state_column, metric, metadata, group_column,
-                            individual_id_column, ci=95, palette='Set1',
-                            plot_control_limits=True, xtick_interval=None,
-                            yscale='linear', spaghetti='no'):
-
-    groups = metadata[group_column].unique()
-    states = sorted(metadata[state_column].unique())
-    fig_count = len(groups) + 1
-    chart, axes = plt.subplots(fig_count, figsize=(6, fig_count * 6))
-
-    # determine x tick interval: autoscale so that ≤ 30 labels appear
-    xtick_interval = _set_xtick_interval(xtick_interval, states)
-
-    # plot individual groups' control charts
-    cmap = dict(zip(groups, sns.color_palette(palette, n_colors=len(groups))))
-    for num, (group, group_md) in enumerate(metadata.groupby(group_column), 1):
-        c, gm, gs = _control_chart(
-            state_column, metric, group_md, None, ci=ci, legend=False,
-            color=cmap[group], plot_control_limits=plot_control_limits,
-            ax=axes[num], palette=None, xtick_interval=xtick_interval)
-        c.set_title('{0}: {1}'.format(group_column, group))
-        if spaghetti != 'no':
-            # plot group's sphaghetti on main plot and current subplot
-            for ax in [0, num]:
-                c = _make_spaghetti(
-                    group_md, state_column, metric, individual_id_column,
-                    states, ax=axes[ax], color=cmap[group], alpha=0.3,
-                    spaghetti=spaghetti)
-        c = _set_xticks(c, group_md, state_column, states, xtick_interval)
-        axes[num].set_yscale(yscale)
-        num += 1
-
-    # plot all groups together, compare variances
-    c, global_mean, global_std = _control_chart(
-        state_column, metric, metadata, group_column, ci=ci, palette=cmap,
-        plot_control_limits=plot_control_limits, ax=axes[0],
-        xtick_interval=xtick_interval)
-    c.set_title('Group volatility comparison plot')
-    c = _set_xticks(c, metadata, state_column, states, xtick_interval)
-
-    c.set_yscale(yscale)
-
-    plt.tight_layout()
-
-    return chart, global_mean, global_std
-
-
 def _make_spaghetti(metadata, state_column, metric, individual_id_column,
                     states, ax, color=None, alpha=1.0, spaghetti='no'):
     for ind, ind_data in metadata.groupby(individual_id_column):
@@ -501,33 +454,6 @@ def _set_xticks(ax, metadata, state_column, states, xtick_interval):
     return ax
 
 
-def _pointplot_from_dataframe(state_column, metric, metadata, group_by,
-                              ci=95, palette='Set1', ax=None, legend=True,
-                              color=None, xtick_interval=None):
-
-    g = sns.pointplot(data=metadata, x=state_column, y=metric, hue=group_by,
-                      ci=ci, palette=palette, color=color, ax=ax, markers=".")
-
-    # place legend to right side of plot
-    if legend:
-        if ax is not None:
-            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        else:
-            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    return g
-
-
-def _calculate_variability(metadata, metric):
-    global_mean = metadata[metric].mean()
-    global_std = metadata[metric].std()
-    upper_limit = global_mean + global_std * 3
-    lower_limit = global_mean - global_std * 3
-    upper_warning = global_mean + global_std * 2
-    lower_warning = global_mean - global_std * 2
-    return (global_mean, global_std, upper_limit, lower_limit, upper_warning,
-            lower_warning)
-
-
 def _multiple_tests_correction(df, method='fdr_bh'):
     try:
         df['FDR P-value'] = multipletests(df['P-value'], method=method)[1]
@@ -535,20 +461,6 @@ def _multiple_tests_correction(df, method='fdr_bh'):
     except ZeroDivisionError:
         pass
     return df.sort_index()
-
-
-def _control_chart(state_column, metric, metadata, group_by, ci=95,
-                   palette='Set1', plot_control_limits=True, ax=None,
-                   color=None, legend=True, xtick_interval=None):
-    g = _pointplot_from_dataframe(state_column, metric, metadata, group_by,
-                                  ci=95, palette=palette, ax=ax, legend=legend,
-                                  color=color, xtick_interval=xtick_interval)
-
-    m, stdev, ul, ll, uw, lw = _calculate_variability(metadata, metric)
-    if plot_control_limits:
-        for lm, ls in [(m, '-'), (ul, '--'), (ll, '--'), (uw, ':'), (lw, ':')]:
-            g.axes.plot(g.get_xlim(), [lm, lm], ls=ls, c='grey')
-    return g, m, stdev
 
 
 def _load_metadata(metadata):

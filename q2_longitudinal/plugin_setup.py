@@ -8,8 +8,7 @@
 
 import importlib
 
-from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Int)
+from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -17,7 +16,7 @@ from q2_types.sample_data import SampleData
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects, volatility, volatility2,
+                            linear_mixed_effects, volatility2,
                             nmit, first_differences, first_distances)
 import q2_longitudinal
 
@@ -207,44 +206,6 @@ plugin.visualizers.register_function(
         'each group column. A feature table artifact is required input, '
         'though whether "metric" is derived from the feature table or '
         'metadata is optional.')
-)
-
-
-plugin.visualizers.register_function(
-    function=volatility,
-    inputs={'table': FeatureTable[RelativeFrequency]},
-    parameters={**base_parameters,
-                'metric': Str,
-                'group_column': Str,
-                'ci': Float % Range(0, 100),
-                'plot_control_limits': Bool,
-                'yscale': Str % Choices(["linear", "log", "symlog", "logit"]),
-                'spaghetti': Str % Choices(["yes", "no", "mean"]),
-                'xtick_interval': Int},
-    input_descriptions={'table': (
-        'Feature table to optionally use for paired comparisons.')},
-    parameter_descriptions={
-        **base_parameter_descriptions,
-        'metric': 'Numerical metadata or artifact column to test.',
-        'group_column': (
-            'Metadata column on which to separate groups for comparison'),
-        'ci': 'Size of the confidence interval to plot on control chart.',
-        'plot_control_limits': ('Plot global mean and control limits (2X and '
-                                '3X standard deviations).'),
-        'yscale': 'y-axis scaling strategy to apply.',
-        'spaghetti': ('Co-plot spaghetti plot of per-individual trajectories. '
-                      'If replicates exist for an individual at the same '
-                      'state, "mean" will plot the mean of replicates; "yes" '
-                      'will plot all replicates on the same line, creating '
-                      'jagged spaghetti.'),
-        'xtick_interval': ('Interval between major tick marks on x axis. '
-                           'Defaults to 1, or autoscales to show up to 30 '
-                           'ticks if data contain more than 30 x-axis values.')
-    },
-    name='Volatility analysis',
-    description=(
-        'Plot control chart of a single dependent variable, "metric", across '
-        'multiple groups contained in sample metadata column "group_column".')
 )
 
 
