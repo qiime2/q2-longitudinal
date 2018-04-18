@@ -176,7 +176,8 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
         raise ValueError('individual_id_column & state_column must be set to '
                          'unique values.')
 
-    data = _add_metric_to_metadata(table, metadata, default_metric)
+    data = _add_metric_to_metadata(table, metadata, default_metric,
+                                   numeric_check=False)
 
     # Convert back to metadata so that we can work with and save these data
     # in a consistent way.
@@ -198,8 +199,7 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
     # Verify states column is numeric
     states = metadata.get_column(state_column)
     if not isinstance(states, qiime2.NumericMetadataColumn):
-        # This will raise a uniform framework error on our behalf
-        qiime2.NumericMetadataColumn(states.to_series())
+        raise TypeError('state_column must be numeric.')
 
     # Verify that the state column has more than one value present
     uniq_states = states.to_series().unique()

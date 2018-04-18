@@ -469,7 +469,7 @@ def _load_metadata(metadata):
     return metadata
 
 
-def _add_metric_to_metadata(table, metadata, metric):
+def _add_metric_to_metadata(table, metadata, metric, numeric_check=True):
     '''find metric in metadata or derive from table and merge into metadata.'''
     metadata = _load_metadata(metadata)
     if metric not in metadata.columns:
@@ -481,7 +481,8 @@ def _add_metric_to_metadata(table, metadata, metric):
         else:
             raise ValueError(
                 'metric must be a valid metadata or feature table column.')
-    _validate_is_numeric_column(metadata, metric)
+    if numeric_check:
+        _validate_is_numeric_column(metadata, metric)
     return metadata
 
 

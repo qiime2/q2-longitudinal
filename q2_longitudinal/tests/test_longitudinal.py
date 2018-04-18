@@ -354,6 +354,14 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
+    def test_volatility(self):
+        # Just a simple "does it run?" test. Not much worth testing in terms
+        # of the rendered output - vega does all the heavy lifting for us.
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            default_metric='observed_otus', default_group_column='delivery',
+            state_column='month', individual_id_column='studyid')
+
     def test_volatility_table_data_invalid_metric(self):
         with self.assertRaisesRegex(ValueError, "metric must be a valid"):
             volatility(
@@ -393,6 +401,29 @@ class TestLongitudinal(TestPluginBase):
                 metadata=qiime2.Metadata(single_state),
                 default_metric='observed_otus',
                 default_group_column='delivery', state_column='month',
+                individual_id_column='studyid')
+
+    def test_volatility_categorical_state_column(self):
+        with self.assertRaisesRegex(TypeError, 'must be numeric'):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                default_metric='observed_otus',
+                default_group_column='delivery', state_column='delivery',
+                individual_id_column='studyid')
+
+    def test_volatility_categorical_metric_column(self):
+        with self.assertRaisesRegex(ValueError, 'delivery.*not a column'):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                default_metric='delivery', default_group_column='delivery',
+                state_column='month', individual_id_column='studyid')
+
+    def test_volatility_numeric_group_column(self):
+        with self.assertRaisesRegex(ValueError, 'observed_otu.*not a column'):
+            volatility(
+                output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+                default_metric='observed_otus',
+                default_group_column='observed_otus', state_column='month',
                 individual_id_column='studyid')
 
     def test_linear_mixed_effects_singular_matrix_error(self):
