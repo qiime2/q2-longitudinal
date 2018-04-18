@@ -339,6 +339,36 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                             },
                         },
                     },
+                    # Need to add symbols into plot for mouseover
+                    # https://github.com/vega/vega-tooltip/issues/120
+                    {
+                        'type': 'symbol',
+                        'from': {
+                            'data': 'spaghettis',
+                        },
+                        'encode': {
+                            'update': {
+                                'size': {
+                                    'value': 20,
+                                },
+                                'x': {
+                                    'scale': 'x',
+                                    'field': state,
+                                },
+                                'y': {
+                                    'scale': 'y',
+                                    'field': metric_signal,
+                                },
+                                'stroke': {
+                                    'scale': 'color',
+                                    'field': group_signal,
+                                },
+                                'opacity': {
+                                    'value': 0.0,
+                                },
+                            },
+                        },
+                    },
                 ],
             },
             {
@@ -578,10 +608,6 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                         'from': {
                             'data': 'series',
                         },
-                        'sort': {
-                            'field': 'datum.%s' % state,
-                            'order': 'ascending',
-                        },
                         'encode': {
                             'update': {
                                 'x': {
@@ -601,17 +627,11 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'field': 'groupByVal',
                                 },
                                 'size': {
-                                    'signal': 'meanLineThickness',
+                                    'value': 20,
                                 },
-                                'opacity': [
-                                    {
-                                        'test': group_test,
-                                        'value': 1.0,
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
+                                'opacity': {
+                                    'value': 0.0,
+                                },
                             },
                         },
                     },
