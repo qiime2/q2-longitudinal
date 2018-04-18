@@ -172,21 +172,50 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
                default_group_column: str, default_metric: str,
                state_column: str, individual_id_column: str,
                table: pd.DataFrame=None, yscale: str='linear') -> None:
+    if individual_id_column == state_column:
+        raise ValueError('individual_id_column & state_column must be set to '
+                         'unique values.')
+
     data = _add_metric_to_metadata(table, metadata, default_metric)
 
-    _validate_input_columns(data, individual_id_column, default_group_column,
-                            state_column, default_metric)
-    _validate_is_numeric_column(data, state_column)
-
-    # Convert back to metadata so that we can save these data in a
-    # consistent way.
+    # Convert back to metadata so that we can work with and save these data
+    # in a consistent way.
     data.index.name = 'id'
     metadata = qiime2.Metadata(data)
     metadata.save(os.path.join(output_dir, 'data.tsv'))
 
+    # Verify that columns specified are present in metadata (skipping the
+    # state col now because it receives special treatment ahead).
+    for col in [individual_id_column, default_group_column, default_metric]:
+        # If the column doesn't exist the framework will raise the
+        # appropriate error.
+        metadata.get_column(col)
+
+    # We don't need to do any additional validation on the
+    # individual_id_column after this point, since it doesn't matter if it is
+    # categorical, numeric, only one value, etc.
+
+    # Verify states column is numeric
+    states = metadata.get_column(state_column)
+    if not isinstance(states, qiime2.NumericMetadataColumn):
+        # This will raise a uniform framework error on our behalf
+        qiime2.NumericMetadataColumn(states.to_series())
+
+    # Verify that the state column has more than one value present
+    uniq_states = states.to_series().unique()
+    if len(uniq_states) < 2:
+        raise ValueError('state_column must contain at least two unique '
+                         'values.')
+
     categorical = metadata.filter_columns(column_type='categorical')
-    group_columns = list(categorical.columns.keys())
     numeric = metadata.filter_columns(column_type='numeric')
+
+    # Ensure the default_* columns are members of their respective groups.
+    # This will raise a uniform framework error on our behalf if necessary.
+    categorical.get_column(default_group_column)
+    numeric.get_column(default_metric)
+
+    group_columns = list(categorical.columns.keys())
     metric_columns = list(numeric.columns.keys())
 
     vega_spec = _render_volatility_spec(data, individual_id_column,
