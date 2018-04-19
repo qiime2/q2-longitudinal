@@ -27,7 +27,7 @@ setup(
     },
     package_data={
         'q2_longitudinal.tests': ['data/*'],
-        'q2_longitudinal': ['assets/index.html'],
+        'q2_longitudinal': ['assets/index.html', 'citations.bib'],
     },
     zip_safe=False,
 )
