@@ -42,29 +42,30 @@
     </div>
     <hr>
     <div class="row">
-      <div class="col-lg-12" id="group-column"></div>
+      <div class="col-lg-6" id="group-column"></div>
+      <div class="col-lg-6" id="metric-column"></div>
     </div>
-    <div class="row">
-      <div class="col-lg-12" id="metric-column"></div>
-    </div>
+
     <div class="row">
       <div class="col-lg-12" id="color-scheme"></div>
     </div>
+
     <div class="row">
-      <div class="col-lg-12" id="toggle-spaghetti"></div>
+      <div class="col-lg-3" id="toggle-error-bars"></div>
+      <div class="col-lg-3" id="toggle-global-mean"></div>
+      <div class="col-lg-6" id="toggle-global-control-limits"></div>
     </div>
+
     <div class="row">
-      <div class="col-lg-12" id="toggle-error-bars"></div>
+      <div class="col-lg-6" id="mean-line-thickness"></div>
+      <div class="col-lg-6" id="spaghetti-line-thickness"></div>
     </div>
+
     <div class="row">
-      <div class="col-lg-12" id="toggle-global-mean"></div>
+      <div class="col-lg-6" id="mean-opacity"></div>
+      <div class="col-lg-6" id="spaghetti-opacity"></div>
     </div>
-    <div class="row">
-      <div class="col-lg-12" id="toggle-global-control-limits"></div>
-    </div>
-    <div class="row">
-      <div class="col-lg-12" id="mean-line-thickness"></div>
-    </div>
+
   </div>
 </div>
 {% endblock %}
@@ -143,13 +144,14 @@
     cleanupEl('#group-column', 'Group column', 'select');
     cleanupEl('#metric-column', 'Metric column', 'select');
     cleanupEl('#color-scheme', 'Color scheme', 'select');
-    cleanupEl('#toggle-spaghetti', 'Show spaghetti');
     cleanupEl('#toggle-error-bars', 'Show error bars');
     cleanupEl('#toggle-global-mean', 'Show global mean');
     cleanupEl('#toggle-global-control-limits', 'Show global control limits');
-    $('#toggle-global-control-limits').append('<p>+/- 2x and 3x standard deviations</p>');
-    $('#mean-line-thickness .vega-bind label').remove();
-    cleanupEl('#mean-line-thickness', 'Mean line thickness');
+    $('#toggle-global-control-limits').append('<p>+/- 2x and 3x standard deviations from global mean</p>');
+    cleanupEl('#mean-line-thickness', 'Mean line width');
+    cleanupEl('#spaghetti-line-thickness', 'Spaghetti line width');
+    cleanupEl('#mean-opacity', 'Mean opacity');
+    cleanupEl('#spaghetti-opacity', 'Spaghetti opacity');
   });
 </script>
 {% endblock %}

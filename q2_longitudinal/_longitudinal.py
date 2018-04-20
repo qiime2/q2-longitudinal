@@ -169,21 +169,31 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 
 
 def volatility(output_dir: str, metadata: qiime2.Metadata,
-               default_group_column: str, default_metric: str,
                state_column: str, individual_id_column: str,
+               default_group_column: str=None, default_metric: str=None,
                table: pd.DataFrame=None, yscale: str='linear') -> None:
     if individual_id_column == state_column:
         raise ValueError('individual_id_column & state_column must be set to '
                          'unique values.')
 
-    data = _add_metric_to_metadata(table, metadata, default_metric,
-                                   numeric_check=False)
+    # Convert table to metadata and merge, if present.
+    if table is not None:
+        table.index.name = 'id'
+        table_md = qiime2.Metadata(table)
+        metadata = metadata.merge(table_md)
 
-    # Convert back to metadata so that we can work with and save these data
-    # in a consistent way.
-    data.index.name = 'id'
-    metadata = qiime2.Metadata(data)
-    metadata.save(os.path.join(output_dir, 'data.tsv'))
+    # Partition the metadata into constituent types and assign defaults.
+    categorical = metadata.filter_columns(column_type='categorical')
+    numeric = metadata.filter_columns(column_type='numeric')
+    if default_group_column is None:
+        default_group_column = list(categorical.columns.keys())[0]
+    if default_metric is None:
+        default_metric = list(numeric.columns.keys())[0]
+
+    # Ensure the default_* columns are members of their respective groups.
+    # This will raise a uniform framework error on our behalf if necessary.
+    categorical.get_column(default_group_column)
+    numeric.get_column(default_metric)
 
     # Verify that columns specified are present in metadata (skipping the
     # state col now because it receives special treatment ahead).
@@ -207,15 +217,10 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
         raise ValueError('state_column must contain at least two unique '
                          'values.')
 
-    categorical = metadata.filter_columns(column_type='categorical')
-    numeric = metadata.filter_columns(column_type='numeric')
-
-    # Ensure the default_* columns are members of their respective groups.
-    # This will raise a uniform framework error on our behalf if necessary.
-    categorical.get_column(default_group_column)
-    numeric.get_column(default_metric)
-
-    group_columns = list(categorical.columns.keys())
+    # We want to include the original Sample ID in the viz, so reset the index.
+    data = metadata.to_dataframe().reset_index(drop=False)
+    # If we made it this far that means we can let Vega do it's thing!
+    group_columns = [metadata.id_header] + list(categorical.columns.keys())
     metric_columns = list(numeric.columns.keys())
 
     vega_spec = _render_volatility_spec(data, individual_id_column,
@@ -225,6 +230,7 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
 
     # Order matters here - need to render the template *after* copying the
     # directory tree, otherwise we will overwrite the index.html
+    metadata.save(os.path.join(output_dir, 'data.tsv'))
     copy_tree(os.path.join(TEMPLATES, 'volatility'), output_dir)
     index = os.path.join(TEMPLATES, 'volatility', 'index.html')
     q2templates.render(index, output_dir, context={'vega_spec': vega_spec})

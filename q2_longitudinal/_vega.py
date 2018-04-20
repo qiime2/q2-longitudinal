@@ -23,7 +23,6 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
     group_test = ("!length(data('selected')) || "
                   "indata('selected', 'value', datum.groupByVal)")
     error_bar_test = 'showErrorBars && (%s)' % group_test
-    spaghetti_test = 'showSpaghetti && (%s)' % group_test
     metric_signal = {'signal': 'metric'}
     group_signal = {'signal': 'grouper'}
     # This looks grosser than it is (you can't do variable assignment in a
@@ -94,14 +93,6 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                 ],
             },
             {
-                'name': 'showSpaghetti',
-                'value': True,
-                'bind': {
-                    'input': 'checkbox',
-                    'element': '#toggle-spaghetti',
-                },
-            },
-            {
                 'name': 'showErrorBars',
                 'value': False,
                 'bind': {
@@ -130,10 +121,43 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                 'value': 3,
                 'bind': {
                     'input': 'range',
-                    'min': 1,
+                    'min': 0.1,
                     'max': 10,
-                    'step': 1,
+                    'step': 0.1,
                     'element': '#mean-line-thickness',
+                },
+            },
+            {
+                'name': 'spaghettiLineThickness',
+                'value': 0.5,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.1,
+                    'max': 10,
+                    'step': 0.1,
+                    'element': '#spaghetti-line-thickness',
+                },
+            },
+            {
+                'name': 'meanOpacity',
+                'value': 1.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#mean-opacity',
+                },
+            },
+            {
+                'name': 'spaghettiOpacity',
+                'value': 0.5,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#spaghetti-opacity',
                 },
             },
             {
@@ -197,11 +221,13 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
         'scales': [
             {
                 'name': 'x',
-                'type': 'point',
+                'type': 'linear',
                 'range': 'width',
+                'nice': True,
                 'domain': {
                     'data': 'individual',
                     'field': state,
+                    'sort': True,
                 },
             },
             {
@@ -212,9 +238,9 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                 'type': yscale,
                 'range': 'height',
                 'nice': True,
-                'zero': True,
                 'domain': {
                     'signal': domain_expr,
+                    'sort': True,
                 },
             },
             {
@@ -307,7 +333,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                             'data': 'spaghettis',
                         },
                         'sort': {
-                            'field': 'x',
+                            'field': 'datum.%s' % state,
                             'order': 'ascending',
                         },
                         'encode': {
@@ -317,7 +343,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'field': state,
                                 },
                                 'strokeWidth': {
-                                    'value': 0.5,
+                                    'signal': 'spaghettiLineThickness',
                                 },
                                 'y': {
                                     'scale': 'y',
@@ -329,8 +355,8 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                 },
                                 'opacity': [
                                     {
-                                        'test': spaghetti_test,
-                                        'value': 0.5,
+                                        'test': group_test,
+                                        'signal': 'spaghettiOpacity',
                                     },
                                     {
                                         'value': 0.0,
@@ -592,7 +618,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                 'opacity': [
                                     {
                                         'test': group_test,
-                                        'value': 1.0,
+                                        'signal': 'meanOpacity',
                                     },
                                     {
                                         'value': 0.0,

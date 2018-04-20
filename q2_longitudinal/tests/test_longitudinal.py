@@ -333,11 +333,26 @@ class TestLongitudinal(TestPluginBase):
         # of the rendered output - vega does all the heavy lifting for us.
         volatility(
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            state_column='month', individual_id_column='studyid')
+
+    def test_volatility_metric_and_group(self):
+        # Just a simple "does it run?" test. Not much worth testing in terms
+        # of the rendered output - vega does all the heavy lifting for us.
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             default_metric='observed_otus', default_group_column='delivery',
             state_column='month', individual_id_column='studyid')
 
+    def test_volatility_table(self):
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            default_metric='e2c3ff4f647112723741aa72087f1bfa',
+            default_group_column='delivery', state_column='month',
+            individual_id_column='studyid', table=self.table_ecam_fp)
+
     def test_volatility_table_data_invalid_metric(self):
-        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+        with self.assertRaisesRegex(ValueError,
+                                    "invalid_metric.*not a column"):
             volatility(
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 default_metric='invalid_metric',
@@ -359,7 +374,7 @@ class TestLongitudinal(TestPluginBase):
                 state_column='month', individual_id_column='studyid')
 
     def test_volatility_invalid_metric(self):
-        with self.assertRaisesRegex(ValueError, "metric must be a valid"):
+        with self.assertRaisesRegex(ValueError, "'peanut' is not a column"):
             volatility(
                 output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
                 default_metric='peanut', default_group_column='delivery',
