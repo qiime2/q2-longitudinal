@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Int)
+                           Int, Citations)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -22,6 +22,8 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
 import q2_longitudinal
 
 
+citations = Citations.load('citations.bib', package='q2_longitudinal')
+
 plugin = Plugin(
     name='longitudinal',
     version=q2_longitudinal.__version__,
@@ -32,12 +34,7 @@ plugin = Plugin(
         'analysis, involving either paired sample comparisons or longitudinal '
         'study designs.'),
     short_description='Plugin for paired sample and time series analyses.',
-    citation_text=("q2-longitudinal: a QIIME 2 plugin for longitudinal and "
-                   "paired-sample analyses of microbiome data. Nicholas "
-                   "Bokulich, Yilong Zhang, Matthew Dillon, Jai Ram Rideout, "
-                   "Evan Bolyen, Huilin Li, Paul Albert, J Gregory "
-                   "Caporaso. bioRxiv 223974; doi: "
-                   "https://doi.org/10.1101/223974")
+    citations=[citations['bokulich2017q2']]
 )
 
 plugin.register_semantic_types(FirstDifferences)
@@ -206,7 +203,8 @@ plugin.visualizers.register_function(
         'dependent variable, "metric". Perform LME and plot line plots of '
         'each group column. A feature table artifact is required input, '
         'though whether "metric" is derived from the feature table or '
-        'metadata is optional.')
+        'metadata is optional.'),
+    citations=[citations['seabold2010statsmodels']]
 )
 
 
@@ -270,7 +268,8 @@ plugin.methods.register_function(
         'Perform nonparametric microbial interdependence test to determine '
         'longitudinal sample similarity as a function of temporal microbial '
         'composition. For more details and citation, please see '
-        'doi.org/10.1002/gepi.22065')
+        'doi.org/10.1002/gepi.22065'),
+    citations=[citations['zhang2017multivariate']]
 )
 
 
