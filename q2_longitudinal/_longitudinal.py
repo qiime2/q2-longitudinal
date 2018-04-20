@@ -30,10 +30,10 @@ TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
-                         group_column: str, metric: str, state_column: str,
-                         state_1: str, state_2: str, individual_id_column: str,
-                         parametric: bool=False, palette: str='Set1',
-                         replicate_handling: str='error',
+                         metric: str, state_column: str, state_1: str,
+                         state_2: str, individual_id_column: str,
+                         group_column: str=None, parametric: bool=False,
+                         palette: str='Set1', replicate_handling: str='error',
                          table: pd.DataFrame=None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
@@ -47,7 +47,11 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     pairs_summaries = {}
     errors = []
     pairs_summary = pd.DataFrame()
-    group_names = metadata[group_column].unique()
+    if group_column is not None:
+        group_names = metadata[group_column].unique()
+    else:
+        # if we do not stratify by groups, find all pairs.
+        group_names = ['all subjects']
     for group in group_names:
         group_pairs, error = _get_group_pairs(
             metadata, group_value=group,
@@ -65,11 +69,17 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
     y_label = 'Difference in {0} ({1} {2} - {1} {3})'.format(
         metric, state_column, state_2, state_1)
 
+    if group_column is not None:
+        multiple_group_test = pairwise_tests = True
+    else:
+        multiple_group_test = pairwise_tests = False
+
     _stats_and_visuals(
         output_dir, pairs, y_label, group_column, state_column, state_1,
         state_2, individual_id_column, errors, parametric, palette,
-        replicate_handling, multiple_group_test=True, pairwise_tests=True,
-        paired_difference_tests=True, boxplot=True)
+        replicate_handling, multiple_group_test=multiple_group_test,
+        pairwise_tests=pairwise_tests, paired_difference_tests=True,
+        boxplot=True)
 
 
 def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
