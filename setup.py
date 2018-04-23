@@ -27,7 +27,14 @@ setup(
     },
     package_data={
         'q2_longitudinal.tests': ['data/*'],
-        'q2_longitudinal': ['assets/index.html', 'citations.bib'],
+        'q2_longitudinal': [
+            'citations.bib',
+            'assets/index.html',
+            'assets/volatility/index.html',
+            'assets/volatility/js/*',
+            'assets/volatility/css/*',
+            'assets/volatility/licenses/*',
+        ],
     },
     zip_safe=False,
 )
