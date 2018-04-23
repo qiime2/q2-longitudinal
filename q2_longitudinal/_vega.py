@@ -50,8 +50,9 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
         # visualization in an offline context.
         '$schema': 'https://vega.github.io/schema/vega/v3.0.json',
         'autosize': {
-            'type': 'fit',
+            'type': 'fit-x',
             'contains': 'padding',
+            'resize': True,
         },
         # These dimensions are here for when the viz is opened in the
         # Vega Editor.

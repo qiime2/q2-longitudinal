@@ -227,10 +227,11 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
         raise ValueError('state_column must contain at least two unique '
                          'values.')
 
-    # We want to include the original Sample ID in the viz, so reset the index.
-    data = metadata.to_dataframe().reset_index(drop=False)
+    data = metadata.to_dataframe()
     # If we made it this far that means we can let Vega do it's thing!
-    group_columns = [metadata.id_header] + list(categorical.columns.keys())
+    group_columns = list(categorical.columns.keys())
+    if individual_id_column not in group_columns:
+        group_columns += [individual_id_column]
     metric_columns = list(numeric.columns.keys())
 
     vega_spec = _render_volatility_spec(data, individual_id_column,
