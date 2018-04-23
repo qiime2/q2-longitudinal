@@ -60,8 +60,18 @@
     </div>
 
     <div class="row">
-      <div class="col-lg-6" id="mean-opacity"></div>
-      <div class="col-lg-6" id="spaghetti-opacity"></div>
+      <div class="col-lg-6" id="mean-line-opacity"></div>
+      <div class="col-lg-6" id="spaghetti-line-opacity"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6" id="mean-symbol-size"></div>
+      <div class="col-lg-6" id="spaghetti-symbol-size"></div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-6" id="mean-symbol-opacity"></div>
+      <div class="col-lg-6" id="spaghetti-symbol-opacity"></div>
     </div>
 
   </div>
@@ -147,8 +157,12 @@
     $('#toggle-global-control-limits').append('<p>+/- 2x and 3x standard deviations from global mean</p>');
     cleanupEl('#mean-line-thickness', 'Mean line width');
     cleanupEl('#spaghetti-line-thickness', 'Spaghetti line width');
-    cleanupEl('#mean-opacity', 'Mean opacity');
-    cleanupEl('#spaghetti-opacity', 'Spaghetti opacity');
+    cleanupEl('#mean-line-opacity', 'Mean line opacity');
+    cleanupEl('#spaghetti-line-opacity', 'Spaghetti line opacity');
+    cleanupEl('#mean-symbol-size', 'Mean scatter size');
+    cleanupEl('#spaghetti-symbol-size', 'Spaghetti scatter size');
+    cleanupEl('#mean-symbol-opacity', 'Mean scatter opacity');
+    cleanupEl('#spaghetti-symbol-opacity', 'Spaghetti scatter opacity');
   });
 </script>
 {% endblock %}

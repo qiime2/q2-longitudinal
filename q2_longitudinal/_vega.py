@@ -149,25 +149,69 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                 },
             },
             {
-                'name': 'meanOpacity',
+                'name': 'meanLineOpacity',
                 'value': 1.0,
                 'bind': {
                     'input': 'range',
                     'min': 0.0,
                     'max': 1.0,
                     'step': 0.01,
-                    'element': '#mean-opacity',
+                    'element': '#mean-line-opacity',
                 },
             },
             {
-                'name': 'spaghettiOpacity',
+                'name': 'spaghettiLineOpacity',
                 'value': 0.5,
                 'bind': {
                     'input': 'range',
                     'min': 0.0,
                     'max': 1.0,
                     'step': 0.01,
-                    'element': '#spaghetti-opacity',
+                    'element': '#spaghetti-line-opacity',
+                },
+            },
+            {
+                'name': 'meanSymbolSize',
+                'value': 50.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 500.0,
+                    'step': 1.0,
+                    'element': '#mean-symbol-size',
+                },
+            },
+            {
+                'name': 'spaghettiSymbolSize',
+                'value': 50.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 500.0,
+                    'step': 1.0,
+                    'element': '#spaghetti-symbol-size',
+                },
+            },
+            {
+                'name': 'meanSymbolOpacity',
+                'value': 0.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#mean-symbol-opacity',
+                },
+            },
+            {
+                'name': 'spaghettiSymbolOpacity',
+                'value': 0.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#spaghetti-symbol-opacity',
                 },
             },
             {
@@ -366,7 +410,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                 'opacity': [
                                     {
                                         'test': group_test,
-                                        'signal': 'spaghettiOpacity',
+                                        'signal': 'spaghettiLineOpacity',
                                     },
                                     {
                                         'value': 0.0,
@@ -388,7 +432,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'signal': spaghetti_signal,
                                 },
                                 'size': {
-                                    'value': 50,
+                                    'signal': 'spaghettiSymbolSize',
                                 },
                                 'x': {
                                     'scale': 'x',
@@ -406,9 +450,15 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'scale': 'color',
                                     'field': group_signal,
                                 },
-                                'opacity': {
-                                    'value': 0.0,
-                                },
+                                'opacity': [
+                                    {
+                                        'test': group_test,
+                                        'signal': 'spaghettiSymbolOpacity',
+                                    },
+                                    {
+                                        'value': 0.0,
+                                    },
+                                ],
                             },
                         },
                     },
@@ -635,7 +685,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                 'opacity': [
                                     {
                                         'test': group_test,
-                                        'signal': 'meanOpacity',
+                                        'signal': 'meanLineOpacity',
                                     },
                                     {
                                         'value': 0.0,
@@ -673,11 +723,17 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'field': 'groupByVal',
                                 },
                                 'size': {
-                                    'value': 50,
+                                    'signal': 'meanSymbolSize',
                                 },
-                                'opacity': {
-                                    'value': 0.0,
-                                },
+                                'opacity': [
+                                    {
+                                        'test': group_test,
+                                        'signal': 'meanSymbolOpacity',
+                                    },
+                                    {
+                                        'value': 0.0,
+                                    },
+                                ],
                             },
                         },
                     },
