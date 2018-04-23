@@ -35,6 +35,15 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                    "max(data('globalVals')[0].cl3,"
                    "data('globalVals')[0].maxY)]")
 
+    # These templates customize the tooltips
+    spaghetti_signal = ('{"title": "spaghetti", "individual_id": datum["%s"],'
+                        ' "group": datum.groupByVal, "state": datum["%s"],'
+                        ' "metric": datum.metricVal}' % (individual_id, state))
+    mean_signal = ('{"title": "group mean", "group": datum.groupByVal,'
+                   ' "state": datum["%s"], "count": datum.count,'
+                   ' "mean": datum.mean, "ci0": datum.ci0, "ci1": datum.ci1}'
+                   % state)
+
     # This looks weird, but the idea is to render a unique string into the JSON
     # spec, that way later on when we render the datatable to JSON, we can
     # just inject the datatable JSON wholesale.
@@ -339,12 +348,12 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                         },
                         'encode': {
                             'update': {
+                                'strokeWidth': {
+                                    'signal': 'spaghettiLineThickness',
+                                },
                                 'x': {
                                     'scale': 'x',
                                     'field': state,
-                                },
-                                'strokeWidth': {
-                                    'signal': 'spaghettiLineThickness',
                                 },
                                 'y': {
                                     'scale': 'y',
@@ -375,8 +384,11 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                         },
                         'encode': {
                             'update': {
+                                'tooltip': {
+                                    'signal': spaghetti_signal,
+                                },
                                 'size': {
-                                    'value': 20,
+                                    'value': 50,
                                 },
                                 'x': {
                                     'scale': 'x',
@@ -387,6 +399,10 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'field': metric_signal,
                                 },
                                 'stroke': {
+                                    'scale': 'color',
+                                    'field': group_signal,
+                                },
+                                'fill': {
                                     'scale': 'color',
                                     'field': group_signal,
                                 },
@@ -637,6 +653,9 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                         },
                         'encode': {
                             'update': {
+                                'tooltip': {
+                                    'signal': mean_signal,
+                                },
                                 'x': {
                                     'scale': 'x',
                                     'field': state,
@@ -654,7 +673,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                                     'field': 'groupByVal',
                                 },
                                 'size': {
-                                    'value': 20,
+                                    'value': 50,
                                 },
                                 'opacity': {
                                     'value': 0.0,
@@ -713,6 +732,11 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                         'type': 'formula',
                         'as': 'groupByVal',
                         'expr': 'datum[grouper]',
+                    },
+                    {
+                        'type': 'formula',
+                        'as': 'metricVal',
+                        'expr': 'datum[metric]',
                     },
                 ],
             },

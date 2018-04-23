@@ -5,8 +5,6 @@
 {% block head %}
   <script src="js/vega.min.js"></script>
   <script src="js/vega-embed.min.js"></script>
-  <script src="js/vega-tooltip.min.js"></script>
-  <link rel="stylesheet" type="text/css" href="css/vega-tooltip.min.css">
   <link rel="stylesheet" type="text/css" href="css/spinkit.css">
 {% endblock %}
 
@@ -111,7 +109,6 @@
 
     vegaEmbed('#plot', spec, opts).then(function(result) {
       result.view.logLevel(vega.Warn);
-      vegaTooltip.vega(result.view);
       // Stash the view object in global namespace for debugging purposes.
       // Check out https://vega.github.io/vega/docs/api/debugging/
       // for more details.
