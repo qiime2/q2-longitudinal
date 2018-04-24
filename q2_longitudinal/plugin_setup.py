@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Int, Citations)
+                           Citations)
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -210,39 +210,36 @@ plugin.visualizers.register_function(
 
 plugin.visualizers.register_function(
     function=volatility,
-    inputs={'table': FeatureTable[RelativeFrequency]},
-    parameters={**base_parameters,
-                'metric': Str,
-                'group_column': Str,
-                'ci': Float % Range(0, 100),
-                'plot_control_limits': Bool,
-                'yscale': Str % Choices(["linear", "log", "symlog", "logit"]),
-                'spaghetti': Str % Choices(["yes", "no", "mean"]),
-                'xtick_interval': Int},
-    input_descriptions={'table': (
-        'Feature table to optionally use for paired comparisons.')},
+    inputs={
+        'table': FeatureTable[RelativeFrequency],
+    },
+    parameters={
+        **shared_parameters,
+        'state_column': miscellaneous_parameters['state_column'],
+        'default_metric': Str,
+        'default_group_column': Str,
+        'yscale': Str % Choices(['linear', 'pow', 'sqrt', 'log'])
+    },
+    input_descriptions={
+        'table': 'Feature table to optionally use for paired comparisons.',
+    },
     parameter_descriptions={
-        **base_parameter_descriptions,
-        'metric': 'Numerical metadata or artifact column to test.',
-        'group_column': (
-            'Metadata column on which to separate groups for comparison'),
-        'ci': 'Size of the confidence interval to plot on control chart.',
-        'plot_control_limits': ('Plot global mean and control limits (2X and '
-                                '3X standard deviations).'),
+        **shared_parameter_descriptions,
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
+        'default_metric': 'Numeric metadata or artifact column to test by '
+                          'default (all numeric metadata columns will be '
+                          'available in the visualization).',
+        'default_group_column': 'The default metadata column on which to '
+                                'separate groups for comparison (all '
+                                'categorical metadata columns will be '
+                                'available in the visualization).',
         'yscale': 'y-axis scaling strategy to apply.',
-        'spaghetti': ('Co-plot spaghetti plot of per-individual trajectories. '
-                      'If replicates exist for an individual at the same '
-                      'state, "mean" will plot the mean of replicates; "yes" '
-                      'will plot all replicates on the same line, creating '
-                      'jagged spaghetti.'),
-        'xtick_interval': ('Interval between major tick marks on x axis. '
-                           'Defaults to 1, or autoscales to show up to 30 '
-                           'ticks if data contain more than 30 x-axis values.')
     },
     name='Volatility analysis',
     description=(
-        'Plot control chart of a single dependent variable, "metric", across '
-        'multiple groups contained in sample metadata column "group_column".')
+        'Plot an interactive control chart of a single dependent variable, '
+        '"metric", across multiple groups contained in sample metadata '
+        'column "group_column".')
 )
 
 

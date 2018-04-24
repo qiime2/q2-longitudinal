@@ -7,10 +7,13 @@
 # ----------------------------------------------------------------------------
 
 import os.path
+import pkg_resources
+from distutils.dir_util import copy_tree
 
 import pandas as pd
 import skbio
 import qiime2
+import q2templates
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -18,9 +21,12 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
-                         _control_chart_subplots, _nmit,
-                         _validate_is_numeric_column, _tabulate_matrix_ids,
-                         _first_differences)
+                         _nmit, _validate_is_numeric_column,
+                         _tabulate_matrix_ids, _first_differences)
+from ._vega import _render_volatility_spec
+
+
+TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
@@ -172,41 +178,73 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                plot_name='Regression scatterplots')
 
 
-def volatility(output_dir: str, metadata: qiime2.Metadata, group_column: str,
-               metric: str, state_column: str, individual_id_column: str,
-               table: pd.DataFrame=None, palette: str='Set1', ci: int=95,
-               plot_control_limits: bool=True, xtick_interval: int=None,
-               yscale: str='linear',  spaghetti: str='no') -> None:
+def volatility(output_dir: str, metadata: qiime2.Metadata,
+               state_column: str, individual_id_column: str,
+               default_group_column: str=None, default_metric: str=None,
+               table: pd.DataFrame=None, yscale: str='linear') -> None:
+    if individual_id_column == state_column:
+        raise ValueError('individual_id_column & state_column must be set to '
+                         'unique values.')
 
-    # find metric in metadata or derive from table and merge into metadata
-    metadata = _add_metric_to_metadata(table, metadata, metric)
+    # Convert table to metadata and merge, if present.
+    if table is not None:
+        table.index.name = 'id'
+        table_md = qiime2.Metadata(table)
+        metadata = metadata.merge(table_md)
 
-    _validate_input_columns(metadata, individual_id_column, group_column,
-                            state_column, metric)
+    # Partition the metadata into constituent types and assign defaults.
+    categorical = metadata.filter_columns(column_type='categorical')
+    numeric = metadata.filter_columns(column_type='numeric')
+    if default_group_column is None:
+        default_group_column = list(categorical.columns.keys())[0]
+    if default_metric is None:
+        default_metric = list(numeric.columns.keys())[0]
 
-    # let's force states to be numeric
-    _validate_is_numeric_column(metadata, state_column)
+    # Ensure the default_* columns are members of their respective groups.
+    # This will raise a uniform framework error on our behalf if necessary.
+    categorical.get_column(default_group_column)
+    numeric.get_column(default_metric)
 
-    # plot control charts
-    chart, global_mean, global_std = _control_chart_subplots(
-        state_column, metric, metadata, group_column, individual_id_column,
-        ci=ci, palette=palette, plot_control_limits=plot_control_limits,
-        xtick_interval=xtick_interval, yscale=yscale, spaghetti=spaghetti)
+    # Verify that columns specified are present in metadata (skipping the
+    # state col now because it receives special treatment ahead).
+    for col in [individual_id_column, default_group_column, default_metric]:
+        # If the column doesn't exist the framework will raise the
+        # appropriate error.
+        metadata.get_column(col)
 
-    # summarize parameters and visualize
-    summary = pd.Series(
-        [metric, group_column, state_column, individual_id_column, global_mean,
-         global_std],
-        index=['Metric', 'Group column', 'State column',
-               'Individual ID column', 'Global mean',
-               'Global standard deviation'],
-        name='Volatility test parameters')
+    # We don't need to do any additional validation on the
+    # individual_id_column after this point, since it doesn't matter if it is
+    # categorical, numeric, only one value, etc.
 
-    raw_data = metadata[[
-        metric, state_column, individual_id_column, group_column]]
+    # Verify states column is numeric
+    states = metadata.get_column(state_column)
+    if not isinstance(states, qiime2.NumericMetadataColumn):
+        raise TypeError('state_column must be numeric.')
 
-    _visualize(output_dir, plot=chart, summary=summary, raw_data=raw_data,
-               plot_name='Control charts')
+    # Verify that the state column has more than one value present
+    uniq_states = states.to_series().unique()
+    if len(uniq_states) < 2:
+        raise ValueError('state_column must contain at least two unique '
+                         'values.')
+
+    data = metadata.to_dataframe()
+    # If we made it this far that means we can let Vega do it's thing!
+    group_columns = list(categorical.columns.keys())
+    if individual_id_column not in group_columns:
+        group_columns += [individual_id_column]
+    metric_columns = list(numeric.columns.keys())
+
+    vega_spec = _render_volatility_spec(data, individual_id_column,
+                                        state_column, default_group_column,
+                                        group_columns, default_metric,
+                                        metric_columns, yscale)
+
+    # Order matters here - need to render the template *after* copying the
+    # directory tree, otherwise we will overwrite the index.html
+    metadata.save(os.path.join(output_dir, 'data.tsv'))
+    copy_tree(os.path.join(TEMPLATES, 'volatility'), output_dir)
+    index = os.path.join(TEMPLATES, 'volatility', 'index.html')
+    q2templates.render(index, output_dir, context={'vega_spec': vega_spec})
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
