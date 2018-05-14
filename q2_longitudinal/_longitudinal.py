@@ -414,14 +414,14 @@ def feature_volatility(ctx, table, metadata, state_column,
         parameter_tuning=parameter_tuning)
 
     # filter table and convert to relative frequency
-    print(importances)
-    filtered_table = filter_tab(table=table, metadata=importances)
-    filtered_table = relative(table=filtered_table)
+    filtered_table, = filter_tab(table=table,
+                                 metadata=importances.view(qiime2.Metadata))
+    filtered_table, = relative(table=filtered_table)
 
-    volatility_plot = volatility(metadata=metadata, state_column=state_column,
-                                 individual_id_column=individual_id_column,
-                                 default_group_column=None,
-                                 default_metric=None, table=filtered_table,
-                                 yscale='linear')
+    volatility_plot, = volatility(metadata=metadata, state_column=state_column,
+                                  individual_id_column=individual_id_column,
+                                  default_group_column=None,
+                                  default_metric=None, table=filtered_table,
+                                  yscale='linear')
 
     return y_pred, importances, filtered_table, volatility_plot
