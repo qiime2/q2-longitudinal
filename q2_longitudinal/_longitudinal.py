@@ -396,3 +396,32 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
         metadata, state_column, individual_id_column, metric=None,
         replicate_handling=replicate_handling, baseline=baseline,
         distance_matrix=distance_matrix)
+
+
+def feature_volatility(ctx, table, metadata, state_column,
+                       individual_id_column, cv=5, random_state=None, n_jobs=1,
+                       n_estimators=100, estimator='RandomForestRegressor',
+                       stratify=False, parameter_tuning=False):
+    regress = ctx.get_action('sample_classifier', 'regress_samples_ncv')
+    filter_tab = ctx.get_action('feature_table', 'filter_features')
+    relative = ctx.get_action('feature_table', 'relative_frequency')
+    volatility = ctx.get_action('longitudinal', 'volatility')
+
+    y_pred, importances = regress(
+        table, metadata=metadata.get_column(state_column),
+        cv=cv, random_state=random_state, n_jobs=n_jobs,
+        n_estimators=n_estimators, estimator=estimator, stratify=stratify,
+        parameter_tuning=parameter_tuning)
+
+    # filter table and convert to relative frequency
+    print(importances)
+    filtered_table = filter_tab(table=table, metadata=importances)
+    filtered_table = relative(table=filtered_table)
+
+    volatility_plot = volatility(metadata=metadata, state_column=state_column,
+                                 individual_id_column=individual_id_column,
+                                 default_group_column=None,
+                                 default_metric=None, table=filtered_table,
+                                 yscale='linear')
+
+    return y_pred, importances, filtered_table, volatility_plot

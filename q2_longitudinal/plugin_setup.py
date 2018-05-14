@@ -9,8 +9,8 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Citations)
-from q2_types.feature_table import FeatureTable, RelativeFrequency
+                           Citations, Visualization)
+from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
@@ -19,9 +19,11 @@ from q2_sample_classifier import Importance
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects, volatility,
-                            plot_feature_volatility, nmit,
-                            first_differences, first_distances)
+                            linear_mixed_effects, volatility, nmit,
+                            first_differences, first_distances,
+                            feature_volatility, plot_feature_volatility)
+from q2_sample_classifier.plugin_setup import (
+    parameters, parameter_descriptions, outputs, output_descriptions)
 import q2_longitudinal
 
 
@@ -399,5 +401,49 @@ plugin.methods.register_function(
         'groups of subjects. Also supports distance from baseline (or '
         'other static comparison state) by setting the "baseline" parameter.')
 )
+
+
+plugin.pipelines.register_function(
+    function=feature_volatility,
+    inputs={'table': FeatureTable[Frequency]},
+    parameters={
+        'metadata': Metadata,
+        **shared_parameters,
+        'state_column': miscellaneous_parameters['state_column'],
+        **parameters['base'],
+        **parameters['cv'],
+        **parameters['regressor'],
+        'estimator': Str % Choices(
+            ['RandomForestRegressor', 'ExtraTreesRegressor',
+             'GradientBoostingRegressor', 'AdaBoostRegressor', 'ElasticNet',
+             'Ridge', 'Lasso', 'KNeighborsRegressor', 'LinearSVR', 'SVR'])},
+    outputs=outputs + [('filtered_table', FeatureTable[RelativeFrequency]),
+                       ('volatility_plot', Visualization)],
+    input_descriptions={'table': ('Feature table containing all features that '
+                                  'should be used for target prediction.')},
+    parameter_descriptions={
+        'metadata': 'Sample metadata containing state_column, '
+                    'individual_id_column, and other metadata for use in '
+                    'volatility plots.',
+        **shared_parameter_descriptions,
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
+        **parameter_descriptions['base'],
+        **parameter_descriptions['cv'],
+        **parameter_descriptions['regressor'],
+        **parameter_descriptions['estimator']},
+    output_descriptions={
+        **output_descriptions,
+        'filtered_table': 'Feature table containing only important features.',
+        'volatility_plot': 'Interactive volatility plot visualization.'},
+    name=('Plot longitudinal abundance of supervised regression important '
+          'features.'),
+    description=(
+        'Uses supervised regression to select the most important features '
+        'that are predictive of the continuous metadata values in '
+        'state_column. These features are plotted in an interactive '
+        'volatility visualization to view their longitudinal abundance in '
+        'groups and in individual subjects.')
+)
+
 
 importlib.import_module('q2_longitudinal._transformer')
