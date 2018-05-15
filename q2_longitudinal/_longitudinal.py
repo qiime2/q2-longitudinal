@@ -407,11 +407,15 @@ def feature_volatility(ctx, table, metadata, state_column,
     relative = ctx.get_action('feature_table', 'relative_frequency')
     volatility = ctx.get_action('longitudinal', 'volatility')
 
+    # this validation must be tested here ahead of supervised regression
+    states = metadata.get_column(state_column)
+    if not isinstance(states, qiime2.NumericMetadataColumn):
+        raise TypeError('state_column must be numeric.')
+
     y_pred, importances = regress(
-        table, metadata=metadata.get_column(state_column),
-        cv=cv, random_state=random_state, n_jobs=n_jobs,
-        n_estimators=n_estimators, estimator=estimator, stratify=stratify,
-        parameter_tuning=parameter_tuning)
+        table, metadata=states, cv=cv, random_state=random_state,
+        n_jobs=n_jobs, n_estimators=n_estimators, estimator=estimator,
+        stratify=stratify, parameter_tuning=parameter_tuning)
 
     # filter table and convert to relative frequency
     filtered_table, = filter_tab(table=table,

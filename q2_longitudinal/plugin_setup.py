@@ -426,7 +426,9 @@ plugin.pipelines.register_function(
                     'individual_id_column, and other metadata for use in '
                     'volatility plots.',
         **shared_parameter_descriptions,
-        'state_column': miscellaneous_parameter_descriptions['state_column'],
+        'state_column': 'Metadata containing collection time (state) values '
+                        'for each sample. Must contain exclusively numeric '
+                        'values.',
         **parameter_descriptions['base'],
         **parameter_descriptions['cv'],
         **parameter_descriptions['regressor'],

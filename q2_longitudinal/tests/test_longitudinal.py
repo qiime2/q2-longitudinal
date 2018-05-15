@@ -17,6 +17,7 @@ import pandas.util.testing as pdt
 import skbio
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
+from qiime2.plugins import longitudinal
 
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
@@ -29,7 +30,8 @@ from q2_longitudinal._utilities import (
     _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit, first_differences, first_distances, plot_feature_volatility)
+    nmit, first_differences, first_distances, feature_volatility,
+    plot_feature_volatility)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
@@ -161,6 +163,33 @@ class TestUtilities(TestPluginBase):
         erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
         with self.assertRaisesRegex(ValueError, "is not a numeric"):
             _validate_is_numeric_column(erroneous_metadata, 'a')
+
+
+class TestLongitudinalPipelines(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+
+        self.md_ecam_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_map_maturity.txt'))
+        table_fp = self.get_data_path('ecam-table-maturity.qza')
+        self.table_ecam_fp = qiime2.Artifact.load(table_fp)
+
+    # just test that the plugin works. Individual commands are tested more
+    # thoroughly elsewhere.
+    def test_feature_volatility(self):
+        longitudinal.actions.feature_volatility(
+            table=self.table_ecam_fp, metadata=self.md_ecam_fp,
+            state_column='month', individual_id_column='studyid')
+
+    # test state_column validation. Other validations are tested in individual
+    # actions.
+    def test_feature_volatility_invalid_state_column(self):
+        with self.assertRaisesRegex(TypeError, 'must be numeric'):
+            longitudinal.actions.feature_volatility(
+                table=self.table_ecam_fp, metadata=self.md_ecam_fp,
+                state_column='diet', individual_id_column='studyid')
 
 
 # This test class really just makes sure that each plugin runs without error.
