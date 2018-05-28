@@ -15,6 +15,6 @@ month:delivery[T.Vaginal]:diet[T.fd]	-0.992	1.263	-0.7859999999999999	0.43200000
 month:delivery[T.Vaginal]:antiexposedall[T.y]	-1.969	0.9	-2.188	0.028999999999999998	-3.733	-0.205
 month:diet[T.fd]:antiexposedall[T.y]	-1.505	1.415	-1.063	0.28800000000000003	-4.279	1.2690000000000001
 month:delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	3.41	2.041	1.671	0.095	-0.591	7.41
-Intercept RE	71.333	1.63				
-Intercept RE x month RE	-8.013	0.19399999999999998				
-month RE	1.39	0.028999999999999998				
+Group Var	71.333	1.63				
+Group x month Cov	-8.013	0.19399999999999998				
+month Var	1.39	0.028999999999999998				

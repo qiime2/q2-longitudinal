@@ -15,4 +15,4 @@ month:delivery[T.Vaginal]:diet[T.fd]	-0.183	0.6459999999999999	-0.284	0.777	-1.4
 month:delivery[T.Vaginal]:antiexposedall[T.y]	-0.779	0.551	-1.415	0.157	-1.859	0.3
 month:diet[T.fd]:antiexposedall[T.y]	-0.669	1.041	-0.642	0.521	-2.7089999999999996	1.3719999999999999
 month:delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	2.371	1.556	1.524	0.128	-0.6779999999999999	5.42
-groups RE	48.653999999999996	0.8390000000000001				
+Group Var	48.653999999999996	0.8390000000000001				
