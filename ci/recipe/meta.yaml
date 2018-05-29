@@ -23,7 +23,7 @@ requirements:
     - numpy
     - pandas
     - scipy
-    - statsmodels
+    - statsmodels >=0.9.0
     - patsy
     - scikit-bio
     - seaborn
