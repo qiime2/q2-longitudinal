@@ -153,13 +153,21 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     _validate_is_numeric_column(metadata, state_column)
 
     # Generate LME model summary
-    model_summary, model_results = _linear_effects(
+    model_summary, model_results, model_fit = _linear_effects(
         metadata, metric, state_column, group_columns,
         individual_id_column, random_effects=random_effects)
 
     # Plot dependent variable as function of independent variables
     g = _regplot_subplots_from_dataframe(
         state_column, metric, metadata, group_columns, lowess=lowess,
+        ci=ci, palette=palette)
+
+    # Plot fit vs. residuals
+    metadata['residual'] = model_fit.resid
+    predicted = 'predicted {0}'.format(metric)
+    metadata[predicted] = model_fit.predict()
+    res = _regplot_subplots_from_dataframe(
+        predicted, 'residual', metadata, group_columns, lowess=lowess,
         ci=ci, palette=palette)
 
     # summarize parameters and visualize
@@ -175,7 +183,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     _visualize(output_dir, model_summary=model_summary,
                model_results=model_results, plot=g, summary=summary,
                raw_data=raw_data,
-               plot_name='Regression scatterplots')
+               plot_name='Regression scatterplots', residuals=res)
 
 
 def volatility(output_dir: str, metadata: qiime2.Metadata,

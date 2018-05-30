@@ -363,7 +363,7 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         index=list(model_summary[0].values) + list(model_summary[2].values),
         name='model summary').to_frame()
 
-    return model_summary, model_results
+    return model_summary, model_results, model_fit
 
 
 def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
@@ -453,6 +453,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                paired_difference_tests=False, plot=False, summary=False,
                errors=False, model_summary=False, model_results=False,
                raw_data=False, plot_name='Pairwise difference boxplot',
+               residuals=False,
                pairwise_test_name='Pairwise group comparison tests'):
 
     pd.set_option('display.max_colwidth', -1)
@@ -492,6 +493,12 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
     if plot is not False:
         plot.savefig(os.path.join(output_dir, 'plot.png'), bbox_inches='tight')
         plot.savefig(os.path.join(output_dir, 'plot.pdf'), bbox_inches='tight')
+
+    if residuals is not False:
+        residuals.savefig(
+            os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
+        residuals.savefig(
+            os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
         plt.close('all')
 
     index = os.path.join(TEMPLATES, 'index.html')
@@ -504,6 +511,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         'pairwise_tests': pairwise_tests,
         'paired_difference_tests': paired_difference_tests,
         'plot': plot,
+        'residuals': residuals,
         'plot_name': plot_name,
         'raw_data': raw_data,
         'pairwise_test_name': pairwise_test_name,
