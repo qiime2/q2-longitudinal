@@ -14,6 +14,7 @@ import pandas as pd
 import skbio
 import qiime2
 import q2templates
+import warnings
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -170,6 +171,15 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
         predicted, 'residual', metadata, group_columns, lowess=lowess,
         ci=ci, palette=palette)
 
+    # add predicted/residual values to "raw" data just for fun
+    raw_data_columns.extend([predicted, 'residual'])
+
+    # if the name of predicted/residual is already in metadata, warn users that
+    # predicted column is overwritten in the viz raw data download
+    for term in [predicted, 'residual']:
+        if term in metadata.columns:
+            _warn_column_name_exists(predicted)
+
     # summarize parameters and visualize
     summary = pd.Series(
         [metric, group_columns, state_column,
@@ -184,6 +194,16 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                model_results=model_results, plot=g, summary=summary,
                raw_data=raw_data,
                plot_name='Regression scatterplots', residuals=res)
+
+
+def _warn_column_name_exists(column_name):
+    warning = (
+        'This is only a warning, and the results of this action are still '
+        'valid. The column name "{0}" already exists in your metadata file. '
+        'Any "raw" metadata that can be downloaded from the resulting '
+        'visualization will contain overwritten values for this metadata '
+        'column, not the original values.'.format(column_name))
+    warnings.warn(warning, UserWarning)
 
 
 def volatility(output_dir: str, metadata: qiime2.Metadata,
