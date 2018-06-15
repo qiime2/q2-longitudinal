@@ -428,4 +428,4 @@ def feature_volatility(ctx, table, metadata, state_column,
                                   default_metric=None, table=filtered_table,
                                   yscale='linear')
 
-    return filtered_table, importances, volatility_plot
+    return filtered_table, importances.feature_importance, volatility_plot
