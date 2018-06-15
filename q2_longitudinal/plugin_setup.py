@@ -14,7 +14,10 @@ from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
+<<<<<<< HEAD
 from q2_sample_classifier import Importance
+=======
+>>>>>>> switched to cv
 
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
@@ -23,7 +26,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             first_differences, first_distances,
                             feature_volatility, plot_feature_volatility)
 from q2_sample_classifier.plugin_setup import (
-    parameters, parameter_descriptions, outputs, output_descriptions)
+    parameters, parameter_descriptions, Importance, output_descriptions)
 import q2_longitudinal
 
 
@@ -412,13 +415,13 @@ plugin.pipelines.register_function(
         'state_column': miscellaneous_parameters['state_column'],
         **parameters['base'],
         **parameters['cv'],
-        **parameters['regressor'],
         'estimator': Str % Choices(
             ['RandomForestRegressor', 'ExtraTreesRegressor',
              'GradientBoostingRegressor', 'AdaBoostRegressor', 'ElasticNet',
              'Ridge', 'Lasso', 'KNeighborsRegressor', 'LinearSVR', 'SVR'])},
-    outputs=outputs + [('filtered_table', FeatureTable[RelativeFrequency]),
-                       ('volatility_plot', Visualization)],
+    outputs=[('filtered_table', FeatureTable[RelativeFrequency]),
+             ('feature_importance', FeatureData[Importance]),
+             ('volatility_plot', Visualization)],
     input_descriptions={'table': ('Feature table containing all features that '
                                   'should be used for target prediction.')},
     parameter_descriptions={
@@ -431,11 +434,10 @@ plugin.pipelines.register_function(
                         'values.',
         **parameter_descriptions['base'],
         **parameter_descriptions['cv'],
-        **parameter_descriptions['regressor'],
         **parameter_descriptions['estimator']},
     output_descriptions={
-        **output_descriptions,
         'filtered_table': 'Feature table containing only important features.',
+        'feature_importance': output_descriptions['feature_importance'],
         'volatility_plot': 'Interactive volatility plot visualization.'},
     name=('Plot longitudinal abundance of supervised regression important '
           'features.'),

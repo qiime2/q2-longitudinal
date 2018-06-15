@@ -181,7 +181,8 @@ class TestLongitudinalPipelines(TestPluginBase):
     def test_feature_volatility(self):
         longitudinal.actions.feature_volatility(
             table=self.table_ecam_fp, metadata=self.md_ecam_fp,
-            state_column='month', individual_id_column='studyid')
+            state_column='month', individual_id_column='studyid',
+            n_estimators=10)
 
     # test state_column validation. Other validations are tested in individual
     # actions.
@@ -189,7 +190,8 @@ class TestLongitudinalPipelines(TestPluginBase):
         with self.assertRaisesRegex(TypeError, 'must be numeric'):
             longitudinal.actions.feature_volatility(
                 table=self.table_ecam_fp, metadata=self.md_ecam_fp,
-                state_column='diet', individual_id_column='studyid')
+                state_column='diet', individual_id_column='studyid',
+                n_estimators=10)
 
 
 # This test class really just makes sure that each plugin runs without error.

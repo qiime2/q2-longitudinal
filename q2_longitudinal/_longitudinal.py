@@ -401,8 +401,8 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
 def feature_volatility(ctx, table, metadata, state_column,
                        individual_id_column, cv=5, random_state=None, n_jobs=1,
                        n_estimators=100, estimator='RandomForestRegressor',
-                       stratify=False, parameter_tuning=False):
-    regress = ctx.get_action('sample_classifier', 'regress_samples_ncv')
+                       parameter_tuning=False):
+    regress = ctx.get_action('sample_classifier', 'fit_regressor')
     filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
     volatility = ctx.get_action('longitudinal', 'volatility')
@@ -412,14 +412,14 @@ def feature_volatility(ctx, table, metadata, state_column,
     if not isinstance(states, qiime2.NumericMetadataColumn):
         raise TypeError('state_column must be numeric.')
 
-    y_pred, importances = regress(
+    importances = regress(
         table, metadata=states, cv=cv, random_state=random_state,
         n_jobs=n_jobs, n_estimators=n_estimators, estimator=estimator,
-        stratify=stratify, parameter_tuning=parameter_tuning)
+        parameter_tuning=parameter_tuning, optimize_feature_selection=True)
 
-    # filter table and convert to relative frequency
-    filtered_table, = filter_tab(table=table,
-                                 metadata=importances.view(qiime2.Metadata))
+    # filter table to important features and convert to relative frequency
+    feature_md = importances.feature_importance.view(qiime2.Metadata)
+    filtered_table, = filter_tab(table=table, metadata=feature_md)
     filtered_table, = relative(table=filtered_table)
 
     volatility_plot, = volatility(metadata=metadata, state_column=state_column,
@@ -428,4 +428,4 @@ def feature_volatility(ctx, table, metadata, state_column,
                                   default_metric=None, table=filtered_table,
                                   yscale='linear')
 
-    return y_pred, importances, filtered_table, volatility_plot
+    return filtered_table, importances, volatility_plot
