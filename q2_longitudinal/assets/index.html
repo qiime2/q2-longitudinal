@@ -29,7 +29,7 @@
   <div class="col-lg-12">
     {{ summary }}
     {% if model_summary %}
-    <h2>Model summary</h1>
+    <h2>Model summary</h2>
     <div class="text-center">
       <div class="col-lg-12">
         {{ model_summary }}
@@ -40,7 +40,7 @@
     </div>
     {% endif %}
     {% if model_results %}
-    <h2>Model results</h1>
+    <h2>Model results</h2>
     <div class="text-center">
       <div class="col-lg-12">
         {{ model_results }}
@@ -51,7 +51,7 @@
     </div>
     {% endif %}
     {% if plot %}
-    <h2>{{ plot_name }}</h1>
+    <h2>{{ plot_name }}</h2>
     <div class="text-center">
       <a href="plot.pdf">
         <img src="plot.png">
@@ -70,8 +70,21 @@
       {% endif %}
     </div>
     {% endif %}
+    {% if residuals %}
+    <h2>Projected Residuals</h2>
+    <p>Fit values for metric vs. observation error (residuals). Residuals
+    should be roughly zero-centered and normal. Uncentered, systematically
+    high or low, and autocorrelated values could indicate a poor model.</p>
+    <div class="text-center">
+      <a href="residuals.pdf">
+        <img src="residuals.png">
+        <br>
+        <p>Download as PDF</p>
+      </a>
+    </div>
+    {% endif %}
     {% if paired_difference_tests %}
-    <h2>Pairwise difference tests</h1>
+    <h2>Pairwise difference tests</h2>
     <div class="col-lg-12">
       {{ paired_difference_tests }}
       <a href="paired_difference_tests.tsv">
@@ -80,13 +93,13 @@
     </div>
     {% endif %}
     {% if multiple_group_test %}
-    <h2>Multiple group tests</h1>
+    <h2>Multiple group tests</h2>
     <div class="col-lg-12">
       {{ multiple_group_test }}
     </div>
     {% endif %}
     {% if pairwise_tests %}
-    <h2>{{ pairwise_test_name }}</h1>
+    <h2>{{ pairwise_test_name }}</h2>
     <div class="col-lg-12">
       {{ pairwise_tests }}
       <a href="pairwise_tests.tsv">
