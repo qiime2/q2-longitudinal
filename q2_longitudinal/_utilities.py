@@ -329,13 +329,19 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         random_effects = None
 
     # semicolon-delimited taxonomies cause an error; copy to new metric column
-    if ';' in metric:
+    # also starting numeral (e.g., in feature name) causes error:
+    # https://github.com/qiime2/q2-longitudinal/issues/101
+    if ';' in metric or metric[0].isdigit():
         # generate random column name but remove hyphens (patsy error)
         # and prepend word character (otherwise patsy splits strings starting
         # with numeral!)
         new_metric = 'f' + _generate_column_name(metadata).replace("-", "")
         metadata[new_metric] = metadata[metric]
+        # store original metric name to report in viz later
+        old_metric = metric
         metric = new_metric
+    else:
+        old_metric = None
 
     # format formula
     formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
@@ -362,6 +368,10 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         data=list(model_summary[1].values) + list(model_summary[3].values),
         index=list(model_summary[0].values) + list(model_summary[2].values),
         name='model summary').to_frame()
+
+    # fix dependent variable name if it was renamed to avoid patsy error
+    if old_metric is not None:
+        model_summary.loc['Dependent Variable:', 'model summary'] = old_metric
 
     return model_summary, model_results, model_fit
 

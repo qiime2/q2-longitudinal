@@ -345,6 +345,15 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
+    # just make sure this runs with metric name beginning with numeral
+    def test_linear_mixed_effects_taxa_dodge_patsy_error(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=self.table_ecam_fp,
+            metadata=self.md_ecam_fp, state_column='month',
+            group_columns='delivery',
+            individual_id_column='studyid',
+            metric='74923f4bbde849e27fc4eda25d757e2a')
+
     def test_volatility(self):
         # Just a simple "does it run?" test. Not much worth testing in terms
         # of the rendered output - vega does all the heavy lifting for us.
