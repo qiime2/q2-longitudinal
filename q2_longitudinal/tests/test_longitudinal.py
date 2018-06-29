@@ -361,6 +361,12 @@ class TestLongitudinal(TestPluginBase):
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             state_column='month', individual_id_column='studyid')
 
+    def test_volatility_no_individual_id_column(self):
+        # Just a simple "does it run?" test.
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            state_column='month')
+
     def test_volatility_metric_and_group(self):
         # Just a simple "does it run?" test. Not much worth testing in terms
         # of the rendered output - vega does all the heavy lifting for us.

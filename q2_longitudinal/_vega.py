@@ -36,13 +36,632 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                    "data('globalVals')[0].maxY)]")
 
     # These templates customize the tooltips
-    spaghetti_signal = ('{"title": "spaghetti", "individual_id": datum["%s"],'
-                        ' "group": datum.groupByVal, "state": datum["%s"],'
-                        ' "metric": datum.metricVal}' % (individual_id, state))
     mean_signal = ('{"title": "group mean", "group": datum.groupByVal,'
                    ' "state": datum["%s"], "count": datum.count,'
                    ' "mean": datum.mean, "ci0": datum.ci0, "ci1": datum.ci1}'
                    % state)
+
+    marks = [
+        {
+            'type': 'rule',
+            'from': {
+                'data': 'globalVals',
+            },
+            'encode': {
+                'update': {
+                    'strokeWidth': {
+                        'value': 2,
+                    },
+                    'x': {
+                        'scale': 'x',
+                        'field': 'minX',
+                    },
+                    'x2': {
+                        'scale': 'x',
+                        'field': 'maxX',
+                    },
+                    'y': {
+                        'scale': 'y',
+                        'field': 'mean',
+                    },
+                    'strokeOpacity': [
+                        {
+                            'test': 'showGlobalMean',
+                            'value': 1.0,
+                        },
+                        {
+                            'value': 0.0,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            'type': 'rule',
+            'from': {
+                'data': 'globalVals',
+            },
+            'encode': {
+                'update': {
+                    'strokeWidth': {
+                        'value': 2,
+                    },
+                    'strokeDash': {
+                        'value': [8, 8],
+                    },
+                    'x': {
+                        'scale': 'x',
+                        'field': 'minX',
+                    },
+                    'x2': {
+                        'scale': 'x',
+                        'field': 'maxX',
+                    },
+                    'y': {
+                        'scale': 'y',
+                        'field': 'cl0',
+                    },
+                    'strokeOpacity': [
+                        {
+                            'test': 'showGlobalControlLimits',
+                            'value': 1.0,
+                        },
+                        {
+                            'value': 0.0,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            'type': 'rule',
+            'from': {
+                'data': 'globalVals',
+            },
+            'encode': {
+                'update': {
+                    'strokeWidth': {
+                        'value': 2,
+                    },
+                    'strokeDash': {
+                        'value': [6, 2],
+                    },
+                    'x': {
+                        'scale': 'x',
+                        'field': 'minX',
+                    },
+                    'x2': {
+                        'scale': 'x',
+                        'field': 'maxX',
+                    },
+                    'y': {
+                        'scale': 'y',
+                        'field': 'cl1',
+                    },
+                    'strokeOpacity': [
+                        {
+                            'test': 'showGlobalControlLimits',
+                            'value': 1.0,
+                        },
+                        {
+                            'value': 0.0,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            'type': 'rule',
+            'from': {
+                'data': 'globalVals',
+            },
+            'encode': {
+                'update': {
+                    'strokeWidth': {
+                        'value': 2,
+                    },
+                    'strokeDash': {
+                        'value': [6, 2],
+                    },
+                    'x': {
+                        'scale': 'x',
+                        'field': 'minX',
+                    },
+                    'x2': {
+                        'scale': 'x',
+                        'field': 'maxX',
+                    },
+                    'y': {
+                        'scale': 'y',
+                        'field': 'cl2',
+                    },
+                    'strokeOpacity': [
+                        {
+                            'test': 'showGlobalControlLimits',
+                            'value': 1.0,
+                        },
+                        {
+                            'value': 0.0,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            'type': 'rule',
+            'from': {
+                'data': 'globalVals',
+            },
+            'encode': {
+                'update': {
+                    'strokeWidth': {
+                        'value': 2,
+                    },
+                    'strokeDash': {
+                        'value': [8, 8],
+                    },
+                    'x': {
+                        'scale': 'x',
+                        'field': 'minX',
+                    },
+                    'x2': {
+                        'scale': 'x',
+                        'field': 'maxX',
+                    },
+                    'y': {
+                        'scale': 'y',
+                        'field': 'cl3',
+                    },
+                    'strokeOpacity': [
+                        {
+                            'test': 'showGlobalControlLimits',
+                            'value': 1.0,
+                        },
+                        {
+                            'value': 0.0,
+                        },
+                    ],
+                },
+            },
+        },
+        {
+            'type': 'group',
+            'from': {
+                'facet': {
+                    'name': 'series',
+                    'data': 'aggBy',
+                    'groupby': 'groupByVal',
+                },
+            },
+            'marks': [
+                {
+                    'type': 'line',
+                    'from': {
+                        'data': 'series',
+                    },
+                    'sort': {
+                        'field': 'datum.%s' % state,
+                        'order': 'ascending',
+                    },
+                    'encode': {
+                        'update': {
+                            'x': {
+                                'scale': 'x',
+                                'field': state,
+                            },
+                            'y': {
+                                'scale': 'y',
+                                'field': 'mean',
+                            },
+                            'stroke': {
+                                'scale': 'color',
+                                'field': 'groupByVal',
+                            },
+                            'strokeWidth': {
+                                'signal': 'meanLineThickness',
+                            },
+                            'opacity': [
+                                {
+                                    'test': group_test,
+                                    'signal': 'meanLineOpacity',
+                                },
+                                {
+                                    'value': 0.0,
+                                },
+                            ],
+                        },
+                    },
+                },
+                # Need to add symbols into plot for mouseover
+                # https://github.com/vega/vega-tooltip/issues/120
+                {
+                    'type': 'symbol',
+                    'from': {
+                        'data': 'series',
+                    },
+                    'encode': {
+                        'update': {
+                            'tooltip': {
+                                'signal': mean_signal,
+                            },
+                            'x': {
+                                'scale': 'x',
+                                'field': state,
+                            },
+                            'y': {
+                                'scale': 'y',
+                                'field': 'mean',
+                            },
+                            'stroke': {
+                                'scale': 'color',
+                                'field': 'groupByVal',
+                            },
+                            'fill': {
+                                'scale': 'color',
+                                'field': 'groupByVal',
+                            },
+                            'size': {
+                                'signal': 'meanSymbolSize',
+                            },
+                            'opacity': [
+                                {
+                                    'test': group_test,
+                                    'signal': 'meanSymbolOpacity',
+                                },
+                                {
+                                    'value': 0.0,
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    'type': 'rect',
+                    'from': {
+                        'data': 'series',
+                    },
+                    'encode': {
+                        'update': {
+                            'width': {
+                                'value': 2.0,
+                            },
+                            'x': {
+                                'scale': 'x',
+                                'field': state,
+                                'band': 0.5,
+                            },
+                            'y': {
+                                'scale': 'y',
+                                'field': 'ci0',
+                            },
+                            'y2': {
+                                'scale': 'y',
+                                'field': 'ci1',
+                            },
+                            'fill': {
+                                'scale': 'color',
+                                'field': 'groupByVal',
+                            },
+                            'opacity': [
+                                {
+                                    'test': error_bar_test,
+                                    'value': 1.0,
+                                },
+                                {
+                                    'value': 0.0,
+                                },
+                            ],
+                        },
+                    },
+                },
+            ],
+        },
+    ]
+
+    signals = [
+        {
+            'name': 'grouper',
+            'value': default_group,
+            'bind': {
+                'input': 'select',
+                'element': '#group-column',
+                'options': group_columns,
+            }
+        },
+        {
+            'name': 'metric',
+            'value': default_metric,
+            'bind': {
+                'input': 'select',
+                'element': '#metric-column',
+                'options': metric_columns,
+            },
+        },
+        {
+            'name': 'width',
+            'value': '',
+            'bind': {
+                'input': 'text',
+            },
+            'on': [
+                {
+                    'events': {
+                        'source': 'window',
+                        'type': 'resize',
+                    },
+                    'update': 'containerSize()[0]',
+                },
+            ],
+        },
+        {
+            'name': 'showErrorBars',
+            'value': False,
+            'bind': {
+                'input': 'checkbox',
+                'element': '#toggle-error-bars',
+            },
+        },
+        {
+            'name': 'showGlobalMean',
+            'value': False,
+            'bind': {
+                'input': 'checkbox',
+                'element': '#toggle-global-mean',
+            },
+        },
+        {
+            'name': 'showGlobalControlLimits',
+            'value': False,
+            'bind': {
+                'input': 'checkbox',
+                'element': '#toggle-global-control-limits',
+            },
+        },
+        {
+            'name': 'meanLineThickness',
+            'value': 3,
+            'bind': {
+                'input': 'range',
+                'min': 0.1,
+                'max': 10,
+                'step': 0.1,
+                'element': '#mean-line-thickness',
+            },
+        },
+        {
+            'name': 'meanLineOpacity',
+            'value': 1.0,
+            'bind': {
+                'input': 'range',
+                'min': 0.0,
+                'max': 1.0,
+                'step': 0.01,
+                'element': '#mean-line-opacity',
+            },
+        },
+        {
+            'name': 'meanSymbolSize',
+            'value': 50.0,
+            'bind': {
+                'input': 'range',
+                'min': 0.0,
+                'max': 500.0,
+                'step': 1.0,
+                'element': '#mean-symbol-size',
+            },
+        },
+        {
+            'name': 'meanSymbolOpacity',
+            'value': 0.0,
+            'bind': {
+                'input': 'range',
+                'min': 0.0,
+                'max': 1.0,
+                'step': 0.01,
+                'element': '#mean-symbol-opacity',
+            },
+        },
+        {
+            'name': 'colorScheme',
+            'value': 'category10',
+            'bind': {
+                'input': 'select',
+                'element': '#color-scheme',
+                'options': [
+                    'accent',
+                    'category10',
+                    'category20',
+                    'category20b',
+                    'category20c',
+                    'dark2',
+                    'paired',
+                    'pastel1',
+                    'pastel2',
+                    'set1',
+                    'set2',
+                    'set3',
+                    'tableau10',
+                    'tableau20',
+                ],
+            }
+        },
+        {
+            'name': 'clear',
+            'value': True,
+            'on': [
+                {
+                    'events': 'mouseup[!event.item]',
+                    'update': 'true',
+                    'force': True,
+                },
+            ],
+        },
+        {
+            'name': 'shift',
+            'value': False,
+            'on': [
+                {
+                    'events': '@legendSymbol:click, @legendLabel:click',
+                    'update': 'event.shiftKey',
+                    'force': True,
+                },
+            ],
+        },
+        {
+            'name': 'clicked',
+            'value': None,
+            'on': [
+                {
+                    'events': '@legendSymbol:click, @legendLabel:click',
+                    'update': '{value: datum.value}',
+                    'force': True,
+                },
+            ],
+        }]
+
+    if individual_id:
+        spaghetti_signal = ('{"title": "spaghetti", "individual_id": '
+                            'datum["%s"], "group": datum.groupByVal, "state": '
+                            'datum["%s"], "metric": datum.metricVal}' %
+                            (individual_id, state))
+        marks.append({
+                'type': 'group',
+                'from': {
+                    'facet': {
+                        'name': 'spaghettis',
+                        'data': 'individual',
+                        'groupby': individual_id,
+                    },
+                },
+                'marks': [
+                    {
+                        'type': 'line',
+                        'from': {
+                            'data': 'spaghettis',
+                        },
+                        'sort': {
+                            'field': 'datum.%s' % state,
+                            'order': 'ascending',
+                        },
+                        'encode': {
+                            'update': {
+                                'strokeWidth': {
+                                    'signal': 'spaghettiLineThickness',
+                                },
+                                'x': {
+                                    'scale': 'x',
+                                    'field': state,
+                                },
+                                'y': {
+                                    'scale': 'y',
+                                    'field': metric_signal,
+                                },
+                                'stroke': {
+                                    'scale': 'color',
+                                    'field': group_signal,
+                                },
+                                'opacity': [
+                                    {
+                                        'test': group_test,
+                                        'signal': 'spaghettiLineOpacity',
+                                    },
+                                    {
+                                        'value': 0.0,
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    # Need to add symbols into plot for mouseover
+                    # https://github.com/vega/vega-tooltip/issues/120
+                    {
+                        'type': 'symbol',
+                        'from': {
+                            'data': 'spaghettis',
+                        },
+                        'encode': {
+                            'update': {
+                                'tooltip': {
+                                    'signal': spaghetti_signal,
+                                },
+                                'size': {
+                                    'signal': 'spaghettiSymbolSize',
+                                },
+                                'x': {
+                                    'scale': 'x',
+                                    'field': state,
+                                },
+                                'y': {
+                                    'scale': 'y',
+                                    'field': metric_signal,
+                                },
+                                'stroke': {
+                                    'scale': 'color',
+                                    'field': group_signal,
+                                },
+                                'fill': {
+                                    'scale': 'color',
+                                    'field': group_signal,
+                                },
+                                'opacity': [
+                                    {
+                                        'test': group_test,
+                                        'signal': 'spaghettiSymbolOpacity',
+                                    },
+                                    {
+                                        'value': 0.0,
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                ],
+            })
+        signals.extend([
+            {
+                'name': 'spaghettiLineThickness',
+                'value': 0.5,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.1,
+                    'max': 10,
+                    'step': 0.1,
+                    'element': '#spaghetti-line-thickness',
+                },
+            },
+            {
+                'name': 'spaghettiLineOpacity',
+                'value': 0.5,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#spaghetti-line-opacity',
+                },
+            },
+            {
+                'name': 'spaghettiSymbolSize',
+                'value': 50.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 500.0,
+                    'step': 1.0,
+                    'element': '#spaghetti-symbol-size',
+                },
+            },
+            {
+                'name': 'spaghettiSymbolOpacity',
+                'value': 0.0,
+                'bind': {
+                    'input': 'range',
+                    'min': 0.0,
+                    'max': 1.0,
+                    'step': 0.01,
+                    'element': '#spaghetti-symbol-opacity',
+                },
+            }])
 
     # This looks weird, but the idea is to render a unique string into the JSON
     # spec, that way later on when we render the datatable to JSON, we can
@@ -67,211 +686,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
         # Vega Editor.
         'width': 800,
         'height': 400,
-        'signals': [
-            {
-                'name': 'grouper',
-                'value': default_group,
-                'bind': {
-                    'input': 'select',
-                    'element': '#group-column',
-                    'options': group_columns,
-                }
-            },
-            {
-                'name': 'metric',
-                'value': default_metric,
-                'bind': {
-                    'input': 'select',
-                    'element': '#metric-column',
-                    'options': metric_columns,
-                },
-            },
-            {
-                'name': 'width',
-                'value': '',
-                'bind': {
-                    'input': 'text',
-                },
-                'on': [
-                    {
-                        'events': {
-                            'source': 'window',
-                            'type': 'resize',
-                        },
-                        'update': 'containerSize()[0]',
-                    },
-                ],
-            },
-            {
-                'name': 'showErrorBars',
-                'value': False,
-                'bind': {
-                    'input': 'checkbox',
-                    'element': '#toggle-error-bars',
-                },
-            },
-            {
-                'name': 'showGlobalMean',
-                'value': False,
-                'bind': {
-                    'input': 'checkbox',
-                    'element': '#toggle-global-mean',
-                },
-            },
-            {
-                'name': 'showGlobalControlLimits',
-                'value': False,
-                'bind': {
-                    'input': 'checkbox',
-                    'element': '#toggle-global-control-limits',
-                },
-            },
-            {
-                'name': 'meanLineThickness',
-                'value': 3,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.1,
-                    'max': 10,
-                    'step': 0.1,
-                    'element': '#mean-line-thickness',
-                },
-            },
-            {
-                'name': 'spaghettiLineThickness',
-                'value': 0.5,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.1,
-                    'max': 10,
-                    'step': 0.1,
-                    'element': '#spaghetti-line-thickness',
-                },
-            },
-            {
-                'name': 'meanLineOpacity',
-                'value': 1.0,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 1.0,
-                    'step': 0.01,
-                    'element': '#mean-line-opacity',
-                },
-            },
-            {
-                'name': 'spaghettiLineOpacity',
-                'value': 0.5,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 1.0,
-                    'step': 0.01,
-                    'element': '#spaghetti-line-opacity',
-                },
-            },
-            {
-                'name': 'meanSymbolSize',
-                'value': 50.0,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 500.0,
-                    'step': 1.0,
-                    'element': '#mean-symbol-size',
-                },
-            },
-            {
-                'name': 'spaghettiSymbolSize',
-                'value': 50.0,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 500.0,
-                    'step': 1.0,
-                    'element': '#spaghetti-symbol-size',
-                },
-            },
-            {
-                'name': 'meanSymbolOpacity',
-                'value': 0.0,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 1.0,
-                    'step': 0.01,
-                    'element': '#mean-symbol-opacity',
-                },
-            },
-            {
-                'name': 'spaghettiSymbolOpacity',
-                'value': 0.0,
-                'bind': {
-                    'input': 'range',
-                    'min': 0.0,
-                    'max': 1.0,
-                    'step': 0.01,
-                    'element': '#spaghetti-symbol-opacity',
-                },
-            },
-            {
-                'name': 'colorScheme',
-                'value': 'category10',
-                'bind': {
-                    'input': 'select',
-                    'element': '#color-scheme',
-                    'options': [
-                        'accent',
-                        'category10',
-                        'category20',
-                        'category20b',
-                        'category20c',
-                        'dark2',
-                        'paired',
-                        'pastel1',
-                        'pastel2',
-                        'set1',
-                        'set2',
-                        'set3',
-                        'tableau10',
-                        'tableau20',
-                    ],
-                }
-            },
-            {
-                'name': 'clear',
-                'value': True,
-                'on': [
-                    {
-                        'events': 'mouseup[!event.item]',
-                        'update': 'true',
-                        'force': True,
-                    },
-                ],
-            },
-            {
-                'name': 'shift',
-                'value': False,
-                'on': [
-                    {
-                        'events': '@legendSymbol:click, @legendLabel:click',
-                        'update': 'event.shiftKey',
-                        'force': True,
-                    },
-                ],
-            },
-            {
-                'name': 'clicked',
-                'value': None,
-                'on': [
-                    {
-                        'events': '@legendSymbol:click, @legendLabel:click',
-                        'update': '{value: datum.value}',
-                        'force': True,
-                    },
-                ],
-            },
-        ],
+        'signals': signals,
         'scales': [
             {
                 'name': 'x',
@@ -370,415 +785,7 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
                 },
             },
         ],
-        'marks': [
-            {
-                'type': 'group',
-                'from': {
-                    'facet': {
-                        'name': 'spaghettis',
-                        'data': 'individual',
-                        'groupby': individual_id,
-                    },
-                },
-                'marks': [
-                    {
-                        'type': 'line',
-                        'from': {
-                            'data': 'spaghettis',
-                        },
-                        'sort': {
-                            'field': 'datum.%s' % state,
-                            'order': 'ascending',
-                        },
-                        'encode': {
-                            'update': {
-                                'strokeWidth': {
-                                    'signal': 'spaghettiLineThickness',
-                                },
-                                'x': {
-                                    'scale': 'x',
-                                    'field': state,
-                                },
-                                'y': {
-                                    'scale': 'y',
-                                    'field': metric_signal,
-                                },
-                                'stroke': {
-                                    'scale': 'color',
-                                    'field': group_signal,
-                                },
-                                'opacity': [
-                                    {
-                                        'test': group_test,
-                                        'signal': 'spaghettiLineOpacity',
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                    # Need to add symbols into plot for mouseover
-                    # https://github.com/vega/vega-tooltip/issues/120
-                    {
-                        'type': 'symbol',
-                        'from': {
-                            'data': 'spaghettis',
-                        },
-                        'encode': {
-                            'update': {
-                                'tooltip': {
-                                    'signal': spaghetti_signal,
-                                },
-                                'size': {
-                                    'signal': 'spaghettiSymbolSize',
-                                },
-                                'x': {
-                                    'scale': 'x',
-                                    'field': state,
-                                },
-                                'y': {
-                                    'scale': 'y',
-                                    'field': metric_signal,
-                                },
-                                'stroke': {
-                                    'scale': 'color',
-                                    'field': group_signal,
-                                },
-                                'fill': {
-                                    'scale': 'color',
-                                    'field': group_signal,
-                                },
-                                'opacity': [
-                                    {
-                                        'test': group_test,
-                                        'signal': 'spaghettiSymbolOpacity',
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                ],
-            },
-            {
-                'type': 'rule',
-                'from': {
-                    'data': 'globalVals',
-                },
-                'encode': {
-                    'update': {
-                        'strokeWidth': {
-                            'value': 2,
-                        },
-                        'x': {
-                            'scale': 'x',
-                            'field': 'minX',
-                        },
-                        'x2': {
-                            'scale': 'x',
-                            'field': 'maxX',
-                        },
-                        'y': {
-                            'scale': 'y',
-                            'field': 'mean',
-                        },
-                        'strokeOpacity': [
-                            {
-                                'test': 'showGlobalMean',
-                                'value': 1.0,
-                            },
-                            {
-                                'value': 0.0,
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                'type': 'rule',
-                'from': {
-                    'data': 'globalVals',
-                },
-                'encode': {
-                    'update': {
-                        'strokeWidth': {
-                            'value': 2,
-                        },
-                        'strokeDash': {
-                            'value': [8, 8],
-                        },
-                        'x': {
-                            'scale': 'x',
-                            'field': 'minX',
-                        },
-                        'x2': {
-                            'scale': 'x',
-                            'field': 'maxX',
-                        },
-                        'y': {
-                            'scale': 'y',
-                            'field': 'cl0',
-                        },
-                        'strokeOpacity': [
-                            {
-                                'test': 'showGlobalControlLimits',
-                                'value': 1.0,
-                            },
-                            {
-                                'value': 0.0,
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                'type': 'rule',
-                'from': {
-                    'data': 'globalVals',
-                },
-                'encode': {
-                    'update': {
-                        'strokeWidth': {
-                            'value': 2,
-                        },
-                        'strokeDash': {
-                            'value': [6, 2],
-                        },
-                        'x': {
-                            'scale': 'x',
-                            'field': 'minX',
-                        },
-                        'x2': {
-                            'scale': 'x',
-                            'field': 'maxX',
-                        },
-                        'y': {
-                            'scale': 'y',
-                            'field': 'cl1',
-                        },
-                        'strokeOpacity': [
-                            {
-                                'test': 'showGlobalControlLimits',
-                                'value': 1.0,
-                            },
-                            {
-                                'value': 0.0,
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                'type': 'rule',
-                'from': {
-                    'data': 'globalVals',
-                },
-                'encode': {
-                    'update': {
-                        'strokeWidth': {
-                            'value': 2,
-                        },
-                        'strokeDash': {
-                            'value': [6, 2],
-                        },
-                        'x': {
-                            'scale': 'x',
-                            'field': 'minX',
-                        },
-                        'x2': {
-                            'scale': 'x',
-                            'field': 'maxX',
-                        },
-                        'y': {
-                            'scale': 'y',
-                            'field': 'cl2',
-                        },
-                        'strokeOpacity': [
-                            {
-                                'test': 'showGlobalControlLimits',
-                                'value': 1.0,
-                            },
-                            {
-                                'value': 0.0,
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                'type': 'rule',
-                'from': {
-                    'data': 'globalVals',
-                },
-                'encode': {
-                    'update': {
-                        'strokeWidth': {
-                            'value': 2,
-                        },
-                        'strokeDash': {
-                            'value': [8, 8],
-                        },
-                        'x': {
-                            'scale': 'x',
-                            'field': 'minX',
-                        },
-                        'x2': {
-                            'scale': 'x',
-                            'field': 'maxX',
-                        },
-                        'y': {
-                            'scale': 'y',
-                            'field': 'cl3',
-                        },
-                        'strokeOpacity': [
-                            {
-                                'test': 'showGlobalControlLimits',
-                                'value': 1.0,
-                            },
-                            {
-                                'value': 0.0,
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                'type': 'group',
-                'from': {
-                    'facet': {
-                        'name': 'series',
-                        'data': 'aggBy',
-                        'groupby': 'groupByVal',
-                    },
-                },
-                'marks': [
-                    {
-                        'type': 'line',
-                        'from': {
-                            'data': 'series',
-                        },
-                        'sort': {
-                            'field': 'datum.%s' % state,
-                            'order': 'ascending',
-                        },
-                        'encode': {
-                            'update': {
-                                'x': {
-                                    'scale': 'x',
-                                    'field': state,
-                                },
-                                'y': {
-                                    'scale': 'y',
-                                    'field': 'mean',
-                                },
-                                'stroke': {
-                                    'scale': 'color',
-                                    'field': 'groupByVal',
-                                },
-                                'strokeWidth': {
-                                    'signal': 'meanLineThickness',
-                                },
-                                'opacity': [
-                                    {
-                                        'test': group_test,
-                                        'signal': 'meanLineOpacity',
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                    # Need to add symbols into plot for mouseover
-                    # https://github.com/vega/vega-tooltip/issues/120
-                    {
-                        'type': 'symbol',
-                        'from': {
-                            'data': 'series',
-                        },
-                        'encode': {
-                            'update': {
-                                'tooltip': {
-                                    'signal': mean_signal,
-                                },
-                                'x': {
-                                    'scale': 'x',
-                                    'field': state,
-                                },
-                                'y': {
-                                    'scale': 'y',
-                                    'field': 'mean',
-                                },
-                                'stroke': {
-                                    'scale': 'color',
-                                    'field': 'groupByVal',
-                                },
-                                'fill': {
-                                    'scale': 'color',
-                                    'field': 'groupByVal',
-                                },
-                                'size': {
-                                    'signal': 'meanSymbolSize',
-                                },
-                                'opacity': [
-                                    {
-                                        'test': group_test,
-                                        'signal': 'meanSymbolOpacity',
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                    {
-                        'type': 'rect',
-                        'from': {
-                            'data': 'series',
-                        },
-                        'encode': {
-                            'update': {
-                                'width': {
-                                    'value': 2.0,
-                                },
-                                'x': {
-                                    'scale': 'x',
-                                    'field': state,
-                                    'band': 0.5,
-                                },
-                                'y': {
-                                    'scale': 'y',
-                                    'field': 'ci0',
-                                },
-                                'y2': {
-                                    'scale': 'y',
-                                    'field': 'ci1',
-                                },
-                                'fill': {
-                                    'scale': 'color',
-                                    'field': 'groupByVal',
-                                },
-                                'opacity': [
-                                    {
-                                        'test': error_bar_test,
-                                        'value': 1.0,
-                                    },
-                                    {
-                                        'value': 0.0,
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                ],
-            },
-        ],
+        'marks': marks,
         'data': [
             {
                 'name': 'individual',
