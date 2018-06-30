@@ -401,7 +401,7 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
 def feature_volatility(ctx, table, metadata, state_column,
                        individual_id_column, cv=5, random_state=None, n_jobs=1,
                        n_estimators=100, estimator='RandomForestRegressor',
-                       parameter_tuning=False):
+                       parameter_tuning=False, missing_samples='error'):
     regress = ctx.get_action('sample_classifier', 'fit_regressor')
     filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
@@ -412,13 +412,14 @@ def feature_volatility(ctx, table, metadata, state_column,
     if not isinstance(states, qiime2.NumericMetadataColumn):
         raise TypeError('state_column must be numeric.')
 
-    importances = regress(
+    estimator, importances = regress(
         table, metadata=states, cv=cv, random_state=random_state,
         n_jobs=n_jobs, n_estimators=n_estimators, estimator=estimator,
-        parameter_tuning=parameter_tuning, optimize_feature_selection=True)
+        parameter_tuning=parameter_tuning, optimize_feature_selection=True,
+        missing_samples=missing_samples)
 
     # filter table to important features and convert to relative frequency
-    feature_md = importances.feature_importance.view(qiime2.Metadata)
+    feature_md = importances.view(qiime2.Metadata)
     filtered_table, = filter_tab(table=table, metadata=feature_md)
     filtered_table, = relative(table=filtered_table)
 
@@ -428,4 +429,4 @@ def feature_volatility(ctx, table, metadata, state_column,
                                   default_metric=None, table=filtered_table,
                                   yscale='linear')
 
-    return filtered_table, importances.feature_importance, volatility_plot
+    return filtered_table, importances, volatility_plot
