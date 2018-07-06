@@ -402,7 +402,7 @@ def feature_volatility(ctx, table, metadata, state_column,
                        individual_id_column, cv=5, random_state=None, n_jobs=1,
                        n_estimators=100, estimator='RandomForestRegressor',
                        parameter_tuning=False, missing_samples='error'):
-    regress = ctx.get_action('sample_classifier', 'fit_regressor')
+    regress = ctx.get_action('sample_classifier', 'regress_samples')
     filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
     volatility = ctx.get_action('longitudinal', 'volatility')
@@ -412,7 +412,7 @@ def feature_volatility(ctx, table, metadata, state_column,
     if not isinstance(states, qiime2.NumericMetadataColumn):
         raise TypeError('state_column must be numeric.')
 
-    estimator, importances = regress(
+    estimator, importances, predictions, summary, accuracy = regress(
         table, metadata=states, cv=cv, random_state=random_state,
         n_jobs=n_jobs, n_estimators=n_estimators, estimator=estimator,
         parameter_tuning=parameter_tuning, optimize_feature_selection=True,
@@ -429,4 +429,4 @@ def feature_volatility(ctx, table, metadata, state_column,
                                   default_metric=None, table=filtered_table,
                                   yscale='linear')
 
-    return filtered_table, importances, volatility_plot
+    return filtered_table, importances, volatility_plot, accuracy, estimator

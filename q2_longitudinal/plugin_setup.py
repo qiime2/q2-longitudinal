@@ -26,7 +26,9 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             first_differences, first_distances,
                             feature_volatility, plot_feature_volatility)
 from q2_sample_classifier.plugin_setup import (
-    parameters, parameter_descriptions, Importance, output_descriptions)
+    parameters, parameter_descriptions, Importance, output_descriptions,
+    pipeline_output_descriptions)
+from q2_sample_classifier._type import SampleEstimator
 import q2_longitudinal
 
 
@@ -421,7 +423,9 @@ plugin.pipelines.register_function(
              'Ridge', 'Lasso', 'KNeighborsRegressor', 'LinearSVR', 'SVR'])},
     outputs=[('filtered_table', FeatureTable[RelativeFrequency]),
              ('feature_importance', FeatureData[Importance]),
-             ('volatility_plot', Visualization)],
+             ('volatility_plot', Visualization),
+             ('accuracy_results', Visualization),
+             ('sample_estimator', SampleEstimator)],
     input_descriptions={'table': ('Feature table containing all features that '
                                   'should be used for target prediction.')},
     parameter_descriptions={
@@ -438,7 +442,9 @@ plugin.pipelines.register_function(
     output_descriptions={
         'filtered_table': 'Feature table containing only important features.',
         'feature_importance': output_descriptions['feature_importance'],
-        'volatility_plot': 'Interactive volatility plot visualization.'},
+        'volatility_plot': 'Interactive volatility plot visualization.',
+        'accuracy_results': pipeline_output_descriptions['accuracy_results'],
+        'sample_estimator': 'Trained sample regressor.'},
     name=('Plot longitudinal abundance of supervised regression important '
           'features.'),
     description=(
