@@ -207,7 +207,7 @@ def _warn_column_name_exists(column_name):
 
 
 def volatility(output_dir: str, metadata: qiime2.Metadata,
-               state_column: str, individual_id_column: str,
+               state_column: str, individual_id_column: str=None,
                default_group_column: str=None, default_metric: str=None,
                table: pd.DataFrame=None, yscale: str='linear') -> None:
     if individual_id_column == state_column:
@@ -235,7 +235,10 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
 
     # Verify that columns specified are present in metadata (skipping the
     # state col now because it receives special treatment ahead).
-    for col in [individual_id_column, default_group_column, default_metric]:
+    validate_cols = [col for col in [individual_id_column,
+                                     default_group_column, default_metric]
+                     if col is not None]
+    for col in validate_cols:
         # If the column doesn't exist the framework will raise the
         # appropriate error.
         metadata.get_column(col)
@@ -258,7 +261,7 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
     data = metadata.to_dataframe()
     # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
-    if individual_id_column not in group_columns:
+    if individual_id_column and individual_id_column not in group_columns:
         group_columns += [individual_id_column]
     metric_columns = list(numeric.columns.keys())
 

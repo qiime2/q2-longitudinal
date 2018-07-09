@@ -355,11 +355,34 @@ class TestLongitudinal(TestPluginBase):
             metric='74923f4bbde849e27fc4eda25d757e2a')
 
     def test_volatility(self):
-        # Just a simple "does it run?" test. Not much worth testing in terms
-        # of the rendered output - vega does all the heavy lifting for us.
+        # Simultaneously "does it run" viz test
+        # plus make sure spaghetti maker works
         volatility(
             output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
             state_column='month', individual_id_column='studyid')
+        html_path = os.path.join(self.temp_dir.name, 'index.html')
+        with open(html_path, 'r') as f:
+            f = f.read()
+            self.assertIn('"spaghettis"', f)
+            self.assertIn('spaghettiLineThickness', f)
+            self.assertIn('spaghettiLineOpacity', f)
+            self.assertIn('spaghettiSymbolSize', f)
+            self.assertIn('spaghettiSymbolOpacity', f)
+            self.assertIn('#spaghetti-line-thickness', f)
+            self.assertIn('#spaghetti-line-opacity', f)
+            self.assertIn('#spaghetti-symbol-size', f)
+            self.assertIn('#spaghetti-symbol-opacity', f)
+
+    def test_volatility_no_individual_id_column(self):
+        # Just a simple "does it run?" test.
+        # plus make sure spaghetti maker is turned off.
+        volatility(
+            output_dir=self.temp_dir.name, metadata=self.md_ecam_fp,
+            state_column='month')
+        html_path = os.path.join(self.temp_dir.name, 'index.html')
+        with open(html_path, 'r') as f:
+            f = f.read()
+            self.assertNotIn('"spaghettis"', f)
 
     def test_volatility_metric_and_group(self):
         # Just a simple "does it run?" test. Not much worth testing in terms
