@@ -28,7 +28,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
 from q2_sample_classifier.plugin_setup import (
     parameters, parameter_descriptions, Importance, output_descriptions,
     pipeline_output_descriptions)
-from q2_sample_classifier._type import SampleEstimator
+from q2_sample_classifier._type import SampleEstimator, Regressor
 import q2_longitudinal
 
 
@@ -425,7 +425,7 @@ plugin.pipelines.register_function(
              ('feature_importance', FeatureData[Importance]),
              ('volatility_plot', Visualization),
              ('accuracy_results', Visualization),
-             ('sample_estimator', SampleEstimator)],
+             ('sample_estimator', SampleEstimator[Regressor])],
     input_descriptions={'table': ('Feature table containing all features that '
                                   'should be used for target prediction.')},
     parameter_descriptions={
