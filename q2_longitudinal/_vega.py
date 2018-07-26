@@ -923,7 +923,4 @@ def _render_volatility_spec(data: pd.DataFrame, individual_id: str, state: str,
     rendered_data = data.to_json(orient='records')
     # convert metadata single quotes to unicode
     rendered_data = rendered_data.replace("'", r'\u0027')
-    rendered_spec = rendered_spec.replace(
-        '"%s"' % DATA_PLACEHOLDER, rendered_data)
-
-    return rendered_spec
+    return rendered_spec.replace('"%s"' % DATA_PLACEHOLDER, rendered_data)
