@@ -80,35 +80,12 @@
 
 {# TODO: move this footer into q2templates (someday) #}
 {% block footer %}
-{# This block is part of it's own script tag, that way it is parsed and #}
-{# executed before any potentially buggy code, below. #}
-<script type="text/javascript">
-  function handleErrors(errors, element) {
-    console.error(errors);
-    var helpMsg = $('<div></div>');
-    helpMsg.append('<p class="alert alert-danger"> \
-                    There was an error loading and rendering the \
-                    visualization.<br><br>Please copy-and-paste the following \
-                    error messages when reporting this error (please be \
-                    aware that the content of your metadata is included \
-                    in these messages):\
-                    </p>');
-    helpMsg.append('<pre><code>' + errors.join('\n\n//----\n\n') + '</code></pre>');
-    element.replaceWith(helpMsg);
-  }
-
-  window.onerror = function(error) {
-    handleErrors([error], $('#loading'));
-  };
-</script>
-
+{% set loading_selector = '#loading' %}
+{% include 'js-error-handler.html' %}
+<script id="spec" type="application/json">{{ vega_spec }}</script>
 <script type="text/javascript">
   $(document).ready(function() {
-    try {
-      var spec = {{ vega_spec }};
-    } catch(error) {
-      handleErrors([error, 'vega spec: {{ vega_spec }}'], $('#loading'));
-    }
+    var spec = JSON.parse(document.getElementById('spec').innerHTML);
 
     // Try and come up with a good initial estimate of plot dimensions,
     // based on the browser dimensions.
@@ -124,7 +101,8 @@
       // for more details.
       window.v = result.view;
     }).catch(function(error) {
-      handleErrors([error, 'vega spec: {{ vega_spec }}'], $('#plot'));
+      // From 'js-error-handler.html'
+      handleErrors([error], $('#plot'));
     });
 
     // Clean up the vega-embed toolbar
