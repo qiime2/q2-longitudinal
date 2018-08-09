@@ -24,7 +24,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column,
                          _tabulate_matrix_ids, _first_differences)
-from ._vega import _render_volatility_spec
+from ._vega_specs import render_spec_volatility
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
@@ -258,17 +258,18 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
         raise ValueError('state_column must contain at least two unique '
                          'values.')
 
-    data = metadata.to_dataframe()
+    control_chart_data = metadata.to_dataframe()
     # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
     if individual_id_column and individual_id_column not in group_columns:
         group_columns += [individual_id_column]
     metric_columns = list(numeric.columns.keys())
 
-    vega_spec = _render_volatility_spec(data, individual_id_column,
-                                        state_column, default_group_column,
-                                        group_columns, default_metric,
-                                        metric_columns, yscale)
+    vega_spec = render_spec_volatility(control_chart_data,
+                                       individual_id_column,
+                                       state_column, default_group_column,
+                                       group_columns, default_metric,
+                                       metric_columns, yscale)
 
     # Order matters here - need to render the template *after* copying the
     # directory tree, otherwise we will overwrite the index.html
