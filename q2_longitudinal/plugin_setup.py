@@ -75,8 +75,8 @@ paired_params = {
 }
 
 miscellaneous_parameter_descriptions = {
-    'state_column': ('Metadata column containing state (e.g., Time) '
-                     'across which samples are paired.'),
+    'state_column': ('Metadata column containing state (time) variable '
+                     'information.'),
     'replicate_handling': (
         'Choose how replicate samples are handled. If replicates are '
         'detected, "error" causes method to fail; "drop" will discard all '
@@ -93,7 +93,6 @@ shared_parameter_descriptions = {
 
 base_parameter_descriptions = {
         **shared_parameter_descriptions,
-        'state_column': miscellaneous_parameter_descriptions['state_column'],
         'palette': 'Color palette to use for generating boxplots.',
 }
 
@@ -108,6 +107,8 @@ paired_parameter_descriptions = {
             'reported in standard output by default. Set '
             'replicate_handling="random" to instead randomly select one '
             'member.'),
+        'state_column': ('Metadata column containing state (e.g., Time) '
+                         'across which samples are paired.'),
         'state_1': 'Baseline state column value.',
         'state_2': 'State column value to pair with baseline.',
         'parametric': ('Perform parametric (ANOVA and t-tests) or non-'
@@ -148,10 +149,10 @@ plugin.visualizers.register_function(
 plugin.visualizers.register_function(
     function=pairwise_distances,
     inputs={'distance_matrix': DistanceMatrix},
-    parameters={**paired_params},
+    parameters=paired_params,
     input_descriptions={'distance_matrix': (
         'Matrix of distances between pairs of samples.')},
-    parameter_descriptions={**paired_parameter_descriptions},
+    parameter_descriptions=paired_parameter_descriptions,
     name='Paired pairwise distance testing and boxplots',
     description=(
         'Performs pairwise distance testing between sample pairs from each '
@@ -181,6 +182,7 @@ plugin.visualizers.register_function(
         **base_parameter_descriptions,
         'metric': ('Dependent variable column name. Must be a column '
                    'name located in the metadata or feature table files.'),
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
         'group_columns': (
             'Comma-separated list (without spaces) of metadata columns to '
             'use as independent covariates used to determine mean structure '
@@ -284,6 +286,7 @@ plugin.methods.register_function(
     parameter_descriptions={
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
         'metric': 'Numerical metadata or artifact column to test.',
         'baseline': (
             'A value listed in the state_column metadata column against which '
@@ -326,6 +329,7 @@ plugin.methods.register_function(
     parameter_descriptions={
         **miscellaneous_parameter_descriptions,
         **shared_parameter_descriptions,
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
         'baseline': (
             'A value listed in the state_column metadata column against which '
             'all other states should be compared. Toggles calculation of '
