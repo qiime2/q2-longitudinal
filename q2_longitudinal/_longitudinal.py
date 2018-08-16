@@ -225,8 +225,10 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
 
         # Compile first differences and other stats on feature data
         stats_chart_data = _summarize_feature_stats(table, state_md_col)
+        stats_chart_data = importances.join(stats_chart_data, how='inner')
         qiime2.Metadata(stats_chart_data).save(
             os.path.join(output_dir, 'feature_metadata.tsv'))
+        stats_chart_data = stats_chart_data.reset_index(drop=False)
 
     # Convert table to metadata and merge, if present.
     if table is not None:

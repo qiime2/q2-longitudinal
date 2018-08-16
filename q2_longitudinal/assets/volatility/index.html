@@ -75,6 +75,15 @@
       <div class="col-lg-6" id="spaghetti-symbol-opacity"></div>
     </div>
 
+    {% if is_feat_vol_plot %}
+    <hr>
+    <div class="row">
+      <div class="col-lg-4" id="metric-stats-left"></div>
+      <div class="col-lg-4" id="sort-stats"></div>
+      <div class="col-lg-4" id="sort-stats-dir"></div>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}

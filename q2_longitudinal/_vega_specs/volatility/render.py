@@ -10,15 +10,19 @@ import json
 
 import pandas as pd
 
-from .const import SIG_METRIC
-from .axis import render_axes_ctrl
+from .const import (
+    FLD_STATS_AVG_CHANGE, FLD_STATS_AVG_DEC, FLD_STATS_AVG_INC, FLD_STATS_ID,
+    SIG_METRIC, SCL_STATS_X_LEFT, SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_LEFT)
+from .axis import render_axes_ctrl, render_axes_stats
 from .legend import render_legends_ctrl
 from .mark import (
-    render_marks_ctrl, render_marks_ctrl_global,
-    render_marks_ctrl_grouped, render_marks_ctrl_individual)
-from .signal import render_signals_ctrl, render_signals_ctrl_individual
-from .scale import render_scales_ctrl
-from .data import render_data_ctrl
+    render_marks_ctrl, render_marks_stats, render_marks_ctrl_global,
+    render_marks_ctrl_grouped, render_marks_ctrl_individual,
+    render_marks_stats_bars)
+from .signal import (
+    render_signals_ctrl, render_signals_ctrl_individual, render_signals_stats)
+from .scale import render_scales_ctrl, render_scales_stats
+from .data import render_data_ctrl, render_data_stats
 
 
 def render_subplot_ctrl(yscale, state):
@@ -30,6 +34,18 @@ def render_subplot_ctrl(yscale, state):
     control_chart['legends'] = render_legends_ctrl()
 
     return control_chart
+
+
+def render_subplot_stats():
+    stats_chart = render_marks_stats()
+    stats_chart[0]['scales'] = render_scales_stats(
+        SCL_STATS_X_LEFT, SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_LEFT)
+    stats_chart[0]['axes'] = render_axes_stats(SCL_STATS_X_LEFT,
+                                               SIG_STATS_LEFT)
+    stats_chart[0]['marks'] = render_marks_stats_bars(SCL_STATS_X_LEFT,
+                                                      SIG_STATS_LEFT)
+    # TODO: add in scales, axes, and marks for right plot
+    return stats_chart
 
 
 def render_spec_volatility(control_chart_data: pd.DataFrame,
@@ -66,4 +82,23 @@ def render_spec_volatility(control_chart_data: pd.DataFrame,
             render_marks_ctrl_individual(individual_id, state))
         spec['signals'].extend(render_signals_ctrl_individual())
     spec['marks'].append(control_chart)
+
+    if stats_chart_data is not None:
+        stat_opts, sort_opts = make_stats_opts(stats_chart_data)
+        spec['signals'].extend(render_signals_stats(stat_opts, sort_opts))
+        spec['marks'].extend(render_subplot_stats())
+        spec['data'].extend(render_data_stats(stats_chart_data))
+
     return json.dumps(spec, indent=2, sort_keys=True)
+
+
+def make_stats_opts(data):
+    sort_opts = data.columns.values.tolist()
+    sort_opts.remove(FLD_STATS_ID)
+
+    stat_opts = data.columns.values.tolist()
+    stat_opts.append(FLD_STATS_AVG_CHANGE)
+    stat_opts.remove(FLD_STATS_AVG_INC)
+    stat_opts.remove(FLD_STATS_AVG_DEC)
+    stat_opts.remove(FLD_STATS_ID)
+    return (stat_opts, sort_opts)

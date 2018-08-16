@@ -15,3 +15,8 @@ def render_axes_ctrl(state):
          'title': state},
         {'orient': 'left', 'scale': SCL_CTRL_Y,
          'title': 'Metric Column'}]
+
+
+def render_axes_stats(scale, selected_stat):
+    return [
+        {'orient': 'top', 'scale': scale, 'title': {'signal': selected_stat}}]

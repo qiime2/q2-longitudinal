@@ -13,7 +13,9 @@ from .const import (
     SIG_CTRL_MEAN_SYMBOL_OPACITY, SIG_CTRL_SPG_LINE_THICKNESS,
     SIG_CTRL_SPG_LINE_OPACITY, SIG_CTRL_SPG_SYMBOL_SIZE,
     SIG_CTRL_SPG_SYMBOL_OPACITY, SIG_WIDTH, SIG_SHOW_ERROR_BARS, SIG_METRIC,
-    SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS)
+    SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS,
+    SIG_STATS_CHART_WIDTH, SIG_STATS_CHART_HEIGHT, DAT_STATS, SIG_STATS_LEFT,
+    SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS_LEFT, MRK_STATS_CIRCLES_LEFT)
 
 
 def render_signals_ctrl(default_group, group_columns, default_metric,
@@ -35,7 +37,14 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                   'options': group_columns}},
         {'name': SIG_METRIC, 'value': default_metric,
          'bind': {'input': 'select', 'element': '#metric-column',
-                  'options': metric_columns}},
+                  'options': metric_columns},
+         # TODO: only render this if feat vol
+         'on': [
+             {'events': '@%s:click' % MRK_STATS_LEFT,
+              'update': 'datum.id', 'force': True},
+             {'events': '@%s:click' % MRK_STATS_CIRCLES_LEFT,
+              'update': 'datum.id', 'force': True}
+             ]},
         {'name': SIG_SHOW_GLOBAL_MEAN, 'value': False,
          'bind': {'input': 'checkbox', 'element': '#toggle-global-mean'}},
         {'name': SIG_SHOW_GLOBAL_CTRL_LIMS, 'value': False,
@@ -89,3 +98,29 @@ def render_signals_ctrl_individual():
         {'name': SIG_CTRL_SPG_SYMBOL_OPACITY, 'value': 0.0,
          'bind': {'input': 'range', 'min': 0.0, 'max': 1.0, 'step': 0.01,
                   'element': '#spaghetti-symbol-opacity'}}]
+
+
+def render_signals_stats(stat_opts, sort_opts):
+    return [
+        # LAYOUT/DIMENSIONS
+        {'name': SIG_STATS_CHART_WIDTH,
+         'update': '(%s / 2) - 25' % SIG_WIDTH},
+        {'name': SIG_STATS_CHART_HEIGHT,
+         'update': '10 * length(data("%s"))' % DAT_STATS},
+
+        # UI WIDGETS
+        {'name': SIG_STATS_LEFT,
+         'value': 'importance',
+         'bind': {
+             'input': 'select', 'element': '#metric-stats-left',
+             'options': stat_opts}},
+        {'name': SIG_STATS_SORT,
+         'value': 'importance',
+         'bind': {
+             'input': 'select', 'element': '#sort-stats',
+             'options': sort_opts}},
+        {'name': SIG_STATS_SORT_DIR,
+         'value': 'descending',
+         'bind': {
+             'input': 'select', 'element': '#sort-stats-dir',
+             'options': ['ascending', 'descending']}}]
