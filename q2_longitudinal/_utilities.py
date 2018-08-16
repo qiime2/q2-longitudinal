@@ -743,6 +743,7 @@ def _validate_is_numeric_column(metadata, metric):
                          'numeric values.'.format(metric))
 
 
+# TODO: relabel the global metrics with word "global"
 def _summarize_feature_stats(table, state_md_col):
     feature_table = pd.concat([state_md_col, table], join='inner', axis=1)
     # calculate mean at each state value
