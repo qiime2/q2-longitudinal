@@ -14,10 +14,7 @@ from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
-<<<<<<< HEAD
 from q2_sample_classifier import Importance
-=======
->>>>>>> switched to cv
 
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
@@ -249,7 +246,9 @@ plugin.visualizers.register_function(
                                 'available in the visualization).',
         'yscale': 'y-axis scaling strategy to apply.',
     },
+    # TODO: update this
     name='Volatility analysis',
+    # TODO: update this
     description=(
         'Plot an interactive control chart of a single dependent variable, '
         '"metric", across multiple groups contained in sample metadata '
