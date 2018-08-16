@@ -33,6 +33,7 @@ def render_subplot_ctrl(yscale, state):
 
 
 def render_spec_volatility(control_chart_data: pd.DataFrame,
+                           stats_chart_data: pd.DataFrame,
                            individual_id: str, state: str,
                            default_group: str, group_columns: list,
                            default_metric: str, metric_columns: list,

@@ -23,7 +23,8 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column,
-                         _tabulate_matrix_ids, _first_differences)
+                         _tabulate_matrix_ids, _first_differences,
+                         _summarize_feature_stats)
 from ._vega_specs import render_spec_volatility
 
 
@@ -206,13 +207,26 @@ def _warn_column_name_exists(column_name):
     warnings.warn(warning, UserWarning)
 
 
-def volatility(output_dir: str, metadata: qiime2.Metadata,
-               state_column: str, individual_id_column: str=None,
-               default_group_column: str=None, default_metric: str=None,
-               table: pd.DataFrame=None, yscale: str='linear') -> None:
+def _volatility(output_dir, metadata, state_column, individual_id_column,
+                default_group_column, default_metric, table, yscale,
+                importances):
     if individual_id_column == state_column:
         raise ValueError('individual_id_column & state_column must be set to '
                          'unique values.')
+
+    is_feat_vol_plot = importances is not None
+
+    if is_feat_vol_plot:
+        # We don't want to include any MD columns in the metric select in the
+        # feature volatility variant of the viz, except for the state vo
+        state_md_col = metadata.get_column(state_column).to_dataframe()
+        metadata = metadata.filter_columns(column_type='categorical')
+        metadata = metadata.merge(qiime2.Metadata(state_md_col))
+
+        # Compile first differences and other stats on feature data
+        stats_chart_data = _summarize_feature_stats(table, state_md_col)
+        qiime2.Metadata(stats_chart_data).save(
+            os.path.join(output_dir, 'feature_metadata.tsv'))
 
     # Convert table to metadata and merge, if present.
     if table is not None:
@@ -265,7 +279,13 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
         group_columns += [individual_id_column]
     metric_columns = list(numeric.columns.keys())
 
+    if is_feat_vol_plot:
+        metric_columns.remove(state_column)
+        default_metric = metric_columns[0]
+
     vega_spec = render_spec_volatility(control_chart_data,
+                                       (stats_chart_data if is_feat_vol_plot
+                                        else None),
                                        individual_id_column,
                                        state_column, default_group_column,
                                        group_columns, default_metric,
@@ -276,7 +296,36 @@ def volatility(output_dir: str, metadata: qiime2.Metadata,
     metadata.save(os.path.join(output_dir, 'data.tsv'))
     copy_tree(os.path.join(TEMPLATES, 'volatility'), output_dir)
     index = os.path.join(TEMPLATES, 'volatility', 'index.html')
-    q2templates.render(index, output_dir, context={'vega_spec': vega_spec})
+    q2templates.render(index, output_dir,
+                       context={'vega_spec': vega_spec,
+                                'is_feat_vol_plot': is_feat_vol_plot})
+
+
+def volatility(output_dir: str,
+               metadata: qiime2.Metadata,
+               state_column: str,
+               individual_id_column: str=None,
+               default_group_column: str=None,
+               default_metric: str=None,
+               table: pd.DataFrame=None,
+               yscale: str='linear') -> None:
+    _volatility(output_dir, metadata, state_column, individual_id_column,
+                default_group_column, default_metric, table, yscale,
+                importances=None)
+
+
+def plot_feature_volatility(output_dir: str,
+                            table: pd.DataFrame,
+                            importances: pd.DataFrame,
+                            metadata: qiime2.Metadata,
+                            state_column: str,
+                            individual_id_column: str=None,
+                            default_group_column: str=None,
+                            default_metric: str=None,
+                            yscale: str='linear') -> None:
+    _volatility(output_dir, metadata, state_column, individual_id_column,
+                default_group_column, default_metric, table, yscale,
+                importances)
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
