@@ -308,5 +308,5 @@ def render_marks_stats_bars(x_scale, selected_stat):
                  'y2': {'signal': SIG_STATS_CHART_HEIGHT},
                  'x': {'value': 0, 'scale': x_scale, 'offset': 0.5},
                  'x2': {'value': 0, 'scale': x_scale, 'offset': 0.5},
-                 'strokeWidth': {'value': 0.5},
+                 'strokeWidth': {'value': 0.25},
                 }}}]
