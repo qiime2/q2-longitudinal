@@ -325,7 +325,6 @@ def plot_feature_volatility(output_dir: str,
                             yscale: str='linear') -> None:
     # default_metric should be whatever the most important feature is
     default_metric = importances.index[0]
-    print(default_metric)
     _volatility(output_dir, metadata, state_column, individual_id_column,
                 default_group_column, default_metric, table, yscale,
                 importances)

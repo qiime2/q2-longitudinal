@@ -62,7 +62,7 @@ def render_scales_stats(scale_x, selected_stat, global_ext):
                                           FLD_STATS_MIN, FLD_STATS_MAX,
                                           global_ext, FLD_STATS_AVG_CHANGE)},
          'range': [0, {'signal': SIG_STATS_CHART_WIDTH}],
-         'nice': True},
+         'nice': True, 'zero': True},
         {'name': SCL_STATS_Y,
          'type': 'band',
          'padding': 0.05,
