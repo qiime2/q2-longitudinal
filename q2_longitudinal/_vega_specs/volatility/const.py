@@ -44,6 +44,7 @@ SIG_CTRL_CHART_HEIGHT = 'controlChartHeight'
 SIG_STATS_CHART_WIDTH = 'statsChartWidth'
 SIG_STATS_CHART_HEIGHT = 'statsChartHeight'
 SIG_STATS_LEFT = 'selectedStatLeft'
+SIG_STATS_RIGHT = 'selectedStatRight'
 SIG_STATS_SORT = 'statsSort'
 SIG_STATS_SORT_DIR = 'statsSortDirection'
 

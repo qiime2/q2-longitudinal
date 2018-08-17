@@ -12,7 +12,8 @@ import pandas as pd
 
 from .const import (
     FLD_STATS_AVG_CHANGE, FLD_STATS_AVG_DEC, FLD_STATS_AVG_INC, FLD_STATS_ID,
-    SIG_METRIC, SCL_STATS_X_LEFT, SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_LEFT)
+    SIG_METRIC, SCL_STATS_X_LEFT, SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_LEFT,
+    SCL_STATS_X_RIGHT, SIG_STATS_RIGHT, DAT_STATS_GLOB_EXT_RIGHT)
 from .axis import render_axes_ctrl, render_axes_stats
 from .legend import render_legends_ctrl
 from .mark import (
@@ -37,6 +38,7 @@ def render_subplot_ctrl(yscale, state):
 
 
 def render_subplot_stats():
+    # add in scales, axes, and marks for left plot
     stats_chart = render_marks_stats()
     stats_chart[0]['scales'] = render_scales_stats(
         SCL_STATS_X_LEFT, SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_LEFT)
@@ -44,7 +46,13 @@ def render_subplot_stats():
                                                SIG_STATS_LEFT)
     stats_chart[0]['marks'] = render_marks_stats_bars(SCL_STATS_X_LEFT,
                                                       SIG_STATS_LEFT)
-    # TODO: add in scales, axes, and marks for right plot
+    # add in scales, axes, and marks for right plot
+    stats_chart[1]['scales'] = render_scales_stats(
+        SCL_STATS_X_RIGHT, SIG_STATS_RIGHT, DAT_STATS_GLOB_EXT_RIGHT)
+    stats_chart[1]['axes'] = render_axes_stats(SCL_STATS_X_RIGHT,
+                                               SIG_STATS_RIGHT)
+    stats_chart[1]['marks'] = render_marks_stats_bars(SCL_STATS_X_RIGHT,
+                                                      SIG_STATS_RIGHT)
     return stats_chart
 
 

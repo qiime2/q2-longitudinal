@@ -15,7 +15,8 @@ from .const import (
     SIG_CTRL_SPG_SYMBOL_OPACITY, SIG_WIDTH, SIG_SHOW_ERROR_BARS, SIG_METRIC,
     SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS,
     SIG_STATS_CHART_WIDTH, SIG_STATS_CHART_HEIGHT, DAT_STATS, SIG_STATS_LEFT,
-    SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS_LEFT, MRK_STATS_CIRCLES_LEFT)
+    SIG_STATS_RIGHT, SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS_LEFT,
+    MRK_STATS_CIRCLES_LEFT)
 
 
 def render_signals_ctrl(default_group, group_columns, default_metric,
@@ -113,6 +114,11 @@ def render_signals_stats(stat_opts, sort_opts):
          'value': 'importance',
          'bind': {
              'input': 'select', 'element': '#metric-stats-left',
+             'options': stat_opts}},
+        {'name': SIG_STATS_RIGHT,
+         'value': 'Global Mean',
+         'bind': {
+             'input': 'select', 'element': '#metric-stats-right',
              'options': stat_opts}},
         {'name': SIG_STATS_SORT,
          'value': 'importance',

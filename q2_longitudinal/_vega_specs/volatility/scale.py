@@ -65,6 +65,7 @@ def render_scales_stats(scale_x, selected_stat, global_ext):
          'nice': True},
         {'name': SCL_STATS_Y,
          'type': 'band',
+         'padding': 0.05,
          'domain': {
              'data': DAT_STATS, 'field': FLD_STATS_ID,
              'sort': {'field': {'signal': SIG_STATS_SORT},

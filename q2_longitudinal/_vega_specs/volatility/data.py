@@ -13,7 +13,7 @@ from .const import (
     FLD_CTRL_EXT, DAT_AGG_BY, FLD_CTRL_CI0, FLD_CTRL_CI1, FLD_CTRL_COUNT,
     FLD_MIN_X, FLD_MAX_X, FLD_MIN_Y, FLD_MAX_Y, FLD_CTRL_CL0, FLD_CTRL_CL1,
     FLD_STATS_AVG_DEC, FLD_STATS_AVG_INC, FLD_STATS_MIN, FLD_STATS_MAX,
-    SIG_STATS_LEFT)
+    SIG_STATS_LEFT, DAT_STATS_GLOB_EXT_RIGHT, SIG_STATS_RIGHT)
 
 
 def render_data_ctrl(control_chart_data, state):
@@ -93,5 +93,14 @@ def render_data_stats(stats_chart_data):
               'ops': ['min', 'max'],
               'fields': [{'signal': SIG_STATS_LEFT},
                          {'signal': SIG_STATS_LEFT}],
+              # These fields will be `undefined` for cumulative avg stats
+              'as': [FLD_STATS_MIN, FLD_STATS_MAX]}]},
+        {'name': DAT_STATS_GLOB_EXT_RIGHT,
+         'source': DAT_STATS,
+         'transform': [
+             {'type': 'aggregate',
+              'ops': ['min', 'max'],
+              'fields': [{'signal': SIG_STATS_RIGHT},
+                         {'signal': SIG_STATS_RIGHT}],
               # These fields will be `undefined` for cumulative avg stats
               'as': [FLD_STATS_MIN, FLD_STATS_MAX]}]}]

@@ -267,15 +267,13 @@ def render_marks_ctrl_individual(individual_id, state):
 
 def render_marks_stats_bars(x_scale, selected_stat):
     test = '%s === "%s"' % (selected_stat, FLD_STATS_AVG_CHANGE)
-    # TODO: add padding between rows
-    # TODO: clean up colors
     return [
         {'name': MRK_STATS_LEFT,
          'type': 'rect',
          'from': {'data': DAT_STATS},
          'encode': {
              'enter': {'height': {'scale': SCL_STATS_Y, 'band': 1}},
-             'hover': {'fill': {'value': '#00FF00'}},
+             'hover': {'fill': {'value': '#f7f591'}},
              'update': {
                  'tooltip': {'signal': 'datum'},
                  'x': [{'test': test, 'scale': x_scale,
@@ -287,21 +285,19 @@ def render_marks_stats_bars(x_scale, selected_stat):
                          'field': {'signal': selected_stat}}],
                  'y': {'scale': SCL_STATS_Y, 'field': FLD_STATS_ID},
                  'fill': [{'test': '%s === datum.%s' %
-                           (SIG_METRIC, FLD_STATS_ID), 'value': '#FF0000'},
-                          {'value': '#AAAAAA'}]}}},
+                           (SIG_METRIC, FLD_STATS_ID), 'value': '#59bbe5'},
+                          {'value': '#d3d3d3'}]}}},
         {'name': MRK_STATS_CIRCLES_LEFT,
          'type': 'symbol',
          'from': {'data': DAT_STATS},
          'encode': {
              'enter': {'size': 50},
+             'hover': {'fill': {'value': '#f7f591'}},
              'update': {
                  'tooltip': {'signal': 'datum'},
                  'x': {'value': -10},
                  'y': {'scale': SCL_STATS_Y, 'field': FLD_STATS_ID,
                        'offset': 5},
                  'fill': [{'test': '%s === datum.%s' %
-                           (SIG_METRIC, FLD_STATS_ID), 'value': '#FF0000'},
-                          {'value': '#FFFFFF'}],
-                 'stroke': [{'test': '%s === datum.%s' %
-                             (SIG_METRIC, FLD_STATS_ID), 'value': '#FF0000'},
-                            {'value': '#AAAAAA'}]}}}]
+                           (SIG_METRIC, FLD_STATS_ID), 'value': '#59bbe5'},
+                          {'value': '#ededed'}]}}}]
