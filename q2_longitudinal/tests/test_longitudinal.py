@@ -141,7 +141,7 @@ class TestUtilities(TestPluginBase):
     def test_temporal_corr(self):
         ind_id = pd.Series(
             [1, 2, 3, 1, 2, 3], index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_tc = _temporal_corr(tab, ind_id)
+        obs_tc = _temporal_corr(tab.copy(), ind_id)
         for k in obs_tc.keys():
             self.assertEqual(exp_tc[k].sort_index(inplace=True),
                              obs_tc[k].sort_index(inplace=True))
@@ -154,7 +154,7 @@ class TestUtilities(TestPluginBase):
     def test_nmit(self):
         sample_md = pd.DataFrame([1, 2, 3, 1, 2, 3], columns=['sample_id'],
                                  index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_td = _nmit(tab, sample_md, 'sample_id')
+        obs_td = _nmit(tab.copy(), sample_md, 'sample_id')
         self.assertTrue(np.array_equal(obs_td.data, exp_td))
 
     def test_validate_is_numeric_column_raise_error(self):
@@ -721,7 +721,6 @@ class TestLongitudinal(TestPluginBase):
                      'Global Standard Deviation',
                      'Global CV (%)'],
             index=['o1', 'o2', 'o3'])
-        print(feature_md)
         pdt.assert_frame_equal(feature_md, exp, check_names=False)
 
     # TODO: Add feature vol tests
