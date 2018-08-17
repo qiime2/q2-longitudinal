@@ -721,6 +721,7 @@ class TestLongitudinal(TestPluginBase):
                      'Global Standard Deviation',
                      'Global CV (%)'],
             index=['o1', 'o2', 'o3'])
+        print(feature_md)
         pdt.assert_frame_equal(feature_md, exp, check_names=False)
 
     # TODO: Add feature vol tests
