@@ -707,14 +707,19 @@ class TestLongitudinal(TestPluginBase):
                                 index=['s1', 's2', 's3', 's4', 's5', 's6'])
         feature_md = _summarize_feature_stats(tab, cheap_md)
         exp = pd.DataFrame(
-            [[0., 0.1, 0.016, 0.5, 0.55, 0.126491106, 0.252982212813],
-             [-0.05, 0.05, 0.00666666667, 0.33333333333, 0.35, 0.0816496581,
-              0.244948974278],
-             [-0.1, 0., 0.00666666667, 0.166666667, 0.15, 0.0816496581,
+            [[0., 0.1, 0.1, 0.016, 0.5, 0.55, 0.126491106, 0.252982212813],
+             [-0.05, 0.05, 0., 0.00666666667, 0.33333333333, 0.35,
+              0.0816496581, 0.244948974278],
+             [-0.1, 0., -0.1, 0.00666666667, 0.166666667, 0.15, 0.0816496581,
               0.489897948557]],
             columns=['Cumulative Avg Decrease',
-                     'Cumulative Avg Increase', 'Variance',
-                     'Mean', 'Median', 'Standard Deviation', 'CV (%)'],
+                     'Cumulative Avg Increase',
+                     'Net Avg Change',
+                     'Global Variance',
+                     'Global Mean',
+                     'Global Median',
+                     'Global Standard Deviation',
+                     'Global CV (%)'],
             index=['o1', 'o2', 'o3'])
         pdt.assert_frame_equal(feature_md, exp, check_names=False)
 

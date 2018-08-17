@@ -283,7 +283,6 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
 
     if is_feat_vol_plot:
         metric_columns.remove(state_column)
-        default_metric = metric_columns[0]
 
     vega_spec = render_spec_volatility(control_chart_data,
                                        (stats_chart_data if is_feat_vol_plot
@@ -323,8 +322,10 @@ def plot_feature_volatility(output_dir: str,
                             state_column: str,
                             individual_id_column: str=None,
                             default_group_column: str=None,
-                            default_metric: str=None,
                             yscale: str='linear') -> None:
+    # default_metric should be whatever the most important feature is
+    default_metric = importances.index[0]
+    print(default_metric)
     _volatility(output_dir, metadata, state_column, individual_id_column,
                 default_group_column, default_metric, table, yscale,
                 importances)

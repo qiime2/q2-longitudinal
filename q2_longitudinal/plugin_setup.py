@@ -259,7 +259,6 @@ plugin.visualizers.register_function(
     parameters={
         **shared_parameters,
         'state_column': miscellaneous_parameters['state_column'],
-        'default_metric': Str,
         'default_group_column': Str,
         'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
     },
@@ -272,9 +271,6 @@ plugin.visualizers.register_function(
     parameter_descriptions={
         **shared_parameter_descriptions,
         'state_column': miscellaneous_parameter_descriptions['state_column'],
-        'default_metric': 'Numeric metadata or artifact column to test by '
-                          'default (all numeric metadata columns will be '
-                          'available in the visualization).',
         'default_group_column': 'The default metadata column on which to '
                                 'separate groups for comparison (all '
                                 'categorical metadata columns will be '

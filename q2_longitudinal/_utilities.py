@@ -757,11 +757,15 @@ def _summarize_feature_stats(table, state_md_col):
     feature_table.index.name = 'feature id'
     feature_md['Cumulative Avg Decrease'] = first_diffs[first_diffs < 0].sum()
     feature_md['Cumulative Avg Increase'] = first_diffs[first_diffs > 0].sum()
+    # Net change effectively = end point - t0
+    feature_md['Net Avg Change'] = \
+        feature_md['Cumulative Avg Decrease'] + \
+        feature_md['Cumulative Avg Increase']
     # collect other descriptive stats
-    feature_md['Variance'] = table.var()
-    feature_md['Mean'] = table.mean()
-    feature_md['Median'] = table.median()
-    feature_md['Standard Deviation'] = table.std()
-    feature_md['CV (%)'] = (
-        feature_md['Standard Deviation'] / feature_md['Mean'])
+    feature_md['Global Variance'] = table.var()
+    feature_md['Global Mean'] = table.mean()
+    feature_md['Global Median'] = table.median()
+    feature_md['Global Standard Deviation'] = table.std()
+    feature_md['Global CV (%)'] = (
+        feature_md['Global Standard Deviation'] / feature_md['Global Mean'])
     return feature_md
