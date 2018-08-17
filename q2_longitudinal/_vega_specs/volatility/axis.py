@@ -19,4 +19,7 @@ def render_axes_ctrl(state):
 
 def render_axes_stats(scale, selected_stat):
     return [
-        {'orient': 'top', 'scale': scale, 'title': {'signal': selected_stat}}]
+        {'orient': 'top',
+         'scale': scale,
+         'title': {'signal': selected_stat},
+         'zindex': 1}]

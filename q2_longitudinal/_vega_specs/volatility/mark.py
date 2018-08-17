@@ -304,4 +304,13 @@ def render_marks_stats_bars(x_scale, selected_stat):
                           {'value': '#FFFFFF'}],
                  'stroke': [{'test': '%s === datum.%s' %
                              (SIG_METRIC, FLD_STATS_ID), 'value': '#FF0000'},
-                            {'value': '#AAAAAA'}]}}}]
+                            {'value': '#AAAAAA'}]}}},
+        {'type': 'rule',
+         'encode': {
+             'update': {
+                 'y': {'value': 0, 'scale': SCL_STATS_Y},
+                 'y2': {'signal': SIG_STATS_CHART_HEIGHT},
+                 'x': {'value': 0, 'scale': x_scale, 'offset': 0.5},
+                 'x2': {'value': 0, 'scale': x_scale, 'offset': 0.5},
+                 'strokeWidth': {'value': 0.5},
+                }}}]
