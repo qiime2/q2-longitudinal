@@ -180,7 +180,7 @@ plugin.visualizers.register_function(
                 'lowess': Bool,
                 'ci': Float % Range(0, 100)},
     input_descriptions={'table': (
-        'Feature table to optionally use for paired comparisons.')},
+        'Feature table containing metric.')},
     parameter_descriptions={
         **base_parameter_descriptions,
         'metric': ('Dependent variable column name. Must be a column '
@@ -228,7 +228,7 @@ plugin.visualizers.register_function(
         'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
     },
     input_descriptions={
-        'table': 'Feature table to optionally use for paired comparisons.',
+        'table': 'Feature table containing metrics.',
     },
     parameter_descriptions={
         **shared_parameter_descriptions,
@@ -263,10 +263,8 @@ plugin.visualizers.register_function(
         'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
     },
     input_descriptions={
-        # TODO: update this
-        'table': 'Feature table to optionally use for paired comparisons.',
-        # TODO: update this
-        'importances': '',
+        'table': 'Feature table containing features found in importances.',
+        'importances': 'Feature importance scores.',
     },
     parameter_descriptions={
         **shared_parameter_descriptions,
@@ -277,13 +275,15 @@ plugin.visualizers.register_function(
                                 'available in the visualization).',
         'yscale': 'y-axis scaling strategy to apply.',
     },
-    # TODO: update this
-    name='Volatility analysis',
-    # TODO: update this
+    name='Plot longitudinal feature volatility and importances',
     description=(
-        'Plot an interactive control chart of a single dependent variable, '
-        '"metric", across multiple groups contained in sample metadata '
-        'column "group_column".')
+        'Plots an interactive control chart of feature abundances (y-axis) '
+        'in each sample across time (or state; x-axis). Feature importance '
+        'scores and descriptive statistics for each each feature are plotted '
+        'in interactive bar charts below the control chart, facilitating '
+        'exploration of longitudinal feature data. This visualization is '
+        'intended for use with the feature-volatility pipeline; use that '
+        'pipeline to access this visualization.')
 )
 
 
