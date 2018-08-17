@@ -746,11 +746,14 @@ def _validate_is_numeric_column(metadata, metric):
 # TODO: relabel the global metrics with word "global"
 def _summarize_feature_stats(table, state_md_col):
     feature_table = pd.concat([state_md_col, table], join='inner', axis=1)
+    print(feature_table)
     # calculate mean at each state value
     state = state_md_col.columns[0]
     feature_state_mean = feature_table.groupby(state).mean()
+    print(feature_state_mean)
     # first differences of mean per state
     first_diffs = feature_state_mean.diff().dropna()
+    print(first_diffs)
     # sum increase and decrease across states
     feature_md = pd.DataFrame(index=table.columns)
     feature_md.index.name = 'id'
