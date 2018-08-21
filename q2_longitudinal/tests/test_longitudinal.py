@@ -29,7 +29,7 @@ from q2_longitudinal._utilities import (
     _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit, first_differences, first_distances)
+    nmit, first_differences, first_distances, plot_feature_volatility)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
@@ -723,7 +723,41 @@ class TestLongitudinal(TestPluginBase):
             index=['o1', 'o2', 'o3'])
         pdt.assert_frame_equal(feature_md, exp, check_names=False)
 
-    # TODO: Add feature vol tests
+    def test_plot_feature_volatility(self):
+        # Simultaneously "does it run" viz test plus validate spec
+        some_md = pd.DataFrame({'time': [1, 1, 2, 2, 3, 3],
+                                'ind': ['a', 'b', 'a', 'b', 'a', 'b']},
+                               index=['s1', 's2', 's3', 's4', 's5', 's6'])
+        some_md.index.name = '#SampleID'
+        imp = pd.DataFrame({'importance': [0.5, 0.4, 0.1]},
+                           index=['o1', 'o2', 'o3'])
+        imp.index.name = 'id'
+        plot_feature_volatility(
+            output_dir=self.temp_dir.name, table=tab, importances=imp,
+            metadata=qiime2.Metadata(some_md), state_column='time',
+            individual_id_column='ind')
+        # check for output files
+        html_path = os.path.join(self.temp_dir.name, 'index.html')
+        data_path = os.path.join(self.temp_dir.name, 'data.tsv')
+        fmd_path = os.path.join(self.temp_dir.name, 'feature_metadata.tsv')
+        self.assertTrue(os.path.isfile(html_path))
+        self.assertTrue(os.path.isfile(data_path))
+        self.assertTrue(os.path.isfile(fmd_path))
+        # validate spec
+        with open(html_path, 'r') as f:
+            f = f.read()
+            # check render_signal_stats
+            self.assertIn('"statsChartWidth"', f)
+            # check render_axes_stats
+            self.assertIn('"selectedStatLeft"', f)
+            # check render_data_stats
+            self.assertIn('"name": "stats"', f)
+            # check render_scales_stats
+            self.assertIn('"signal": "statsSort"', f)
+            # check render_marks_stats
+            self.assertIn('"name": "statsChartLeft"', f)
+            # check render_marks_stats_bars
+            self.assertIn('"name": "statsMarksLeft"', f)
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
