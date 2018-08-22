@@ -75,42 +75,45 @@
     </div>
 
     {% if is_feat_vol_plot %}
-    <hr>
-    <div class="row">
-      <h3>Feature stats subplot controls</h3>
-    </div>
-    <div class="row">
-      <div class="col-lg-12">
-        The bar charts display descriptive statistics for all features
-        available in the volatility control chart. Click on a bar to view
-        the volatility plot for that metric. Hover over a bar to display the
-        metric's name and values for each available statistic. Features can
-        also be selected using the grey circles running along the y-axes.
+    <div class="well">
+
+      <div class="row">
+        <div class="col-lg-12">
+          <h3 style="margin-top:0px;">Feature Stats Subplot Controls</h3>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-12">
-      <a href="feature_metadata.tsv">
-          <p>Download stats as tsv</p>
-        </a>
+
+      <div class="row">
+        <div class="col-lg-12">
+          <p>
+            The bar charts display descriptive statistics for all features
+            available in the volatility control chart. Click on a bar to view the
+            volatility plot for that metric. Hover over a bar to display the
+            metric's name and values for each available statistic. Features can
+            also be selected using the grey circles running along the y-axes.
+          </p>
+        </div>
       </div>
-    </div>
 
-    <hr>
-    <div class="row">
-      <div class="col-lg-4" id="metric-stats-left"></div>
-    </div>
+      <div class="row">
+        <div class="col-lg-12">
+          <a href="feature_metadata.tsv" target="_blank" rel="noopener noreferrer" class="btn btn-default">
+            Export Stats as TSV
+          </a>
+        </div>
+      </div>
 
-    <div class="row">
-      <div class="col-lg-4" id="metric-stats-right"></div>
-    </div>
+      <hr>
 
-    <div class="row">
-      <div class="col-lg-4" id="sort-stats"></div>
-    </div>
+      <div class="row">
+        <div class="col-lg-6" id="metric-stats-left"></div>
+        <div class="col-lg-6" id="sort-stats"></div>
+      </div>
 
-    <div class="row">
-      <div class="col-lg-4" id="sort-stats-dir"></div>
+      <div class="row">
+        <div class="col-lg-6" id="metric-stats-right"></div>
+        <div class="col-lg-6" id="sort-stats-dir"></div>
+      </div>
     </div>
     {% endif %}
 
@@ -180,10 +183,10 @@
     cleanupEl('#spaghetti-symbol-size', 'Spaghetti scatter size');
     cleanupEl('#mean-symbol-opacity', 'Mean scatter opacity');
     cleanupEl('#spaghetti-symbol-opacity', 'Spaghetti scatter opacity');
-    cleanupEl('#metric-stats-left', 'Left metric');
-    cleanupEl('#metric-stats-right', 'Right metric');
-    cleanupEl('#sort-stats', 'Sort by');
-    cleanupEl('#sort-stats-dir', 'Sort order');
+    cleanupEl('#metric-stats-left', 'Left metric', 'select');
+    cleanupEl('#metric-stats-right', 'Right metric', 'select');
+    cleanupEl('#sort-stats', 'Sort by', 'select');
+    cleanupEl('#sort-stats-dir', 'Sort order', 'select');
   });
 </script>
 {% endblock %}
