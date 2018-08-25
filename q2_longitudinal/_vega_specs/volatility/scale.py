@@ -21,7 +21,7 @@ def render_scales_ctrl(state, yscale):
         {'name': SCL_CTRL_X,
          'type': 'linear',
          'range': {'signal': SIG_CTRL_CHART_WIDTH},
-         'nice': True,
+         'nice': False,
          'domain': {
              'data': DAT_INDIVIDUAL,
              'field': state,
