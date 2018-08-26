@@ -14,7 +14,7 @@ from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
-from q2_sample_classifier import Importance
+from q2_sample_classifier import Importance, SampleEstimator, Regressor
 
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat

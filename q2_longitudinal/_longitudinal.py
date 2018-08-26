@@ -398,10 +398,18 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
         distance_matrix=distance_matrix)
 
 
-def feature_volatility(ctx, table, metadata, state_column,
-                       individual_id_column, cv=5, random_state=None, n_jobs=1,
-                       n_estimators=100, estimator='RandomForestRegressor',
-                       parameter_tuning=False, missing_samples='error'):
+def feature_volatility(ctx,
+                       table,
+                       metadata,
+                       state_column,
+                       individual_id_column=None,
+                       cv=5,
+                       random_state=None,
+                       n_jobs=1,
+                       n_estimators=100,
+                       estimator='RandomForestRegressor',
+                       parameter_tuning=False,
+                       missing_samples='error'):
     regress = ctx.get_action('sample_classifier', 'regress_samples')
     filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
@@ -423,10 +431,12 @@ def feature_volatility(ctx, table, metadata, state_column,
     filtered_table, = filter_tab(table=table, metadata=feature_md)
     filtered_table, = relative(table=filtered_table)
 
-    volatility_plot, = volatility(metadata=metadata, state_column=state_column,
+    volatility_plot, = volatility(metadata=metadata,
+                                  table=filtered_table,
+                                  importances=importances,
+                                  state_column=state_column,
                                   individual_id_column=individual_id_column,
                                   default_group_column=None,
-                                  default_metric=None, table=filtered_table,
                                   yscale='linear')
 
     return filtered_table, importances, volatility_plot, accuracy, estimator
