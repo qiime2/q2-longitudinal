@@ -275,6 +275,11 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
                          'values.')
 
     control_chart_data = metadata.to_dataframe()
+    # convert np.nan to None (nans and vega don't mix)
+    # df.fillna(None) does not work so used solution from:
+    # https://github.com/pandas-dev/pandas/issues/1972
+    control_chart_data = control_chart_data.where(
+        pd.notnull(control_chart_data), None)
     # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
     if individual_id_column and individual_id_column not in group_columns:
