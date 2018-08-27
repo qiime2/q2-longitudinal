@@ -13,11 +13,14 @@ from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
 from q2_types.feature_table import FeatureTable, RelativeFrequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
+from q2_types.feature_data import FeatureData
+from q2_sample_classifier import Importance
 
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
-                            linear_mixed_effects, volatility, nmit,
+                            linear_mixed_effects, volatility,
+                            plot_feature_volatility, nmit,
                             first_differences, first_distances)
 import q2_longitudinal
 
@@ -177,7 +180,7 @@ plugin.visualizers.register_function(
                 'lowess': Bool,
                 'ci': Float % Range(0, 100)},
     input_descriptions={'table': (
-        'Feature table to optionally use for paired comparisons.')},
+        'Feature table containing metric.')},
     parameter_descriptions={
         **base_parameter_descriptions,
         'metric': ('Dependent variable column name. Must be a column '
@@ -210,6 +213,8 @@ plugin.visualizers.register_function(
 )
 
 
+_VOLATILITY_SCALE_OPTS = ['linear', 'pow', 'sqrt', 'log']
+
 plugin.visualizers.register_function(
     function=volatility,
     inputs={
@@ -220,10 +225,10 @@ plugin.visualizers.register_function(
         'state_column': miscellaneous_parameters['state_column'],
         'default_metric': Str,
         'default_group_column': Str,
-        'yscale': Str % Choices(['linear', 'pow', 'sqrt', 'log'])
+        'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
     },
     input_descriptions={
-        'table': 'Feature table to optionally use for paired comparisons.',
+        'table': 'Feature table containing metrics.',
     },
     parameter_descriptions={
         **shared_parameter_descriptions,
@@ -242,6 +247,43 @@ plugin.visualizers.register_function(
         'Plot an interactive control chart of a single dependent variable, '
         '"metric", across multiple groups contained in sample metadata '
         'column "group_column".')
+)
+
+
+plugin.visualizers.register_function(
+    function=plot_feature_volatility,
+    inputs={
+        'table': FeatureTable[RelativeFrequency],
+        'importances': FeatureData[Importance],
+    },
+    parameters={
+        **shared_parameters,
+        'state_column': miscellaneous_parameters['state_column'],
+        'default_group_column': Str,
+        'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
+    },
+    input_descriptions={
+        'table': 'Feature table containing features found in importances.',
+        'importances': 'Feature importance scores.',
+    },
+    parameter_descriptions={
+        **shared_parameter_descriptions,
+        'state_column': miscellaneous_parameter_descriptions['state_column'],
+        'default_group_column': 'The default metadata column on which to '
+                                'separate groups for comparison (all '
+                                'categorical metadata columns will be '
+                                'available in the visualization).',
+        'yscale': 'y-axis scaling strategy to apply.',
+    },
+    name='Plot longitudinal feature volatility and importances',
+    description=(
+        'Plots an interactive control chart of feature abundances (y-axis) '
+        'in each sample across time (or state; x-axis). Feature importance '
+        'scores and descriptive statistics for each each feature are plotted '
+        'in interactive bar charts below the control chart, facilitating '
+        'exploration of longitudinal feature data. This visualization is '
+        'intended for use with the feature-volatility pipeline; use that '
+        'pipeline to access this visualization.')
 )
 
 

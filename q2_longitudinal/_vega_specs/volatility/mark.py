@@ -9,14 +9,17 @@
 from .const import (
     DAT_AGG_BY, FLD_GROUP_BY, SCL_CTRL_COLOR, DAT_GLOBAL_VALS, FLD_MIN_X,
     DAT_INDIVIDUAL, FLD_CTRL_CL1, FLD_CTRL_CL2, FLD_CTRL_CL3, SCL_CTRL_X,
-    FLD_MAX_X, FLD_CTRL_MEAN, FLD_CTRL_CL0, FLD_CTRL_CI1, DAT_SPAGHETTIS,
-    SCL_CTRL_Y, FLD_METRIC, SIG_CTRL_MEAN_LINE_OPACITY, SIG_CTRL_CHART_HEIGHT,
     DAT_SERIES, SIG_SHOW_GLOBAL_MEAN, STY_STROKE_2,
+    FLD_MAX_X, FLD_CTRL_MEAN, FLD_CTRL_CL0, FLD_CTRL_CI1, DAT_SPAGHETTIS,
+    FLD_STATS_AVG_CHANGE, MRK_STATS, MRK_STATS_CIRCLES,
+    SCL_CTRL_Y, FLD_METRIC, SIG_CTRL_MEAN_LINE_OPACITY, SIG_CTRL_CHART_HEIGHT,
+    SCL_STATS_Y, FLD_STATS_AVG_INC, FLD_STATS_AVG_DEC, SIG_METRIC,
     SIG_CTRL_MEAN_SYMBOL_OPACITY, FLD_CTRL_CI0, SIG_CTRL_MEAN_LINE_THICKNESS,
     SIG_CTRL_MEAN_SYMBOL_SIZE, TST_GROUP, SIG_CTRL_SPG_LINE_OPACITY,
-    SIG_CTRL_SPG_SYMBOL_SIZE, SIG_CTRL_SPG_LINE_THICKNESS, SIG_GROUP,
     SIG_CTRL_SPG_SYMBOL_OPACITY, FLD_CTRL_COUNT, SIG_SHOW_ERROR_BARS,
-    SIG_SHOW_GLOBAL_CTRL_LIMS, SIG_CTRL_CHART_WIDTH, STY_DASH_A, STY_DASH_B)
+    SIG_CTRL_SPG_SYMBOL_SIZE, SIG_CTRL_SPG_LINE_THICKNESS, SIG_GROUP,
+    SIG_SHOW_GLOBAL_CTRL_LIMS, SIG_CTRL_CHART_WIDTH, STY_DASH_A, STY_DASH_B,
+    SIG_STATS_CHART_WIDTH, SIG_STATS_CHART_HEIGHT, FLD_STATS_ID, DAT_STATS)
 
 
 def render_marks_ctrl(yscale):
@@ -35,6 +38,36 @@ def render_marks_ctrl(yscale):
          'scales': [],
          'axes': [],
          'legends': []}
+
+
+def render_marks_stats():
+    return [
+        {'description': 'Descriptive Stats (Left)',
+         'name': 'statsChartLeft',
+         'type': 'group',
+         'encode': {
+             'enter': {
+                 'x': {'value': 0},
+                 'y': {'signal': SIG_CTRL_CHART_HEIGHT, 'offset': 75},
+                 'width': {'signal': SIG_STATS_CHART_WIDTH},
+                 'height': {'signal': SIG_STATS_CHART_HEIGHT}}},
+         'marks': [],
+         'scales': [],
+         'axes': [],
+         'legends': []},
+        {'description': 'Descriptive Stats (Right)',
+         'name': 'statsChartRight',
+         'type': 'group',
+         'encode': {
+             'enter': {
+                 'x': {'signal': SIG_STATS_CHART_WIDTH, 'offset': 50},
+                 'y': {'signal': SIG_CTRL_CHART_HEIGHT, 'offset': 75},
+                 'width': {'signal': SIG_STATS_CHART_WIDTH},
+                 'height': {'signal': SIG_STATS_CHART_HEIGHT}}},
+         'marks': [],
+         'scales': [],
+         'axes': [],
+         'legends': []}]
 
 
 def render_marks_ctrl_global():
@@ -230,3 +263,50 @@ def render_marks_ctrl_individual(individual_id, state):
                           {'test': TST_GROUP,
                            'signal': SIG_CTRL_SPG_SYMBOL_OPACITY},
                           {'value': 0.0}]}}}]}
+
+
+def render_marks_stats_bars(x_scale, selected_stat):
+    test = '%s === "%s"' % (selected_stat, FLD_STATS_AVG_CHANGE)
+    return [
+        {'name': MRK_STATS,
+         'type': 'rect',
+         'from': {'data': DAT_STATS},
+         'encode': {
+             'enter': {'height': {'scale': SCL_STATS_Y, 'band': 1}},
+             'hover': {'fill': {'value': '#f7f591'}},
+             'update': {
+                 'tooltip': {'signal': 'datum'},
+                 'x': [{'test': test, 'scale': x_scale,
+                        'field': FLD_STATS_AVG_DEC},
+                       {'scale': x_scale, 'value': 0}],
+                 'x2': [{'test': test, 'scale': x_scale,
+                         'field': FLD_STATS_AVG_INC},
+                        {'scale': x_scale,
+                         'field': {'signal': selected_stat}}],
+                 'y': {'scale': SCL_STATS_Y, 'field': FLD_STATS_ID},
+                 'fill': [{'test': '%s === datum.%s' %
+                           (SIG_METRIC, FLD_STATS_ID), 'value': '#59bbe5'},
+                          {'value': '#d3d3d3'}]}}},
+        {'name': MRK_STATS_CIRCLES,
+         'type': 'symbol',
+         'from': {'data': DAT_STATS},
+         'encode': {
+             'enter': {'size': 50},
+             'hover': {'fill': {'value': '#f7f591'}},
+             'update': {
+                 'tooltip': {'signal': 'datum'},
+                 'x': {'value': -10},
+                 'y': {'scale': SCL_STATS_Y, 'field': FLD_STATS_ID,
+                       'offset': 5},
+                 'fill': [{'test': '%s === datum.%s' %
+                           (SIG_METRIC, FLD_STATS_ID), 'value': '#59bbe5'},
+                          {'value': '#ededed'}]}}},
+        {'type': 'rule',
+         'encode': {
+             'update': {
+                 'y': {'value': 0, 'scale': SCL_STATS_Y},
+                 'y2': {'signal': SIG_STATS_CHART_HEIGHT},
+                 'x': {'value': 0, 'scale': x_scale, 'offset': 0.5},
+                 'x2': {'value': 0, 'scale': x_scale, 'offset': 0.5},
+                 'strokeWidth': {'value': 0.25},
+                }}}]

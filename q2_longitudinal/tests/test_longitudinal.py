@@ -25,10 +25,11 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _tabulate_matrix_ids, _validate_metadata_is_superset)
+    _tabulate_matrix_ids, _validate_metadata_is_superset,
+    _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit, first_differences, first_distances)
+    nmit, first_differences, first_distances, plot_feature_volatility)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
@@ -140,7 +141,7 @@ class TestUtilities(TestPluginBase):
     def test_temporal_corr(self):
         ind_id = pd.Series(
             [1, 2, 3, 1, 2, 3], index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_tc = _temporal_corr(tab, ind_id)
+        obs_tc = _temporal_corr(tab.copy(), ind_id)
         for k in obs_tc.keys():
             self.assertEqual(exp_tc[k].sort_index(inplace=True),
                              obs_tc[k].sort_index(inplace=True))
@@ -153,7 +154,7 @@ class TestUtilities(TestPluginBase):
     def test_nmit(self):
         sample_md = pd.DataFrame([1, 2, 3, 1, 2, 3], columns=['sample_id'],
                                  index=['s1', 's2', 's3', 's4', 's5', 's6'])
-        obs_td = _nmit(tab, sample_md, 'sample_id')
+        obs_td = _nmit(tab.copy(), sample_md, 'sample_id')
         self.assertTrue(np.array_equal(obs_td.data, exp_td))
 
     def test_validate_is_numeric_column_raise_error(self):
@@ -700,6 +701,63 @@ class TestLongitudinal(TestPluginBase):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
             _validate_metadata_is_superset(
                 md[md['Time'] == 1], _tabulate_matrix_ids(dm))
+
+    def test_summarize_feature_stats(self):
+        cheap_md = pd.DataFrame({'time': [1, 1, 2, 2, 3, 3]},
+                                index=['s1', 's2', 's3', 's4', 's5', 's6'])
+        feature_md = _summarize_feature_stats(tab, cheap_md)
+        exp = pd.DataFrame(
+            [[0., 0.1, 0.1, 0.016, 0.5, 0.55, 0.126491106, 0.252982212813],
+             [-0.05, 0.05, 0., 0.00666666667, 0.33333333333, 0.35,
+              0.0816496581, 0.244948974278],
+             [-0.1, 0., -0.1, 0.00666666667, 0.166666667, 0.15, 0.0816496581,
+              0.489897948557]],
+            columns=['Cumulative Avg Decrease',
+                     'Cumulative Avg Increase',
+                     'Net Avg Change',
+                     'Global Variance',
+                     'Global Mean',
+                     'Global Median',
+                     'Global Standard Deviation',
+                     'Global CV (%)'],
+            index=['o1', 'o2', 'o3'])
+        pdt.assert_frame_equal(feature_md, exp, check_names=False)
+
+    def test_plot_feature_volatility(self):
+        # Simultaneously "does it run" viz test plus validate spec
+        some_md = pd.DataFrame({'time': [1, 1, 2, 2, 3, 3],
+                                'ind': ['a', 'b', 'a', 'b', 'a', 'b']},
+                               index=['s1', 's2', 's3', 's4', 's5', 's6'])
+        some_md.index.name = '#SampleID'
+        imp = pd.DataFrame({'importance': [0.5, 0.4, 0.1]},
+                           index=['o1', 'o2', 'o3'])
+        imp.index.name = 'id'
+        plot_feature_volatility(
+            output_dir=self.temp_dir.name, table=tab, importances=imp,
+            metadata=qiime2.Metadata(some_md), state_column='time',
+            individual_id_column='ind')
+        # check for output files
+        html_path = os.path.join(self.temp_dir.name, 'index.html')
+        data_path = os.path.join(self.temp_dir.name, 'data.tsv')
+        fmd_path = os.path.join(self.temp_dir.name, 'feature_metadata.tsv')
+        self.assertTrue(os.path.isfile(html_path))
+        self.assertTrue(os.path.isfile(data_path))
+        self.assertTrue(os.path.isfile(fmd_path))
+        # validate spec
+        with open(html_path, 'r') as f:
+            f = f.read()
+            # check render_signal_stats
+            self.assertIn('"statsChartWidth"', f)
+            # check render_axes_stats
+            self.assertIn('"selectedStatLeft"', f)
+            # check render_data_stats
+            self.assertIn('"name": "stats"', f)
+            # check render_scales_stats
+            self.assertIn('"signal": "statsSort"', f)
+            # check render_marks_stats
+            self.assertIn('"name": "statsChartLeft"', f)
+            # check render_marks_stats_bars
+            self.assertIn('"name": "statsMarks"', f)
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),

@@ -19,6 +19,7 @@
 #    STY - style
 #    LEG - legend
 #    VAR - any other variable that doesn't fit into the above categories
+#    MRK - mark
 
 # SIGNALS
 ###############################################################################
@@ -40,6 +41,12 @@ SIG_WIDTH = 'width'  # this is a special signal in vega
 SIG_HEIGHT = 'height'  # this is a special signal in vega
 SIG_CTRL_CHART_WIDTH = 'controlChartWidth'
 SIG_CTRL_CHART_HEIGHT = 'controlChartHeight'
+SIG_STATS_CHART_WIDTH = 'statsChartWidth'
+SIG_STATS_CHART_HEIGHT = 'statsChartHeight'
+SIG_STATS_LEFT = 'selectedStatLeft'
+SIG_STATS_RIGHT = 'selectedStatRight'
+SIG_STATS_SORT = 'statsSort'
+SIG_STATS_SORT_DIR = 'statsSortDirection'
 
 # STYLES
 ###############################################################################
@@ -55,6 +62,10 @@ DAT_SERIES = 'series'
 DAT_SPAGHETTIS = 'spaghettis'
 DAT_SELECTED = 'selected'
 DAT_AGG_BY = 'aggBy'
+DAT_STATS = 'stats'
+DAT_STATS_CUME_EXT = 'statsCumeAvg'
+DAT_STATS_GLOB_EXT_LEFT = 'statsGlobAvgLeft'
+DAT_STATS_GLOB_EXT_RIGHT = 'statsGlobAvgRight'
 
 # FIELDS
 ###############################################################################
@@ -75,19 +86,34 @@ FLD_CTRL_CI1 = 'ci1'
 FLD_CTRL_EXT = 'ext'
 FLD_GROUP_BY = 'groupByVal'
 FLD_METRIC = 'metricVal'
+FLD_STATS_AVG_DEC = 'Cumulative Avg Decrease'
+FLD_STATS_AVG_INC = 'Cumulative Avg Increase'
+FLD_STATS_AVG_CHANGE = 'Cumulative Avg Change'
+FLD_STATS_MIN = 'min'
+FLD_STATS_MAX = 'max'
+FLD_STATS_ID = 'id'
+FLD_IMPORTANCE = 'importance'
 
 # SCALES
 ###############################################################################
 SCL_CTRL_X = 'x'
 SCL_CTRL_Y = 'y'
 SCL_CTRL_COLOR = 'color'
+SCL_STATS_X_LEFT = 'xLeft'
+SCL_STATS_X_RIGHT = 'xRight'
+SCL_STATS_Y = 'y'
 
 # TESTS
 ###############################################################################
 TST_OPACITY = "!length(data('{0}')) || indata('{0}', 'value', datum.value)".format(DAT_SELECTED)  # noqa: E501
 TST_GROUP = "!length(data('{0}')) || indata('{0}', 'value', datum.{1})".format(DAT_SELECTED, FLD_GROUP_BY)  # noqa: E501
 
-# LEGEND
+# LEGENDS
 ###############################################################################
 LEG_CTRL_SYMBOL = 'legendSymbol'
 LEG_CTRL_LABEL = 'legendLabel'
+
+# MARKS
+###############################################################################
+MRK_STATS = 'statsMarks'
+MRK_STATS_CIRCLES = 'statsMarksCircles'

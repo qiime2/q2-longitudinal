@@ -3,7 +3,6 @@
 {% block title %}q2-longitudinal : volatility{% endblock %}
 
 {% block head %}
- {# TODO: Update to latest vega #}
   <script src="js/vega.min.js"></script>
   <script src="js/vega-embed.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/spinkit.css">
@@ -75,6 +74,49 @@
       <div class="col-lg-6" id="spaghetti-symbol-opacity"></div>
     </div>
 
+    {% if is_feat_vol_plot %}
+    <div class="well">
+
+      <div class="row">
+        <div class="col-lg-12">
+          <h3 style="margin-top:0px;">Feature Stats Subplot Controls</h3>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-12">
+          <p>
+            The bar charts display descriptive statistics for all features
+            available in the volatility control chart. Click on a bar to view the
+            volatility plot for that metric. Hover over a bar to display the
+            metric's name and values for each available statistic. Features can
+            also be selected using the grey circles running along the y-axes.
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-12">
+          <a href="feature_metadata.tsv" target="_blank" rel="noopener noreferrer" class="btn btn-default">
+            Export Stats as TSV
+          </a>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <div class="col-lg-6" id="metric-stats-left"></div>
+        <div class="col-lg-6" id="sort-stats"></div>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-6" id="metric-stats-right"></div>
+        <div class="col-lg-6" id="sort-stats-dir"></div>
+      </div>
+    </div>
+    {% endif %}
+
   </div>
 </div>
 {% endblock %}
@@ -141,6 +183,10 @@
     cleanupEl('#spaghetti-symbol-size', 'Spaghetti scatter size');
     cleanupEl('#mean-symbol-opacity', 'Mean scatter opacity');
     cleanupEl('#spaghetti-symbol-opacity', 'Spaghetti scatter opacity');
+    cleanupEl('#metric-stats-left', 'Left metric', 'select');
+    cleanupEl('#metric-stats-right', 'Right metric', 'select');
+    cleanupEl('#sort-stats', 'Sort by', 'select');
+    cleanupEl('#sort-stats-dir', 'Sort order', 'select');
   });
 </script>
 {% endblock %}

@@ -13,12 +13,15 @@ from .const import (
     SIG_CTRL_MEAN_SYMBOL_OPACITY, SIG_CTRL_SPG_LINE_THICKNESS,
     SIG_CTRL_SPG_LINE_OPACITY, SIG_CTRL_SPG_SYMBOL_SIZE,
     SIG_CTRL_SPG_SYMBOL_OPACITY, SIG_WIDTH, SIG_SHOW_ERROR_BARS, SIG_METRIC,
-    SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS)
+    SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS,
+    SIG_STATS_CHART_WIDTH, SIG_STATS_CHART_HEIGHT, DAT_STATS, SIG_STATS_LEFT,
+    SIG_STATS_RIGHT, SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS,
+    MRK_STATS_CIRCLES)
 
 
 def render_signals_ctrl(default_group, group_columns, default_metric,
-                        metric_columns):
-    return [
+                        metric_columns, is_feat_vol_plot):
+    _signals_ctrl = [
         # LAYOUT/DIMENSIONS
         {'name': SIG_WIDTH, 'value': '', 'bind': {'input': 'text'},
          'on': [{'events': {'source': 'window', 'type': 'resize'},
@@ -73,6 +76,14 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                            (LEG_CTRL_SYMBOL, LEG_CTRL_LABEL),
                  'update': '{value: datum.value}', 'force': True}]},
     ]
+    # only render feature metadata stats if feat vol
+    if is_feat_vol_plot:
+        _signals_ctrl[5]['on'] = [
+            {'events': '@%s:click' % MRK_STATS,
+             'update': 'datum.id', 'force': True},
+            {'events': '@%s:click' % MRK_STATS_CIRCLES,
+             'update': 'datum.id', 'force': True}]
+    return _signals_ctrl
 
 
 def render_signals_ctrl_individual():
@@ -89,3 +100,34 @@ def render_signals_ctrl_individual():
         {'name': SIG_CTRL_SPG_SYMBOL_OPACITY, 'value': 0.0,
          'bind': {'input': 'range', 'min': 0.0, 'max': 1.0, 'step': 0.01,
                   'element': '#spaghetti-symbol-opacity'}}]
+
+
+def render_signals_stats(stat_opts, sort_opts):
+    return [
+        # LAYOUT/DIMENSIONS
+        {'name': SIG_STATS_CHART_WIDTH,
+         'update': '(%s / 2) - 25' % SIG_WIDTH},
+        {'name': SIG_STATS_CHART_HEIGHT,
+         'update': '10 * length(data("%s"))' % DAT_STATS},
+
+        # UI WIDGETS
+        {'name': SIG_STATS_LEFT,
+         'value': 'importance',
+         'bind': {
+             'input': 'select', 'element': '#metric-stats-left',
+             'options': stat_opts}},
+        {'name': SIG_STATS_RIGHT,
+         'value': 'Global Mean',
+         'bind': {
+             'input': 'select', 'element': '#metric-stats-right',
+             'options': stat_opts}},
+        {'name': SIG_STATS_SORT,
+         'value': 'importance',
+         'bind': {
+             'input': 'select', 'element': '#sort-stats',
+             'options': sort_opts}},
+        {'name': SIG_STATS_SORT_DIR,
+         'value': 'descending',
+         'bind': {
+             'input': 'select', 'element': '#sort-stats-dir',
+             'options': ['ascending', 'descending']}}]

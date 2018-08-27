@@ -741,3 +741,37 @@ def _validate_is_numeric_column(metadata, metric):
         raise ValueError('{0} is not a numeric metadata column. '
                          'Please choose a metadata column containing only '
                          'numeric values.'.format(metric))
+
+
+def _summarize_feature_stats(table, state_md_col):
+    feature_table = pd.concat([state_md_col, table], join='inner', axis=1)
+    # calculate mean at each state value
+    state = state_md_col.columns[0]
+    feature_state_mean = feature_table.groupby(state).mean()
+    # first differences of mean per state
+    first_diffs = feature_state_mean.diff().dropna()
+    # sum increase and decrease across states
+    feature_md = pd.DataFrame(index=table.columns)
+    feature_md.index.name = 'id'
+    feature_table.index.name = 'feature id'
+    feature_md['Cumulative Avg Decrease'] = first_diffs[first_diffs < 0].sum()
+    feature_md['Cumulative Avg Increase'] = first_diffs[first_diffs > 0].sum()
+    # Net change effectively = end point - t0
+    feature_md['Net Avg Change'] = \
+        feature_md['Cumulative Avg Decrease'] + \
+        feature_md['Cumulative Avg Increase']
+    # collect other descriptive stats
+    feature_md['Global Variance'] = table.var()
+    feature_md['Global Mean'] = table.mean()
+    feature_md['Global Median'] = table.median()
+    feature_md['Global Standard Deviation'] = table.std()
+    feature_md['Global CV (%)'] = (
+        feature_md['Global Standard Deviation'] / feature_md['Global Mean'])
+    return feature_md
+
+
+# convert np.nan to None (nans and vega don't mix)
+# df.fillna(None) does not work so used solution from:
+# https://github.com/pandas-dev/pandas/issues/1972
+def _convert_nan_to_none(df):
+    return df.where(pd.notnull(df), None)
