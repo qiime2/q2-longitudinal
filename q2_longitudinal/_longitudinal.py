@@ -24,7 +24,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column,
                          _tabulate_matrix_ids, _first_differences,
-                         _summarize_feature_stats)
+                         _summarize_feature_stats, _convert_nan_to_none)
 from ._vega_specs import render_spec_volatility
 
 
@@ -229,6 +229,8 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
         qiime2.Metadata(stats_chart_data).save(
             os.path.join(output_dir, 'feature_metadata.tsv'))
         stats_chart_data = stats_chart_data.reset_index(drop=False)
+        # convert np.nan to None (nans and vega don't mix)
+        stats_chart_data = _convert_nan_to_none(stats_chart_data)
 
     # Convert table to metadata and merge, if present.
     if table is not None:
@@ -276,10 +278,7 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
 
     control_chart_data = metadata.to_dataframe()
     # convert np.nan to None (nans and vega don't mix)
-    # df.fillna(None) does not work so used solution from:
-    # https://github.com/pandas-dev/pandas/issues/1972
-    control_chart_data = control_chart_data.where(
-        pd.notnull(control_chart_data), None)
+    control_chart_data = _convert_nan_to_none(control_chart_data)
     # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
     if individual_id_column and individual_id_column not in group_columns:
@@ -295,7 +294,8 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
                                        individual_id_column,
                                        state_column, default_group_column,
                                        group_columns, default_metric,
-                                       metric_columns, yscale)
+                                       metric_columns, yscale,
+                                       is_feat_vol_plot)
 
     # Order matters here - need to render the template *after* copying the
     # directory tree, otherwise we will overwrite the index.html

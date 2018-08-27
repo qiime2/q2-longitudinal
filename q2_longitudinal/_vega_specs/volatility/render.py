@@ -61,7 +61,8 @@ def render_spec_volatility(control_chart_data: pd.DataFrame,
                            individual_id: str, state: str,
                            default_group: str, group_columns: list,
                            default_metric: str, metric_columns: list,
-                           yscale: str) -> str:
+                           yscale: str,
+                           is_feat_vol_plot: bool) -> str:
     spec = {
         # This `$schema` is only fetched as part of the interactive vega
         # editor, which opens up outside of the visualization - this doesn't
@@ -77,7 +78,8 @@ def render_spec_volatility(control_chart_data: pd.DataFrame,
         # Not registering signals on a subplot level since they aren't super
         # helpful (e.g. can't `bind` in a subplot signal).
         'signals': render_signals_ctrl(default_group, group_columns,
-                                       default_metric, metric_columns),
+                                       default_metric, metric_columns,
+                                       is_feat_vol_plot),
         'scales': [],
         'marks': [],
         # Add data at root of plot, it is easier to use the built in view

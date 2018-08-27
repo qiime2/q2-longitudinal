@@ -115,5 +115,5 @@ LEG_CTRL_LABEL = 'legendLabel'
 
 # MARKS
 ###############################################################################
-MRK_STATS_LEFT = 'statsMarksLeft'
-MRK_STATS_CIRCLES_LEFT = 'statsMarksCirclesLeft'
+MRK_STATS = 'statsMarks'
+MRK_STATS_CIRCLES = 'statsMarksCircles'

@@ -757,7 +757,7 @@ class TestLongitudinal(TestPluginBase):
             # check render_marks_stats
             self.assertIn('"name": "statsChartLeft"', f)
             # check render_marks_stats_bars
-            self.assertIn('"name": "statsMarksLeft"', f)
+            self.assertIn('"name": "statsMarks"', f)
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),

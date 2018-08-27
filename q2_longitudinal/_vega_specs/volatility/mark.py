@@ -11,7 +11,7 @@ from .const import (
     DAT_INDIVIDUAL, FLD_CTRL_CL1, FLD_CTRL_CL2, FLD_CTRL_CL3, SCL_CTRL_X,
     DAT_SERIES, SIG_SHOW_GLOBAL_MEAN, STY_STROKE_2,
     FLD_MAX_X, FLD_CTRL_MEAN, FLD_CTRL_CL0, FLD_CTRL_CI1, DAT_SPAGHETTIS,
-    FLD_STATS_AVG_CHANGE, MRK_STATS_LEFT, MRK_STATS_CIRCLES_LEFT,
+    FLD_STATS_AVG_CHANGE, MRK_STATS, MRK_STATS_CIRCLES,
     SCL_CTRL_Y, FLD_METRIC, SIG_CTRL_MEAN_LINE_OPACITY, SIG_CTRL_CHART_HEIGHT,
     SCL_STATS_Y, FLD_STATS_AVG_INC, FLD_STATS_AVG_DEC, SIG_METRIC,
     SIG_CTRL_MEAN_SYMBOL_OPACITY, FLD_CTRL_CI0, SIG_CTRL_MEAN_LINE_THICKNESS,
@@ -268,7 +268,7 @@ def render_marks_ctrl_individual(individual_id, state):
 def render_marks_stats_bars(x_scale, selected_stat):
     test = '%s === "%s"' % (selected_stat, FLD_STATS_AVG_CHANGE)
     return [
-        {'name': MRK_STATS_LEFT,
+        {'name': MRK_STATS,
          'type': 'rect',
          'from': {'data': DAT_STATS},
          'encode': {
@@ -287,7 +287,7 @@ def render_marks_stats_bars(x_scale, selected_stat):
                  'fill': [{'test': '%s === datum.%s' %
                            (SIG_METRIC, FLD_STATS_ID), 'value': '#59bbe5'},
                           {'value': '#d3d3d3'}]}}},
-        {'name': MRK_STATS_CIRCLES_LEFT,
+        {'name': MRK_STATS_CIRCLES,
          'type': 'symbol',
          'from': {'data': DAT_STATS},
          'encode': {

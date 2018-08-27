@@ -768,3 +768,10 @@ def _summarize_feature_stats(table, state_md_col):
     feature_md['Global CV (%)'] = (
         feature_md['Global Standard Deviation'] / feature_md['Global Mean'])
     return feature_md
+
+
+# convert np.nan to None (nans and vega don't mix)
+# df.fillna(None) does not work so used solution from:
+# https://github.com/pandas-dev/pandas/issues/1972
+def _convert_nan_to_none(df):
+    return df.where(pd.notnull(df), None)

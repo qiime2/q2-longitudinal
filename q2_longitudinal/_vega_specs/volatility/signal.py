@@ -15,13 +15,13 @@ from .const import (
     SIG_CTRL_SPG_SYMBOL_OPACITY, SIG_WIDTH, SIG_SHOW_ERROR_BARS, SIG_METRIC,
     SIG_GROUP, SIG_SHOW_GLOBAL_MEAN, SIG_SHOW_GLOBAL_CTRL_LIMS,
     SIG_STATS_CHART_WIDTH, SIG_STATS_CHART_HEIGHT, DAT_STATS, SIG_STATS_LEFT,
-    SIG_STATS_RIGHT, SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS_LEFT,
-    MRK_STATS_CIRCLES_LEFT)
+    SIG_STATS_RIGHT, SIG_STATS_SORT, SIG_STATS_SORT_DIR, MRK_STATS,
+    MRK_STATS_CIRCLES)
 
 
 def render_signals_ctrl(default_group, group_columns, default_metric,
-                        metric_columns):
-    return [
+                        metric_columns, is_feat_vol_plot):
+    _signals_ctrl = [
         # LAYOUT/DIMENSIONS
         {'name': SIG_WIDTH, 'value': '', 'bind': {'input': 'text'},
          'on': [{'events': {'source': 'window', 'type': 'resize'},
@@ -38,14 +38,7 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                   'options': group_columns}},
         {'name': SIG_METRIC, 'value': default_metric,
          'bind': {'input': 'select', 'element': '#metric-column',
-                  'options': metric_columns},
-         # TODO: only render this if feat vol
-         'on': [
-             {'events': '@%s:click' % MRK_STATS_LEFT,
-              'update': 'datum.id', 'force': True},
-             {'events': '@%s:click' % MRK_STATS_CIRCLES_LEFT,
-              'update': 'datum.id', 'force': True}
-             ]},
+                  'options': metric_columns}},
         {'name': SIG_SHOW_GLOBAL_MEAN, 'value': False,
          'bind': {'input': 'checkbox', 'element': '#toggle-global-mean'}},
         {'name': SIG_SHOW_GLOBAL_CTRL_LIMS, 'value': False,
@@ -83,6 +76,14 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                            (LEG_CTRL_SYMBOL, LEG_CTRL_LABEL),
                  'update': '{value: datum.value}', 'force': True}]},
     ]
+    # only render feature metadata stats if feat vol
+    if is_feat_vol_plot:
+        _signals_ctrl[5]['on'] = [
+            {'events': '@%s:click' % MRK_STATS,
+             'update': 'datum.id', 'force': True},
+            {'events': '@%s:click' % MRK_STATS_CIRCLES,
+             'update': 'datum.id', 'force': True}]
+    return _signals_ctrl
 
 
 def render_signals_ctrl_individual():
