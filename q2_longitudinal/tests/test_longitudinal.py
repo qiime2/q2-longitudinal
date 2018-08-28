@@ -17,6 +17,7 @@ import pandas.util.testing as pdt
 import skbio
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
+from qiime2.plugins import longitudinal
 
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
@@ -758,6 +759,24 @@ class TestLongitudinal(TestPluginBase):
             self.assertIn('"name": "statsChartLeft"', f)
             # check render_marks_stats_bars
             self.assertIn('"name": "statsMarks"', f)
+
+    # Test that this action works, produces expected results.
+    # Internal pipeline actions are tested independently so this test
+    # tests that predictions and MAZ scores are calculated correctly.
+    def test_maturity_index(self):
+        table_fp = self.get_data_path('ecam-table-maturity.qza')
+        table = qiime2.Artifact.load(table_fp)
+        res = longitudinal.actions.maturity_index(
+            table, self.md_ecam_fp, state_column='month', n_estimators=2,
+            group_by='delivery', random_state=123, n_jobs=1, control='Vaginal',
+            test_size=0.4, missing_samples='ignore')
+        maz = pd.to_numeric(res[5].view(pd.Series))
+        exp_maz = pd.read_csv(
+            self.get_data_path('maz.tsv'), sep='\t', squeeze=True, index_col=0,
+            header=0)
+        pdt.assert_series_equal(
+            maz, exp_maz, check_dtype=False, check_index_type=False,
+            check_series_type=False, check_names=False)
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),

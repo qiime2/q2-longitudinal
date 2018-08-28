@@ -15,6 +15,7 @@ import skbio
 import qiime2
 import q2templates
 import warnings
+import biom
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -22,7 +23,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _add_metric_to_metadata, _linear_effects,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
-                         _nmit, _validate_is_numeric_column,
+                         _nmit, _validate_is_numeric_column, _maz_score,
                          _tabulate_matrix_ids, _first_differences,
                          _summarize_feature_stats, _convert_nan_to_none)
 from ._vega_specs import render_spec_volatility
@@ -353,6 +354,118 @@ def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
         corr_method=corr_method, dist_method=dist_method)
 
     return _dist
+
+
+def maturity_index(ctx,
+                   table,
+                   metadata,
+                   state_column,
+                   group_by,
+                   control,
+                   individual_id_column=None,
+                   estimator='RandomForestRegressor',
+                   n_estimators=100,
+                   test_size=0.5,
+                   step=0.05,
+                   cv=5,
+                   random_state=None,
+                   n_jobs=1,
+                   parameter_tuning=False,
+                   optimize_feature_selection=False,
+                   stratify=False,
+                   missing_samples='error'):
+
+    filter_samples = ctx.get_action('feature_table', 'filter_samples')
+    filter_features = ctx.get_action('feature_table', 'filter_features')
+    group_table = ctx.get_action('feature_table', 'group')
+    heatmap = ctx.get_action('feature_table', 'heatmap')
+    split = ctx.get_action('sample_classifier', 'split_table')
+    fit = ctx.get_action('sample_classifier', 'fit_regressor')
+    predict_test = ctx.get_action('sample_classifier', 'predict_regression')
+    summarize_estimator = ctx.get_action('sample_classifier', 'summarize')
+    scatter = ctx.get_action('sample_classifier', 'scatterplot')
+    volatility = ctx.get_action('longitudinal', 'volatility')
+
+    # we must perform metadata superset validation here before we start
+    # slicing and dicing.
+    md_as_frame = metadata.to_dataframe()
+    if missing_samples == 'error':
+        _validate_metadata_is_superset(md_as_frame, table.view(biom.Table))
+
+    # Let's also validate metadata columns before we get busy
+    _validate_input_columns(
+        md_as_frame, individual_id_column, group_by, state_column, None)
+
+    # train regressor on subset of control samples
+    control_table, = filter_samples(
+        table, metadata=metadata, where="{0}='{1}'".format(group_by, control))
+
+    md_column = metadata.get_column(state_column)
+    X_train, X_test = split(control_table, md_column, test_size, random_state,
+                            stratify, missing_samples='ignore')
+
+    sample_estimator, importance = fit(
+        X_train, md_column, step, cv, random_state, n_jobs, n_estimators,
+        estimator, optimize_feature_selection, parameter_tuning,
+        missing_samples='ignore')
+
+    # drop training samples from rest of dataset; we will predict all others
+    control_ids = pd.DataFrame(index=X_train.view(biom.Table).ids())
+    control_ids.index.name = 'id'
+    control_ids = qiime2.Metadata(control_ids)
+    test_table, = filter_samples(table, metadata=control_ids, exclude_ids=True)
+
+    # predict test samples
+    predictions, = predict_test(test_table, sample_estimator, n_jobs)
+
+    # summarize estimator params
+    summary, = summarize_estimator(sample_estimator)
+
+    # only report accuracy on control test samples
+    test_ids = X_test.view(biom.Table).ids()
+    accuracy_md = metadata.filter_ids(test_ids).get_column(state_column)
+    accuracy_results, = scatter(predictions, accuracy_md, 'ignore')
+
+    # calculate MAZ score
+    # merge is inner join by default, so training samples are dropped (good!)
+    pred_md = metadata.merge(predictions.view(qiime2.Metadata)).to_dataframe()
+    pred_md['prediction'] = pd.to_numeric(pred_md['prediction'])
+    pred_md = _maz_score(
+        pred_md, 'prediction', state_column, group_by, control)
+    maz = '{0} MAZ score'.format(state_column)
+    maz_scores = qiime2.Artifact.import_data(
+        'SampleData[RegressorPredictions]', pred_md[maz])
+
+    # make heatmap
+    # trim table to important features for viewing as heatmap
+    table, = filter_features(table, metadata=importance.view(qiime2.Metadata))
+    # make sure IDs match between table and metadata
+    cluster_table, = filter_samples(table, metadata=metadata)
+    # need to group table by two columns together, so do this ugly hack
+    cluster_by = group_by + '-' + state_column
+    md_as_frame[cluster_by] = (md_as_frame[group_by].astype(str) + '-' +
+                               md_as_frame[state_column].astype(str))
+    cluster_md = qiime2.CategoricalMetadataColumn(md_as_frame[cluster_by])
+    cluster_table, = group_table(cluster_table, axis='sample',
+                                 metadata=cluster_md, mode='median-ceiling')
+    # group metadata to match grouped sample IDs and sort by group/column
+    clust_md = md_as_frame.groupby(cluster_by).first()
+    clust_md = clust_md.sort_values([group_by, state_column])
+    # sort table using clustered/sorted metadata as guide
+    sorted_table = cluster_table.view(biom.Table).sort_order(clust_md.index)
+    sorted_table = qiime2.Artifact.import_data(
+        'FeatureTable[Frequency]', sorted_table)
+    clustermap, = heatmap(sorted_table, cluster='features')
+
+    # visualize MAZ vs. time (column)
+    lineplots, = volatility(
+        qiime2.Metadata(pred_md), state_column=state_column,
+        individual_id_column=individual_id_column,
+        default_group_column=group_by, default_metric=maz, yscale='linear')
+
+    return (
+        sample_estimator, importance, predictions, summary, accuracy_results,
+        maz_scores, clustermap, lineplots)
 
 
 def first_differences(metadata: qiime2.Metadata, state_column: str,

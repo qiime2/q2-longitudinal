@@ -9,18 +9,21 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Citations)
-from q2_types.feature_table import FeatureTable, RelativeFrequency
+                           Citations, Visualization)
+from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
-from q2_sample_classifier import Importance
+from q2_sample_classifier import Importance, RegressorPredictions
+from q2_sample_classifier.plugin_setup import (
+    pipeline_parameters, pipeline_parameter_descriptions,
+    regressor_pipeline_outputs, pipeline_output_descriptions, regressors)
 
 from ._type import FirstDifferences
 from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility,
-                            plot_feature_volatility, nmit,
+                            plot_feature_volatility, nmit, maturity_index,
                             first_differences, first_distances)
 import q2_longitudinal
 
@@ -399,5 +402,71 @@ plugin.methods.register_function(
         'groups of subjects. Also supports distance from baseline (or '
         'other static comparison state) by setting the "baseline" parameter.')
 )
+
+
+plugin.pipelines.register_function(
+    function=maturity_index,
+    inputs={'table': FeatureTable[Frequency]},
+    parameters={'group_by': Str,
+                'control': Str,
+                'individual_id_column': Str,
+                'estimator': regressors,
+                **pipeline_parameters,
+                'metadata': Metadata,
+                'state_column': Str,
+                'stratify': Bool,
+                },
+    outputs=regressor_pipeline_outputs + [
+        ('maz_scores', SampleData[RegressorPredictions]),
+        ('clustermap', Visualization),
+        ('volatility-plots', Visualization)],
+    input_descriptions={'table': ('Feature table containing all features that '
+                                  'should be used for target prediction.')},
+    parameter_descriptions={
+        **pipeline_parameter_descriptions,
+        'state_column': ('Numeric metadata column containing sampling time '
+                         '(state) data to use as prediction target.'),
+        'group_by': ('Categorical metadata column to use for plotting and '
+                     'significance testing between main treatment groups.'),
+        'control': (
+            'Value of group_by to use as control group. The regression model '
+            'will be trained using only control group data, and the maturity '
+            'scores of other groups consequently will be assessed relative to '
+            'this group.'),
+        'individual_id_column': (
+            'Optional metadata column containing IDs for individual subjects. '
+            'Adds individual subject (spaghetti) vectors to volatility charts '
+            'if a column name is provided.'),
+        'estimator': 'Regression model to use for prediction.',
+        'stratify': 'Evenly stratify training and test data among metadata '
+                    'categories. If True, all values in column must match '
+                    'at least two samples.'},
+    output_descriptions={
+        **pipeline_output_descriptions,
+        'maz_scores': 'Microbiota-for-age z-score predictions.',
+        'clustermap': 'Heatmap of important feature abundance at each time '
+                      'point in each group.',
+        'volatility-plots': 'Interactive volatility plots of MAZ and maturity '
+                            'scores, target (column) predictions, and the '
+                            'sample metadata.'},
+    name='Microbial maturity index prediction.',
+    description=('Calculates a "microbial maturity" index from a regression '
+                 'model trained on feature data to predict a given continuous '
+                 'metadata column, e.g., to predict age as a function of '
+                 'microbiota composition. The model is trained on a subset of '
+                 'control group samples, then predicts the column value for '
+                 'all samples. This visualization computes maturity index '
+                 'z-scores to compare relative "maturity" between each group, '
+                 'as described in doi:10.1038/nature13421. This method can '
+                 'be used to predict between-group differences in relative '
+                 'trajectory across any type of continuous metadata gradient, '
+                 'e.g., intestinal microbiome development by age, microbial '
+                 'succession during wine fermentation, or microbial community '
+                 'differences along environmental gradients, as a function of '
+                 'two or more different "treatment" groups.'),
+    citations=[citations['subramanian2014persistent'],
+               citations['Bokulich306167']]
+)
+
 
 importlib.import_module('q2_longitudinal._transformer')

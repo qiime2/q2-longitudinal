@@ -728,10 +728,10 @@ def _generate_column_name(df):
 
 def _validate_metadata_is_superset(metadata, table):
     metadata_ids = set(metadata.index.tolist())
-    table_ids = set(table.index.tolist())
-    if not table_ids.issubset(metadata_ids):
-        raise ValueError('Missing samples in metadata: %r' %
-                         table_ids.difference(metadata_ids))
+    table_ids = set(table.ids())
+    missing_ids = table_ids.difference(metadata_ids)
+    if len(missing_ids) > 0:
+        raise ValueError('Missing samples in metadata: %r' % missing_ids)
 
 
 def _validate_is_numeric_column(metadata, metric):
@@ -775,3 +775,37 @@ def _summarize_feature_stats(table, state_md_col):
 # https://github.com/pandas-dev/pandas/issues/1972
 def _convert_nan_to_none(df):
     return df.where(pd.notnull(df), None)
+
+
+def _maz_score(metadata, predicted, column, group_by, control):
+    '''pd.DataFrame -> pd.DataFrame'''
+    # extract control data
+    md_control = metadata[metadata[group_by] == control]
+
+    # for each bin, calculate median and SD in control samples
+    medians = {}
+    for n in md_control[column].unique():
+        _bin = md_control[md_control[column] == n]
+        _median = _bin[predicted].median()
+        _std = _bin[predicted].std()
+        medians[n] = (_median, _std)
+
+    # calculate maturity and MAZ scores in all samples
+    maturity_scores = []
+    maz_scores = []
+    for i, v in metadata[predicted].iteritems():
+        _median, _std = medians[metadata.loc[i][column]]
+        maturity = v - _median
+        maturity_scores.append(maturity)
+        if maturity == 0.0 or _std == 0.0:
+            maz_score = 0.0
+        else:
+            maz_score = maturity / _std
+        maz_scores.append(maz_score)
+
+    maturity = '{0} maturity'.format(column)
+    metadata[maturity] = maturity_scores
+    maz = '{0} MAZ score'.format(column)
+    metadata[maz] = maz_scores
+
+    return metadata
