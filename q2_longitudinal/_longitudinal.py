@@ -15,6 +15,7 @@ import skbio
 import qiime2
 import q2templates
 import warnings
+import biom
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -409,7 +410,9 @@ def feature_volatility(ctx,
                        parameter_tuning=False,
                        missing_samples='error'):
     regress = ctx.get_action('sample_classifier', 'regress_samples')
-    filter_tab = ctx.get_action('feature_table', 'filter_features')
+    # TODO: Add this back once filter_features can operate on a
+    # FeatureTable[RelativeFrequency] artifact (see notes below)
+    # filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
     volatility = ctx.get_action('longitudinal', 'plot_feature_volatility')
 
@@ -426,8 +429,21 @@ def feature_volatility(ctx,
 
     # filter table to important features and convert to relative frequency
     feature_md = importances.view(qiime2.Metadata)
-    filtered_table, = filter_tab(table=table, metadata=feature_md)
-    filtered_table, = relative(table=filtered_table)
+    filtered_table, = relative(table=table)
+    # TODO: use feature_table.relative_frequency to convert to transform
+    # once feature_table.filter_features can accept a relative frequency table.
+    # We must transform and then filter, because otherwise relative frequencies
+    # are based only on filtered features, which can seriously distort
+    # frequency if a large number of features is filtered out. At which point
+    # we can just filter with this code:
+    # filtered_table, = filter_tab(table=filtered_table, metadata=feature_md)
+    # filter_features also seems problematic, since it drops SAMPLES that have
+    # none of the features to keep... distorting averages in the control chart.
+    # For now let's use biom for this:
+    filtered_table = filtered_table.view(biom.Table).filter(
+        ids_to_keep=feature_md.get_ids(), axis='observation', inplace=False)
+    filtered_table = qiime2.Artifact.import_data(
+        'FeatureTable[RelativeFrequency]', filtered_table)
 
     volatility_plot, = volatility(metadata=metadata,
                                   table=filtered_table,
