@@ -245,13 +245,20 @@ plugin.visualizers.register_function(
                                 'available in the visualization).',
         'yscale': 'y-axis scaling strategy to apply.',
     },
-    # TODO: update this
-    name='Volatility analysis',
-    # TODO: update this
+    name='Generate interactive volatility plot',
     description=(
-        'Plot an interactive control chart of a single dependent variable, '
-        '"metric", across multiple groups contained in sample metadata '
-        'column "group_column".')
+        'Generate an interactive control chart depicting the longitudinal '
+        'volatility of sample metadata and/or feature frequencies across time '
+        '(as set using the "state_column" parameter). Any numeric metadata '
+        'column (and metadata-transformable artifacts, e.g., alpha diversity '
+        'results) can be plotted on the y-axis, and are selectable using the '
+        '"metric_column" selector. Metric values are averaged to compare '
+        'across any categorical metadata column using the "group_column" '
+        'selector. Longitudinal volatility for individual subjects sampled '
+        'over time is co-plotted as "spaghetti" plots if the '
+        '"individual_id_column" parameter is used. state_column will '
+        'typically be a measure of time, but any numeric metadata column can '
+        'be used.')
 )
 
 
@@ -443,15 +450,15 @@ plugin.pipelines.register_function(
         'volatility_plot': 'Interactive volatility plot visualization.',
         'accuracy_results': pipeline_output_descriptions['accuracy_results'],
         'sample_estimator': 'Trained sample regressor.'},
-    name=('Plot longitudinal abundance of supervised regression important '
-          'features.'),
+    name='Feature volatility analysis',
     description=(
-        'Uses supervised regression to select the most important features '
-        'that are predictive of the continuous metadata values in '
-        'state_column. These features are plotted in an interactive '
-        'volatility visualization to view their longitudinal abundance in '
-        'groups and in individual subjects.')
-)
+        'Identify features that are predictive of a numeric metadata column, '
+        'state_column (e.g., time), and plot their relative frequencies '
+        'across states using interactive feature volatility plots. A '
+        'supervised learning regressor is used to identify important features '
+        'and assess their ability to predict sample states. state_column will '
+        'typically be a measure of time, but any numeric metadata column can '
+        'be used.')
 
 
 importlib.import_module('q2_longitudinal._transformer')
