@@ -30,8 +30,7 @@ from q2_longitudinal._utilities import (
     _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit, first_differences, first_distances, feature_volatility,
-    plot_feature_volatility)
+    nmit, first_differences, first_distances, plot_feature_volatility)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)

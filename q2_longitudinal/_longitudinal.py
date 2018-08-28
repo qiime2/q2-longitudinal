@@ -214,6 +214,12 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
         raise ValueError('individual_id_column & state_column must be set to '
                          'unique values.')
 
+    # verify that individual_id_column exists in metadata
+    # other metadata columns are validated later (to ensure correct types)
+    if individual_id_column is not None:
+        individual_ids = metadata.get_column(
+            individual_id_column).to_dataframe()
+
     is_feat_vol_plot = importances is not None
 
     if is_feat_vol_plot:
@@ -251,16 +257,6 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
     categorical.get_column(default_group_column)
     numeric.get_column(default_metric)
 
-    # Verify that columns specified are present in metadata (skipping the
-    # state col now because it receives special treatment ahead).
-    validate_cols = [col for col in [individual_id_column,
-                                     default_group_column, default_metric]
-                     if col is not None]
-    for col in validate_cols:
-        # If the column doesn't exist the framework will raise the
-        # appropriate error.
-        metadata.get_column(col)
-
     # We don't need to do any additional validation on the
     # individual_id_column after this point, since it doesn't matter if it is
     # categorical, numeric, only one value, etc.
@@ -276,18 +272,20 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
         raise ValueError('state_column must contain at least two unique '
                          'values.')
 
-    control_chart_data = metadata.to_dataframe()
-    # convert np.nan to None (nans and vega don't mix)
-    control_chart_data = _convert_nan_to_none(control_chart_data)
-    # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
     if individual_id_column and individual_id_column not in group_columns:
         group_columns += [individual_id_column]
+        if individual_id_column not in metadata.columns.keys():
+            metadata = metadata.merge(qiime2.Metadata(individual_ids))
     metric_columns = list(numeric.columns.keys())
+    control_chart_data = metadata.to_dataframe()
+    # convert np.nan to None (nans and vega don't mix)
+    control_chart_data = _convert_nan_to_none(control_chart_data)
 
     if is_feat_vol_plot:
         metric_columns.remove(state_column)
 
+    # If we made it this far that means we can let Vega do it's thing!
     vega_spec = render_spec_volatility(control_chart_data,
                                        (stats_chart_data if is_feat_vol_plot
                                         else None),
@@ -413,7 +411,7 @@ def feature_volatility(ctx,
     regress = ctx.get_action('sample_classifier', 'regress_samples')
     filter_tab = ctx.get_action('feature_table', 'filter_features')
     relative = ctx.get_action('feature_table', 'relative_frequency')
-    volatility = ctx.get_action('longitudinal', 'volatility')
+    volatility = ctx.get_action('longitudinal', 'plot_feature_volatility')
 
     # this validation must be tested here ahead of supervised regression
     states = metadata.get_column(state_column)

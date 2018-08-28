@@ -38,14 +38,7 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                   'options': group_columns}},
         {'name': SIG_METRIC, 'value': default_metric,
          'bind': {'input': 'select', 'element': '#metric-column',
-                  'options': metric_columns},
-         # TODO: only render this if feat vol
-         'on': [
-             {'events': '@%s:click' % MRK_STATS_LEFT,
-              'update': 'datum.id', 'force': True},
-             {'events': '@%s:click' % MRK_STATS_CIRCLES_LEFT,
-              'update': 'datum.id', 'force': True}
-             ]},
+                  'options': metric_columns}},
         {'name': SIG_SHOW_GLOBAL_MEAN, 'value': False,
          'bind': {'input': 'checkbox', 'element': '#toggle-global-mean'}},
         {'name': SIG_SHOW_GLOBAL_CTRL_LIMS, 'value': False,
