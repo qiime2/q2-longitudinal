@@ -15,7 +15,7 @@ from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
 from q2_types.feature_data import FeatureData
 
-from q2_sample_classifier import (Importance, RegressorPredictions, 
+from q2_sample_classifier import (Importance, RegressorPredictions,
                                   SampleEstimator, Regressor)
 from q2_sample_classifier.plugin_setup import (
     parameters, parameter_descriptions, output_descriptions,
@@ -28,7 +28,7 @@ from ._format import FirstDifferencesFormat, FirstDifferencesDirectoryFormat
 from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances,
-                            maturity_index, feature_volatility, 
+                            maturity_index, feature_volatility,
                             plot_feature_volatility)
 import q2_longitudinal
 
@@ -464,6 +464,7 @@ plugin.pipelines.register_function(
         'and assess their ability to predict sample states. state_column will '
         'typically be a measure of time, but any numeric metadata column can '
         'be used.')
+)
 
 
 plugin.pipelines.register_function(

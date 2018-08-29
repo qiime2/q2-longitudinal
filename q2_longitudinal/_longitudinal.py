@@ -553,8 +553,8 @@ def feature_volatility(ctx,
     # For now let's use biom for this:
     filtered_table = filtered_table.view(biom.Table).filter(
         ids_to_keep=feature_md.get_ids(), axis='observation', inplace=False)
-    filtered_table = qiime2.Artifact.import_data(
-        'FeatureTable[RelativeFrequency]', filtered_table)
+    filtered_table = ctx.make_artifact('FeatureTable[RelativeFrequency]',
+                                       filtered_table)
 
     volatility_plot, = volatility(metadata=metadata,
                                   table=filtered_table,
