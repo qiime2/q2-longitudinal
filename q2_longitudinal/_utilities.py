@@ -728,7 +728,11 @@ def _generate_column_name(df):
 
 def _validate_metadata_is_superset(metadata, table):
     metadata_ids = set(metadata.index.tolist())
-    table_ids = set(table.ids())
+    try:
+        table_ids = set(table.index.tolist())
+    # we can also validate biom tables by extracting IDs like so
+    except AttributeError:
+        table_ids = set(table.ids())
     missing_ids = table_ids.difference(metadata_ids)
     if len(missing_ids) > 0:
         raise ValueError('Missing samples in metadata: %r' % missing_ids)
