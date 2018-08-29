@@ -26,8 +26,7 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _tabulate_matrix_ids, _validate_metadata_is_superset,
-    _summarize_feature_stats)
+    _validate_metadata_is_superset, _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances, plot_feature_volatility)
@@ -700,8 +699,7 @@ class TestLongitudinal(TestPluginBase):
 
     def test_validate_metadata_is_superset_distance_matrix(self):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
-            _validate_metadata_is_superset(
-                md[md['Time'] == 1], _tabulate_matrix_ids(dm))
+            _validate_metadata_is_superset(md[md['Time'] == 1], dm)
 
     def test_summarize_feature_stats(self):
         cheap_md = pd.DataFrame({'time': [1, 1, 2, 2, 3, 3]},

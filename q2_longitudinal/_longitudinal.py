@@ -24,7 +24,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column, _maz_score,
-                         _tabulate_matrix_ids, _first_differences,
+                         _first_differences,
                          _summarize_feature_stats, _convert_nan_to_none)
 from ._vega_specs import render_spec_volatility
 
@@ -497,8 +497,7 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
 
     # load and validate metadata
     metadata = _load_metadata(metadata)
-    _validate_metadata_is_superset(
-        metadata, _tabulate_matrix_ids(distance_matrix))
+    _validate_metadata_is_superset(metadata, distance_matrix)
 
     # validate columns
     # "Distance" is not actually a metadata value, so don't validate metric!

@@ -25,6 +25,7 @@ from statsmodels.formula.api import mixedlm
 from skbio import DistanceMatrix
 from skbio.stats.distance import MissingIDError
 import q2templates
+import biom
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
@@ -199,11 +200,6 @@ def _between_subject_distance_distribution(
                 except MissingIDError:
                     pass
     return list(results.values())
-
-
-def _tabulate_matrix_ids(distance_matrix):
-    _ids = distance_matrix.ids
-    return pd.Series(_ids, index=_ids)
 
 
 def _get_pairwise_differences(df, pairs, category, individual_id_column,
@@ -728,11 +724,13 @@ def _generate_column_name(df):
 
 def _validate_metadata_is_superset(metadata, table):
     metadata_ids = set(metadata.index.tolist())
-    try:
+    if isinstance(table, pd.DataFrame):
         table_ids = set(table.index.tolist())
     # we can also validate biom tables by extracting IDs like so
-    except AttributeError:
+    elif isinstance(table, biom.Table):
         table_ids = set(table.ids())
+    elif isinstance(table, DistanceMatrix):
+        table_ids = set(table.ids)
     missing_ids = table_ids.difference(metadata_ids)
     if len(missing_ids) > 0:
         raise ValueError('Missing samples in metadata: %r' % missing_ids)
