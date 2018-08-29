@@ -431,8 +431,8 @@ def maturity_index(ctx,
     pred_md = _maz_score(
         pred_md, 'prediction', state_column, group_by, control)
     maz = '{0} MAZ score'.format(state_column)
-    maz_scores = qiime2.Artifact.import_data(
-        'SampleData[RegressorPredictions]', pred_md[maz])
+    maz_scores = ctx.make_artifact('SampleData[RegressorPredictions]',
+                                   pred_md[maz])
 
     # make heatmap
     # trim table to important features for viewing as heatmap
@@ -451,8 +451,7 @@ def maturity_index(ctx,
     clust_md = clust_md.sort_values([group_by, state_column])
     # sort table using clustered/sorted metadata as guide
     sorted_table = cluster_table.view(biom.Table).sort_order(clust_md.index)
-    sorted_table = qiime2.Artifact.import_data(
-        'FeatureTable[Frequency]', sorted_table)
+    sorted_table = ctx.make_artifact('FeatureTable[Frequency]', sorted_table)
     clustermap, = heatmap(sorted_table, cluster='features')
 
     # visualize MAZ vs. time (column)
