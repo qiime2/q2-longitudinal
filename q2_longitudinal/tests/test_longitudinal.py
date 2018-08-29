@@ -17,6 +17,7 @@ import pandas.util.testing as pdt
 import skbio
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
+from qiime2.plugins import longitudinal
 
 from q2_longitudinal._utilities import (
     _get_group_pairs, _extract_distance_distribution,
@@ -25,8 +26,7 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _tabulate_matrix_ids, _validate_metadata_is_superset,
-    _summarize_feature_stats)
+    _validate_metadata_is_superset, _summarize_feature_stats)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances, plot_feature_volatility)
@@ -699,8 +699,7 @@ class TestLongitudinal(TestPluginBase):
 
     def test_validate_metadata_is_superset_distance_matrix(self):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
-            _validate_metadata_is_superset(
-                md[md['Time'] == 1], _tabulate_matrix_ids(dm))
+            _validate_metadata_is_superset(md[md['Time'] == 1], dm)
 
     def test_summarize_feature_stats(self):
         cheap_md = pd.DataFrame({'time': [1, 1, 2, 2, 3, 3]},
@@ -758,6 +757,24 @@ class TestLongitudinal(TestPluginBase):
             self.assertIn('"name": "statsChartLeft"', f)
             # check render_marks_stats_bars
             self.assertIn('"name": "statsMarks"', f)
+
+    # Test that this action works, produces expected results.
+    # Internal pipeline actions are tested independently so this test
+    # tests that predictions and MAZ scores are calculated correctly.
+    def test_maturity_index(self):
+        table_fp = self.get_data_path('ecam-table-maturity.qza')
+        table = qiime2.Artifact.load(table_fp)
+        res = longitudinal.actions.maturity_index(
+            table, self.md_ecam_fp, state_column='month', n_estimators=2,
+            group_by='delivery', random_state=123, n_jobs=1, control='Vaginal',
+            test_size=0.4, missing_samples='ignore')
+        maz = pd.to_numeric(res[5].view(pd.Series))
+        exp_maz = pd.read_csv(
+            self.get_data_path('maz.tsv'), sep='\t', squeeze=True, index_col=0,
+            header=0)
+        pdt.assert_series_equal(
+            maz, exp_maz, check_dtype=False, check_index_type=False,
+            check_series_type=False, check_names=False)
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
