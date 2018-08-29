@@ -419,7 +419,7 @@ plugin.pipelines.register_function(
     outputs=regressor_pipeline_outputs + [
         ('maz_scores', SampleData[RegressorPredictions]),
         ('clustermap', Visualization),
-        ('volatility-plots', Visualization)],
+        ('volatility_plots', Visualization)],
     input_descriptions={'table': ('Feature table containing all features that '
                                   'should be used for target prediction.')},
     parameter_descriptions={
@@ -446,7 +446,7 @@ plugin.pipelines.register_function(
         'maz_scores': 'Microbiota-for-age z-score predictions.',
         'clustermap': 'Heatmap of important feature abundance at each time '
                       'point in each group.',
-        'volatility-plots': 'Interactive volatility plots of MAZ and maturity '
+        'volatility_plots': 'Interactive volatility plots of MAZ and maturity '
                             'scores, target (column) predictions, and the '
                             'sample metadata.'},
     name='Microbial maturity index prediction.',
