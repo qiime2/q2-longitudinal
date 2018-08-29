@@ -34,7 +34,7 @@ plugin = Plugin(
     package='q2_longitudinal',
     description=(
         'This QIIME 2 plugin supports methods for analysis of time series '
-        'analysis, involving either paired sample comparisons or longitudinal '
+        'data, involving either paired sample comparisons or longitudinal '
         'study designs.'),
     short_description='Plugin for paired sample and time series analyses.',
     citations=[citations['bokulich2017q2']]
