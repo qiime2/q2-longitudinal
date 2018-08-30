@@ -163,6 +163,35 @@ class TestUtilities(TestPluginBase):
             _validate_is_numeric_column(erroneous_metadata, 'a')
 
 
+class TestLongitudinalPipelines(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+
+        self.md_ecam_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_map_maturity.txt'))
+        table_fp = self.get_data_path('ecam-table-maturity.qza')
+        self.table_ecam_fp = qiime2.Artifact.load(table_fp)
+
+    # just test that the plugin works. Individual commands are tested more
+    # thoroughly elsewhere.
+    def test_feature_volatility(self):
+        longitudinal.actions.feature_volatility(
+            table=self.table_ecam_fp, metadata=self.md_ecam_fp,
+            state_column='month', individual_id_column='studyid',
+            n_estimators=10)
+
+    # test state_column validation. Other validations are tested in individual
+    # actions.
+    def test_feature_volatility_invalid_state_column(self):
+        with self.assertRaisesRegex(TypeError, 'must be numeric'):
+            longitudinal.actions.feature_volatility(
+                table=self.table_ecam_fp, metadata=self.md_ecam_fp,
+                state_column='diet', individual_id_column='studyid',
+                n_estimators=10)
+
+
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
 # sure all plugins run smoothly.

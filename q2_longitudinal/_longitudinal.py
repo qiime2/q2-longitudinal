@@ -215,6 +215,12 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
         raise ValueError('individual_id_column & state_column must be set to '
                          'unique values.')
 
+    # verify that individual_id_column exists in metadata
+    # other metadata columns are validated later (to ensure correct types)
+    if individual_id_column is not None:
+        individual_ids = metadata.get_column(
+            individual_id_column).to_dataframe()
+
     is_feat_vol_plot = importances is not None
 
     if is_feat_vol_plot:
@@ -252,16 +258,6 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
     categorical.get_column(default_group_column)
     numeric.get_column(default_metric)
 
-    # Verify that columns specified are present in metadata (skipping the
-    # state col now because it receives special treatment ahead).
-    validate_cols = [col for col in [individual_id_column,
-                                     default_group_column, default_metric]
-                     if col is not None]
-    for col in validate_cols:
-        # If the column doesn't exist the framework will raise the
-        # appropriate error.
-        metadata.get_column(col)
-
     # We don't need to do any additional validation on the
     # individual_id_column after this point, since it doesn't matter if it is
     # categorical, numeric, only one value, etc.
@@ -277,18 +273,20 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
         raise ValueError('state_column must contain at least two unique '
                          'values.')
 
-    control_chart_data = metadata.to_dataframe()
-    # convert np.nan to None (nans and vega don't mix)
-    control_chart_data = _convert_nan_to_none(control_chart_data)
-    # If we made it this far that means we can let Vega do it's thing!
     group_columns = list(categorical.columns.keys())
     if individual_id_column and individual_id_column not in group_columns:
         group_columns += [individual_id_column]
+        if individual_id_column not in metadata.columns.keys():
+            metadata = metadata.merge(qiime2.Metadata(individual_ids))
     metric_columns = list(numeric.columns.keys())
+    control_chart_data = metadata.to_dataframe()
+    # convert np.nan to None (nans and vega don't mix)
+    control_chart_data = _convert_nan_to_none(control_chart_data)
 
     if is_feat_vol_plot:
         metric_columns.remove(state_column)
 
+    # If we made it this far that means we can let Vega do it's thing!
     vega_spec = render_spec_volatility(control_chart_data,
                                        (stats_chart_data if is_feat_vol_plot
                                         else None),
@@ -433,8 +431,8 @@ def maturity_index(ctx,
     pred_md = _maz_score(
         pred_md, 'prediction', state_column, group_by, control)
     maz = '{0} MAZ score'.format(state_column)
-    maz_scores = qiime2.Artifact.import_data(
-        'SampleData[RegressorPredictions]', pred_md[maz])
+    maz_scores = ctx.make_artifact('SampleData[RegressorPredictions]',
+                                   pred_md[maz])
 
     # make heatmap
     # trim table to important features for viewing as heatmap
@@ -453,8 +451,7 @@ def maturity_index(ctx,
     clust_md = clust_md.sort_values([group_by, state_column])
     # sort table using clustered/sorted metadata as guide
     sorted_table = cluster_table.view(biom.Table).sort_order(clust_md.index)
-    sorted_table = qiime2.Artifact.import_data(
-        'FeatureTable[Frequency]', sorted_table)
+    sorted_table = ctx.make_artifact('FeatureTable[Frequency]', sorted_table)
     clustermap, = heatmap(sorted_table, cluster='features')
 
     # visualize MAZ vs. time (column)
@@ -508,3 +505,62 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
         metadata, state_column, individual_id_column, metric=None,
         replicate_handling=replicate_handling, baseline=baseline,
         distance_matrix=distance_matrix)
+
+
+def feature_volatility(ctx,
+                       table,
+                       metadata,
+                       state_column,
+                       individual_id_column=None,
+                       cv=5,
+                       random_state=None,
+                       n_jobs=1,
+                       n_estimators=100,
+                       estimator='RandomForestRegressor',
+                       parameter_tuning=False,
+                       missing_samples='error'):
+    regress = ctx.get_action('sample_classifier', 'regress_samples')
+    # TODO: Add this back once filter_features can operate on a
+    # FeatureTable[RelativeFrequency] artifact (see notes below)
+    # filter_tab = ctx.get_action('feature_table', 'filter_features')
+    relative = ctx.get_action('feature_table', 'relative_frequency')
+    volatility = ctx.get_action('longitudinal', 'plot_feature_volatility')
+
+    # this validation must be tested here ahead of supervised regression
+    states = metadata.get_column(state_column)
+    if not isinstance(states, qiime2.NumericMetadataColumn):
+        raise TypeError('state_column must be numeric.')
+
+    estimator, importances, predictions, summary, accuracy = regress(
+        table, metadata=states, cv=cv, random_state=random_state,
+        n_jobs=n_jobs, n_estimators=n_estimators, estimator=estimator,
+        parameter_tuning=parameter_tuning, optimize_feature_selection=True,
+        missing_samples=missing_samples)
+
+    # filter table to important features and convert to relative frequency
+    feature_md = importances.view(qiime2.Metadata)
+    filtered_table, = relative(table=table)
+    # TODO: use feature_table.relative_frequency to convert to transform
+    # once feature_table.filter_features can accept a relative frequency table.
+    # We must transform and then filter, because otherwise relative frequencies
+    # are based only on filtered features, which can seriously distort
+    # frequency if a large number of features is filtered out. At which point
+    # we can just filter with this code:
+    # filtered_table, = filter_tab(table=filtered_table, metadata=feature_md)
+    # filter_features also seems problematic, since it drops SAMPLES that have
+    # none of the features to keep... distorting averages in the control chart.
+    # For now let's use biom for this:
+    filtered_table = filtered_table.view(biom.Table).filter(
+        ids_to_keep=feature_md.get_ids(), axis='observation', inplace=False)
+    filtered_table = ctx.make_artifact('FeatureTable[RelativeFrequency]',
+                                       filtered_table)
+
+    volatility_plot, = volatility(metadata=metadata,
+                                  table=filtered_table,
+                                  importances=importances,
+                                  state_column=state_column,
+                                  individual_id_column=individual_id_column,
+                                  default_group_column=None,
+                                  yscale='linear')
+
+    return filtered_table, importances, volatility_plot, accuracy, estimator
