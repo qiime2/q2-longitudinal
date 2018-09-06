@@ -18,8 +18,8 @@ API documentation can be found [here](https://docs.qiime2.org/2018.8/plugins/ava
 
 ## Help
 
-For user support, see the [QIIME 2 Forum](https://forum.qiime2.org). Bug reports and feature requests can also be made [via a new issue](./issues/new/choose).
+For user support, see the [QIIME 2 Forum](https://forum.qiime2.org). Bug reports and feature requests can also be made [via a new issue](/issues/new/choose).
 
 ## Contributing
 
-QIIME 2 is an open-source project, and we are very interested in contributions from the community. Please see the [contributing guidelines](./.github/CONTRIBUTING.md) if you would like to get involved.
+QIIME 2 is an open-source project, and we are very interested in contributions from the community. Please see the [contributing guidelines](/.github/CONTRIBUTING.md) if you would like to get involved.
