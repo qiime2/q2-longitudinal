@@ -309,7 +309,7 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
 
 
 def _linear_effects(metadata, metric, state_column, group_columns,
-                    individual_id_column, random_effects):
+                    individual_id_column, random_effects, formula):
     # Assemble fixed_effects
     if group_columns is not None:
         fixed_effects = [state_column] + group_columns
@@ -325,9 +325,9 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         random_effects = None
 
     # semicolon-delimited taxonomies cause an error; copy to new metric column
-    # also starting numeral (e.g., in feature name) causes error:
+    # also spaces and starting numeral (e.g., in feature name) cause error:
     # https://github.com/qiime2/q2-longitudinal/issues/101
-    if ';' in metric or metric[0].isdigit():
+    if ';' in metric or metric[0].isdigit() or ' ' in metric:
         # generate random column name but remove hyphens (patsy error)
         # and prepend word character (otherwise patsy splits strings starting
         # with numeral!)
@@ -336,11 +336,14 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         # store original metric name to report in viz later
         old_metric = metric
         metric = new_metric
+        if formula is not None:
+            formula.replace(old_metric, metric, 1)
     else:
         old_metric = None
 
-    # format formula
-    formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
+    # format formula if one is not passed explicitly
+    if formula is None:
+        formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
 
     # generate model
     mlm = mixedlm(

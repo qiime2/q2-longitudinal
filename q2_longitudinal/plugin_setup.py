@@ -186,7 +186,8 @@ plugin.visualizers.register_function(
                 'group_columns': Str,
                 'random_effects': Str,
                 'lowess': Bool,
-                'ci': Float % Range(0, 100)},
+                'ci': Float % Range(0, 100),
+                'formula': Str},
     input_descriptions={'table': (
         'Feature table containing metric.')},
     parameter_descriptions={
@@ -205,9 +206,23 @@ plugin.visualizers.register_function(
             'random slope, the same value passed to "state_column" should '
             'be passed here. A random intercept for each individual is set '
             'by default and does not need to be passed here.'),
-        'lowess': ('Estimate locally weighted scatterplot smoothing. Note '
-                   'that this will eliminate confidence interval plotting.'),
+        'lowess': 'Estimate locally weighted scatterplot smoothing. Note '
+                  'that this will eliminate confidence interval plotting.',
         'ci': 'Size of the confidence interval for the regression estimate.',
+        'formula': (
+            'R-style formula to use for model specification. A formula must '
+            'be used if the "metric" parameter is None. Note that the metric '
+            'and group columns specified in the formula will override metric '
+            'and group columns that are passed separately as parameters to '
+            'this method. Formulae will be in the format "a ~ b + c", where '
+            '"a" is the metric (dependent variable) and "b" and "c" are '
+            'independent covariates. Use "+" to add a variable; "+ a:b" to '
+            'add an interaction between variables a and b; "*" to include '
+            'a variable and all interactions; and "-" to subtract a '
+            'particular term (e.g., an interaction term). See '
+            'https://patsy.readthedocs.io/en/latest/formulas.html for full '
+            'documentation of valid formula operators. On command line, '
+            'remember to enclose in quotes if the formula contains spaces.'),
     },
     name='Linear mixed effects modeling',
     description=(

@@ -303,6 +303,60 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
+    def test_linear_mixed_effects_formula(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            formula='observed_otus ~ month * delivery * diet * antiexposedall')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_complex_formula(self):
+        formula='observed_otus~month*delivery+diet+month:diet-month:delivery'
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', formula=formula)
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_complex_formula.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_formula_missing_state_column(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'must contain the "state_column"'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                formula='observed_otus ~ delivery * diet * antiexposedall')
+
+    def test_linear_mixed_effects_formula_missing_tilde(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'metric ~ independent'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                formula='delivery * diet * antiexposedall')
+
+    def test_linear_mixed_effects_missing_metric(self):
+        with self.assertRaisesRegex(
+                ValueError, 'Must specify either a metric or a formula'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid')
+
     def test_linear_mixed_effects_no_group_columns(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
@@ -383,6 +437,17 @@ class TestLongitudinal(TestPluginBase):
             group_columns='delivery',
             individual_id_column='studyid',
             metric='74923f4bbde849e27fc4eda25d757e2a')
+
+    # just make sure this runs with spaces in metric name
+    def test_linear_mixed_effects_taxa_dodge_patsy_error_spacey_metrics(self):
+        peanuts_ugly_md = qiime2.Metadata(self.md_ecam_fp.to_dataframe().\
+            rename(columns={'observed_otus': 'observed otus'}))
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name,
+            metadata=peanuts_ugly_md, state_column='month',
+            group_columns='delivery',
+            individual_id_column='studyid',
+            metric='observed otus')
 
     def test_volatility(self):
         # Simultaneously "does it run" viz test
