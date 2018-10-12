@@ -430,7 +430,7 @@ class TestLongitudinal(TestPluginBase):
         pdt.assert_frame_equal(obs, exp)
 
     # just make sure this runs with metric name beginning with numeral
-    def test_linear_mixed_effects_taxa_dodge_patsy_error(self):
+    def test_linear_mixed_effects_dodge_patsy_error_ix0_is_digit(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
             metadata=self.md_ecam_fp, state_column='month',
@@ -438,8 +438,16 @@ class TestLongitudinal(TestPluginBase):
             individual_id_column='studyid',
             metric='74923f4bbde849e27fc4eda25d757e2a')
 
+    # just make sure this runs with metric name beginning with numeral
+    def test_linear_mixed_effects_dodge_patsy_error_ix0_is_digit_formula(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=self.table_ecam_fp,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            formula='74923f4bbde849e27fc4eda25d757e2a ~ month * delivery')
+
     # just make sure this runs with spaces in metric name
-    def test_linear_mixed_effects_taxa_dodge_patsy_error_spacey_metrics(self):
+    def test_linear_mixed_effects_dodge_patsy_error_spacey_metrics(self):
         peanuts_ugly_md = qiime2.Metadata(
             self.md_ecam_fp.to_dataframe().rename(
                 columns={'observed_otus': 'observed otus'}))

@@ -337,7 +337,7 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         old_metric = metric
         metric = new_metric
         if formula is not None:
-            formula.replace(old_metric, metric, 1)
+            formula = formula.replace(old_metric, metric, 1)
     else:
         old_metric = None
 
