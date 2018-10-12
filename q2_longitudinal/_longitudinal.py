@@ -9,6 +9,7 @@
 import os.path
 import pkg_resources
 from distutils.dir_util import copy_tree
+import re
 
 import pandas as pd
 import skbio
@@ -158,15 +159,16 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     # instead of putting in too many safety features (e.g., to prevent this
     # override behavior).
     if formula is not None:
-        split_formula = formula.split('~')
+        # add support for "**" operator — by dropping before parsing group cols
+        split_formula = re.sub(r'\*\*\s?\d', '', formula).split('~')
         metric = split_formula[0].strip()
         # parse out group columns (terms)
-        # yeah this is ugly but it's fastest and avoids extraneous imports
-        group_columns = split_formula[1].replace('*', '+').replace(':', '+').\
-            replace('-', '+').replace('(', '+').replace(')', '+').\
-            replace('/', '+').split('+')
-        group_columns = ','.join(list(set(
-            [c.strip() for c in group_columns if c.strip() != state_column])))
+        group_columns = re.sub(r'[\*\:\-\(\)/]', '+', split_formula[1])
+        group_columns = [c.strip() for c in group_columns.split('+')
+                         if c.strip() != state_column]
+        # drop empty strings (e.g., '**' operator will create empty str')
+        group_columns = list(filter(None, group_columns))
+        group_columns = ','.join(list(set(group_columns)))
 
     raw_data_columns = [metric, state_column, individual_id_column]
 

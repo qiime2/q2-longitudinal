@@ -331,6 +331,20 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
+    def test_linear_mixed_effects_interaction_depth_operator(self):
+        formula = 'observed_otus~(month+delivery+diet)**2'
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', formula=formula)
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_formula_depth.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
     def test_linear_mixed_effects_formula_missing_state_column(self):
         with self.assertRaisesRegex(ValueError,
                                     'must contain the "state_column"'):
