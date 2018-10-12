@@ -162,9 +162,9 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
         metric = split_formula[0].strip()
         # parse out group columns (terms)
         # yeah this is ugly but it's fastest and avoids extraneous imports
-        group_columns = split_formula[1].replace('*','+').replace(':','+').\
-            replace('-','+').replace('(','+').replace(')','+').\
-            replace('/','+').split('+')
+        group_columns = split_formula[1].replace('*', '+').replace(':', '+').\
+            replace('-', '+').replace('(', '+').replace(')', '+').\
+            replace('/', '+').split('+')
         group_columns = ','.join(list(set(
             [c.strip() for c in group_columns if c.strip() != state_column])))
 

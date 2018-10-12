@@ -318,7 +318,7 @@ class TestLongitudinal(TestPluginBase):
         pdt.assert_frame_equal(obs, exp)
 
     def test_linear_mixed_effects_complex_formula(self):
-        formula='observed_otus~month*delivery+diet+month:diet-month:delivery'
+        formula = 'observed_otus~month*delivery+diet+month:diet-month:delivery'
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
             metadata=self.md_ecam_fp, state_column='month',
@@ -440,8 +440,9 @@ class TestLongitudinal(TestPluginBase):
 
     # just make sure this runs with spaces in metric name
     def test_linear_mixed_effects_taxa_dodge_patsy_error_spacey_metrics(self):
-        peanuts_ugly_md = qiime2.Metadata(self.md_ecam_fp.to_dataframe().\
-            rename(columns={'observed_otus': 'observed otus'}))
+        peanuts_ugly_md = qiime2.Metadata(
+            self.md_ecam_fp.to_dataframe().rename(
+                columns={'observed_otus': 'observed otus'}))
         linear_mixed_effects(
             output_dir=self.temp_dir.name,
             metadata=peanuts_ugly_md, state_column='month',
