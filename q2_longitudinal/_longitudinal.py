@@ -36,9 +36,10 @@ TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
                          metric: str, state_column: str, state_1: str,
                          state_2: str, individual_id_column: str,
-                         group_column: str=None, parametric: bool=False,
-                         palette: str='Set1', replicate_handling: str='error',
-                         table: pd.DataFrame=None) -> None:
+                         group_column: str = None, parametric: bool = False,
+                         palette: str = 'Set1',
+                         replicate_handling: str = 'error',
+                         table: pd.DataFrame = None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
     metadata = _add_metric_to_metadata(table, metadata, metric)
@@ -89,9 +90,9 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
 def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
                        metadata: qiime2.Metadata, group_column: str,
                        state_column: str, state_1: str, state_2: str,
-                       individual_id_column: str, parametric: bool=False,
-                       palette: str='Set1', replicate_handling: str='error',
-                       ) -> None:
+                       individual_id_column: str, parametric: bool = False,
+                       palette: str = 'Set1',
+                       replicate_handling: str = 'error',) -> None:
 
     metadata = _load_metadata(metadata)
 
@@ -129,10 +130,11 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                          state_column: str, individual_id_column: str,
-                         metric: str=None, group_columns: str=None,
-                         random_effects: str=None, table: pd.DataFrame=None,
-                         palette: str='Set1', lowess: bool=False, ci: int=95,
-                         formula: str=None) -> None:
+                         metric: str = None, group_columns: str = None,
+                         random_effects: str = None,
+                         table: pd.DataFrame = None,
+                         palette: str = 'Set1', lowess: bool = False,
+                         ci: int = 95, formula: str = None) -> None:
 
     # Must use formula and/or metric.
     if metric is None and formula is None:
@@ -346,11 +348,11 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
 def volatility(output_dir: str,
                metadata: qiime2.Metadata,
                state_column: str,
-               individual_id_column: str=None,
-               default_group_column: str=None,
-               default_metric: str=None,
-               table: pd.DataFrame=None,
-               yscale: str='linear') -> None:
+               individual_id_column: str = None,
+               default_group_column: str = None,
+               default_metric: str = None,
+               table: pd.DataFrame = None,
+               yscale: str = 'linear') -> None:
     _volatility(output_dir, metadata, state_column, individual_id_column,
                 default_group_column, default_metric, table, yscale,
                 importances=None)
@@ -361,9 +363,9 @@ def plot_feature_volatility(output_dir: str,
                             importances: pd.DataFrame,
                             metadata: qiime2.Metadata,
                             state_column: str,
-                            individual_id_column: str=None,
-                            default_group_column: str=None,
-                            yscale: str='linear') -> None:
+                            individual_id_column: str = None,
+                            default_group_column: str = None,
+                            yscale: str = 'linear') -> None:
     # default_metric should be whatever the most important feature is
     default_metric = importances.index[0]
     _volatility(output_dir, metadata, state_column, individual_id_column,
@@ -372,8 +374,8 @@ def plot_feature_volatility(output_dir: str,
 
 
 def nmit(table: pd.DataFrame, metadata: qiime2.Metadata,
-         individual_id_column: str, corr_method: str="kendall",
-         dist_method: str="fro") -> skbio.DistanceMatrix:
+         individual_id_column: str, corr_method: str = "kendall",
+         dist_method: str = "fro") -> skbio.DistanceMatrix:
 
     # load and prep metadata
     metadata = _load_metadata(metadata)
@@ -504,8 +506,9 @@ def maturity_index(ctx,
 
 def first_differences(metadata: qiime2.Metadata, state_column: str,
                       individual_id_column: str, metric: str,
-                      replicate_handling: str='error', baseline: float=None,
-                      table: pd.DataFrame=None) -> pd.Series:
+                      replicate_handling: str = 'error',
+                      baseline: float = None,
+                      table: pd.DataFrame = None) -> pd.Series:
 
     # find metric in metadata or derive from table and merge into metadata
     if table is not None:
@@ -526,8 +529,8 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
 
 def first_distances(distance_matrix: skbio.DistanceMatrix,
                     metadata: qiime2.Metadata, state_column: str,
-                    individual_id_column: str, baseline: float=None,
-                    replicate_handling: str='error') -> pd.Series:
+                    individual_id_column: str, baseline: float = None,
+                    replicate_handling: str = 'error') -> pd.Series:
 
     # load and validate metadata
     metadata = _load_metadata(metadata)
