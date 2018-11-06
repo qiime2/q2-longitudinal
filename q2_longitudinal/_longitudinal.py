@@ -98,6 +98,9 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
     _validate_input_values(metadata, None, individual_id_column, group_column,
                            state_column, state_1, state_2)
 
+    # subset metadata to match distance_matrix ids
+    metadata = metadata.filter(distance_matrix.ids, axis=0)
+
     # calculate pairwise distance distributions
     pairs = {}
     pairs_summaries = {}
