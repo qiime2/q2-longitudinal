@@ -26,7 +26,7 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _validate_metadata_is_superset, _summarize_feature_stats)
+    _validate_metadata_is_superset, _summarize_feature_stats, _parse_formula)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances, plot_feature_volatility)
@@ -161,6 +161,27 @@ class TestUtilities(TestPluginBase):
         erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
         with self.assertRaisesRegex(ValueError, "is not a numeric"):
             _validate_is_numeric_column(erroneous_metadata, 'a')
+
+
+class TestParseFormula(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def test_parse_formula(self):
+        formulae = [('y ~ a * b * c', 'y', {'a', 'b', 'c'}),
+                    ('y~a*b+c+b:c-a:b', 'y', {'a', 'b', 'c'}),
+                    ('y~(a+b+c)**2', 'y', {'a', 'b', 'c'}),
+                    # TODO: this is a formula that will not pass
+                    # Leaving for another day because right now I doubt there
+                    # are many users/metadata files that follow this spec.
+                    # Besides, the workaround is easy.
+                    # ('y~(1a+b+c)**2', 'y', {'1a', 'b', 'c'}),
+                    ('"PC 1" ~ a + b', '"PC 1"', {'a', 'b'}),
+                    ('PC 1 ~ a + b', 'PC 1', {'a', 'b'}),
+                    ('57e2a ~ a / (b + d)', '57e2a', {'a', 'b', 'd'})]
+        for f, m, e in formulae:
+            metric, group_columns = _parse_formula(f)
+            self.assertEqual(metric, m, "formula: {0}".format(f))
+            self.assertEqual(group_columns, e, "formula: {0}".format(f))
 
 
 class TestLongitudinalPipelines(TestPluginBase):

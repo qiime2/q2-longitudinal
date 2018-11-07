@@ -9,7 +9,6 @@
 import os.path
 import pkg_resources
 from distutils.dir_util import copy_tree
-import re
 
 import pandas as pd
 import skbio
@@ -26,7 +25,8 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column, _maz_score,
                          _first_differences,
-                         _summarize_feature_stats, _convert_nan_to_none)
+                         _summarize_feature_stats, _convert_nan_to_none,
+                         _parse_formula)
 from ._vega_specs import render_spec_volatility
 
 
@@ -42,7 +42,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
                          table: pd.DataFrame = None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
-    metadata = _add_metric_to_metadata(table, metadata, metric)
+    metadata = _add_metric_to_metadata(table, _load_metadata(metadata), metric)
 
     _validate_input_values(metadata, metric, individual_id_column,
                            group_column, state_column, state_1, state_2)
@@ -136,6 +136,8 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                          palette: str = 'Set1', lowess: bool = False,
                          ci: int = 95, formula: str = None) -> None:
 
+    metadata = _load_metadata(metadata)
+
     # Must use formula and/or metric.
     if metric is None and formula is None:
         raise ValueError('Must specify either a metric or a formula that '
@@ -161,16 +163,9 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     # instead of putting in too many safety features (e.g., to prevent this
     # override behavior).
     if formula is not None:
-        # add support for "**" operator — by dropping before parsing group cols
-        split_formula = re.sub(r'\*\*\s?\d', '', formula).split('~')
-        metric = split_formula[0].strip()
-        # parse out group columns (terms)
-        group_columns = re.sub(r'[\*\:\-\(\)/]', '+', split_formula[1])
-        group_columns = [c.strip() for c in group_columns.split('+')
-                         if c.strip() != state_column]
-        # drop empty strings (e.g., '**' operator will create empty str')
-        group_columns = list(filter(None, group_columns))
-        group_columns = ','.join(list(set(group_columns)))
+        metric, group_columns = _parse_formula(formula)
+        group_columns.remove(state_column)
+        group_columns = ','.join(list(group_columns))
 
     raw_data_columns = [metric, state_column, individual_id_column]
 
@@ -511,11 +506,11 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
                       table: pd.DataFrame = None) -> pd.Series:
 
     # find metric in metadata or derive from table and merge into metadata
+    metadata = _load_metadata(metadata)
     if table is not None:
-        _validate_metadata_is_superset(metadata.to_dataframe(), table)
+        _validate_metadata_is_superset(metadata, table)
         metadata = _add_metric_to_metadata(table, metadata, metric)
     else:
-        metadata = _load_metadata(metadata)
         _validate_is_numeric_column(metadata, metric)
 
     # validate columns
