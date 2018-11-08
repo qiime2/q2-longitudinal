@@ -26,7 +26,7 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _validate_metadata_is_superset, _summarize_feature_stats)
+    _validate_metadata_is_superset, _summarize_feature_stats, _parse_formula)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances, plot_feature_volatility)
@@ -161,6 +161,27 @@ class TestUtilities(TestPluginBase):
         erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
         with self.assertRaisesRegex(ValueError, "is not a numeric"):
             _validate_is_numeric_column(erroneous_metadata, 'a')
+
+
+class TestParseFormula(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def test_parse_formula(self):
+        formulae = [('y ~ a * b * c', 'y', {'a', 'b', 'c'}),
+                    ('y~a*b+c+b:c-a:b', 'y', {'a', 'b', 'c'}),
+                    ('y~(a+b+c)**2', 'y', {'a', 'b', 'c'}),
+                    # TODO: this is a formula that will not pass
+                    # Leaving for another day because right now I doubt there
+                    # are many users/metadata files that follow this spec.
+                    # Besides, the workaround is easy.
+                    # ('y~(1a+b+c)**2', 'y', {'1a', 'b', 'c'}),
+                    ('"PC 1" ~ a + b', '"PC 1"', {'a', 'b'}),
+                    ('PC 1 ~ a + b', 'PC 1', {'a', 'b'}),
+                    ('57e2a ~ a / (b + d)', '57e2a', {'a', 'b', 'd'})]
+        for f, m, e in formulae:
+            metric, group_columns = _parse_formula(f)
+            self.assertEqual(metric, m, "formula: {0}".format(f))
+            self.assertEqual(group_columns, e, "formula: {0}".format(f))
 
 
 class TestLongitudinalPipelines(TestPluginBase):
@@ -303,6 +324,74 @@ class TestLongitudinal(TestPluginBase):
             sep='\t', index_col=0)
         pdt.assert_frame_equal(obs, exp)
 
+    def test_linear_mixed_effects_formula(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            formula='observed_otus ~ month * delivery * diet * antiexposedall')
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_complex_formula(self):
+        formula = 'observed_otus~month*delivery+diet+month:diet-month:delivery'
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', formula=formula)
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_complex_formula.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_interaction_depth_operator(self):
+        formula = 'observed_otus~(month+delivery+diet)**2'
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid', formula=formula)
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'model_results.tsv'),
+            sep='\t', index_col=0)
+        exp = pd.read_csv(
+            self.get_data_path('linear_mixed_effects_formula_depth.tsv'),
+            sep='\t', index_col=0)
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_linear_mixed_effects_formula_missing_state_column(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'must contain the "state_column"'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                formula='observed_otus ~ delivery * diet * antiexposedall')
+
+    def test_linear_mixed_effects_formula_missing_tilde(self):
+        with self.assertRaisesRegex(ValueError,
+                                    'metric ~ independent'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid',
+                formula='delivery * diet * antiexposedall')
+
+    def test_linear_mixed_effects_missing_metric(self):
+        with self.assertRaisesRegex(
+                ValueError, 'Must specify either a metric or a formula'):
+            linear_mixed_effects(
+                output_dir=self.temp_dir.name, table=None,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid')
+
     def test_linear_mixed_effects_no_group_columns(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=None,
@@ -376,13 +465,33 @@ class TestLongitudinal(TestPluginBase):
         pdt.assert_frame_equal(obs, exp)
 
     # just make sure this runs with metric name beginning with numeral
-    def test_linear_mixed_effects_taxa_dodge_patsy_error(self):
+    def test_linear_mixed_effects_dodge_patsy_error_ix0_is_digit(self):
         linear_mixed_effects(
             output_dir=self.temp_dir.name, table=self.table_ecam_fp,
             metadata=self.md_ecam_fp, state_column='month',
             group_columns='delivery',
             individual_id_column='studyid',
             metric='74923f4bbde849e27fc4eda25d757e2a')
+
+    # just make sure this runs with metric name beginning with numeral
+    def test_linear_mixed_effects_dodge_patsy_error_ix0_is_digit_formula(self):
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name, table=self.table_ecam_fp,
+            metadata=self.md_ecam_fp, state_column='month',
+            individual_id_column='studyid',
+            formula='74923f4bbde849e27fc4eda25d757e2a ~ month * delivery')
+
+    # just make sure this runs with spaces in metric name
+    def test_linear_mixed_effects_dodge_patsy_error_spacey_metrics(self):
+        peanuts_ugly_md = qiime2.Metadata(
+            self.md_ecam_fp.to_dataframe().rename(
+                columns={'observed_otus': 'observed otus'}))
+        linear_mixed_effects(
+            output_dir=self.temp_dir.name,
+            metadata=peanuts_ugly_md, state_column='month',
+            group_columns='delivery',
+            individual_id_column='studyid',
+            metric='observed otus')
 
     def test_volatility(self):
         # Simultaneously "does it run" viz test

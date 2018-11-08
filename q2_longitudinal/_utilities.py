@@ -26,6 +26,7 @@ from skbio import DistanceMatrix
 from skbio.stats.distance import MissingIDError
 import q2templates
 import biom
+from patsy import ModelDesc
 
 
 TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
@@ -309,7 +310,7 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
 
 
 def _linear_effects(metadata, metric, state_column, group_columns,
-                    individual_id_column, random_effects):
+                    individual_id_column, random_effects, formula):
     # Assemble fixed_effects
     if group_columns is not None:
         fixed_effects = [state_column] + group_columns
@@ -324,23 +325,17 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         # fit random intercept by default
         random_effects = None
 
-    # semicolon-delimited taxonomies cause an error; copy to new metric column
-    # also starting numeral (e.g., in feature name) causes error:
-    # https://github.com/qiime2/q2-longitudinal/issues/101
-    if ';' in metric or metric[0].isdigit():
-        # generate random column name but remove hyphens (patsy error)
-        # and prepend word character (otherwise patsy splits strings starting
-        # with numeral!)
-        new_metric = 'f' + _generate_column_name(metadata).replace("-", "")
-        metadata[new_metric] = metadata[metric]
-        # store original metric name to report in viz later
-        old_metric = metric
-        metric = new_metric
-    else:
-        old_metric = None
+    # reformat terms to avoid patsy errors
+    metadata, metric, old_metric = _dodge_patsy_errors(metadata, metric)
 
-    # format formula
-    formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
+    # format formula if one is not passed explicitly
+    if formula is None:
+        formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
+        original_formula = \
+            "{0} ~ {1}".format(old_metric, " * ".join(fixed_effects))
+    else:
+        original_formula = formula
+        formula = formula.replace(old_metric, metric, 1)
 
     # generate model
     mlm = mixedlm(
@@ -369,7 +364,7 @@ def _linear_effects(metadata, metric, state_column, group_columns,
     if old_metric is not None:
         model_summary.loc['Dependent Variable:', 'model summary'] = old_metric
 
-    return model_summary, model_results, model_fit
+    return model_summary, model_results, model_fit, original_formula
 
 
 def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
@@ -441,7 +436,6 @@ def _load_metadata(metadata):
 
 def _add_metric_to_metadata(table, metadata, metric):
     '''find metric in metadata or derive from table and merge into metadata.'''
-    metadata = _load_metadata(metadata)
     if metric not in metadata.columns:
         if table is not None and metric in table.columns:
             table_metric = pd.DataFrame(
@@ -811,3 +805,37 @@ def _maz_score(metadata, predicted, column, group_by, control):
     metadata[maz] = maz_scores
 
     return metadata
+
+
+def _parse_formula(formula):
+    # head off patsy errors
+    if ';' in formula or formula.strip()[0].isdigit():
+        metric = formula.split('~')[0].strip()
+    else:
+        metric = None
+
+    # use patsy to parse formula
+    model_desc = ModelDesc.from_formula(formula)
+    group_columns = set()
+    for t in model_desc.rhs_termlist:
+        for i in t.factors:
+            group_columns.add(i.name())
+    if metric is None:
+        metric = model_desc.lhs_termlist[0].name()
+    return metric, group_columns
+
+
+def _dodge_patsy_errors(metadata, metric):
+    # store original metric name to report in viz later
+    old_metric = metric
+    # semicolon-delimited taxonomies cause an error; copy to new metric column
+    # also spaces and starting numeral (e.g., in feature name) cause error:
+    # https://github.com/qiime2/q2-longitudinal/issues/101
+    if ';' in metric or metric[0].isdigit() or ' ' in metric:
+        # generate random column name but remove hyphens (patsy error)
+        # and prepend word character (otherwise patsy splits strings starting
+        # with numeral!)
+        metric = 'f' + _generate_column_name(metadata).replace("-", "")
+        metadata[metric] = metadata[old_metric]
+
+    return metadata, metric, old_metric

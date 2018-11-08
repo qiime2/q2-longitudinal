@@ -25,7 +25,8 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column, _maz_score,
                          _first_differences,
-                         _summarize_feature_stats, _convert_nan_to_none)
+                         _summarize_feature_stats, _convert_nan_to_none,
+                         _parse_formula)
 from ._vega_specs import render_spec_volatility
 
 
@@ -41,7 +42,7 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
                          table: pd.DataFrame = None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
-    metadata = _add_metric_to_metadata(table, metadata, metric)
+    metadata = _add_metric_to_metadata(table, _load_metadata(metadata), metric)
 
     _validate_input_values(metadata, metric, individual_id_column,
                            group_column, state_column, state_1, state_2)
@@ -131,12 +132,43 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
 
 
 def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
-                         metric: str, state_column: str,
-                         individual_id_column: str, group_columns: str = None,
+                         state_column: str, individual_id_column: str,
+                         metric: str = None, group_columns: str = None,
                          random_effects: str = None,
                          table: pd.DataFrame = None,
                          palette: str = 'Set1', lowess: bool = False,
-                         ci: int = 95) -> None:
+                         ci: int = 95, formula: str = None) -> None:
+
+    metadata = _load_metadata(metadata)
+
+    # Must use formula and/or metric.
+    if metric is None and formula is None:
+        raise ValueError('Must specify either a metric or a formula that '
+                         'contains a valid metric to use as a dependent '
+                         'variable.')
+
+    # Formulae must contain state_column and designate a metric.
+    # (state_column is used separately for plotting but is ambiguous in the
+    # formula, so it does make sense to require even when formula is passed.)
+    if formula is not None:
+        if '~' not in formula:
+            raise ValueError('Formula must be in format "metric ~ independent '
+                             'variables".')
+        if state_column not in formula:
+            raise ValueError(
+                '"formula" must contain the "state_column" value: '
+                '{0} does not contain {1}'.format(formula, state_column))
+
+    # optionally parse R-style formula for validation. Note that this will
+    # override "metric" and "group_columns" parameters if input separately.
+    # "formula" is meant to be a "secret" feature for power users familiar with
+    # R-style formulae, so I think it is okay to just clarify this in the docs
+    # instead of putting in too many safety features (e.g., to prevent this
+    # override behavior).
+    if formula is not None:
+        metric, group_columns = _parse_formula(formula)
+        group_columns.remove(state_column)
+        group_columns = ','.join(list(group_columns))
 
     raw_data_columns = [metric, state_column, individual_id_column]
 
@@ -161,9 +193,9 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     _validate_is_numeric_column(metadata, state_column)
 
     # Generate LME model summary
-    model_summary, model_results, model_fit = _linear_effects(
+    model_summary, model_results, model_fit, formula = _linear_effects(
         metadata, metric, state_column, group_columns,
-        individual_id_column, random_effects=random_effects)
+        individual_id_column, random_effects=random_effects, formula=formula)
 
     # Plot dependent variable as function of independent variables
     g = _regplot_subplots_from_dataframe(
@@ -189,10 +221,10 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 
     # summarize parameters and visualize
     summary = pd.Series(
-        [metric, group_columns, state_column,
+        [formula, metric, group_columns, state_column,
          individual_id_column, random_effects],
-        index=['Metric', 'Group column', 'State column',
-               'Individual ID column', 'Random effects'],
+        index=['Fixed Effects formula', 'Metric', 'Group column',
+               'State column', 'Individual ID column', 'Random effects'],
         name='Linear mixed effects parameters')
 
     raw_data = metadata[list(set(raw_data_columns))]
@@ -477,11 +509,11 @@ def first_differences(metadata: qiime2.Metadata, state_column: str,
                       table: pd.DataFrame = None) -> pd.Series:
 
     # find metric in metadata or derive from table and merge into metadata
+    metadata = _load_metadata(metadata)
     if table is not None:
-        _validate_metadata_is_superset(metadata.to_dataframe(), table)
+        _validate_metadata_is_superset(metadata, table)
         metadata = _add_metric_to_metadata(table, metadata, metric)
     else:
-        metadata = _load_metadata(metadata)
         _validate_is_numeric_column(metadata, metric)
 
     # validate columns
