@@ -326,14 +326,16 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         random_effects = None
 
     # reformat terms to avoid patsy errors
-    metadata, metric, old_metric, formula, original_formula = \
-        _dodge_patsy_errors(metadata, metric, formula)
+    metadata, metric, old_metric = _dodge_patsy_errors(metadata, metric)
 
     # format formula if one is not passed explicitly
     if formula is None:
         formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
         original_formula = \
             "{0} ~ {1}".format(old_metric, " * ".join(fixed_effects))
+    else:
+        original_formula = formula
+        formula = formula.replace(old_metric, metric, 1)
 
     # generate model
     mlm = mixedlm(
@@ -823,8 +825,9 @@ def _parse_formula(formula):
     return metric, group_columns
 
 
-def _dodge_patsy_errors(metadata, metric, formula):
-    original_formula = None
+def _dodge_patsy_errors(metadata, metric):
+    # store original metric name to report in viz later
+    old_metric = metric
     # semicolon-delimited taxonomies cause an error; copy to new metric column
     # also spaces and starting numeral (e.g., in feature name) cause error:
     # https://github.com/qiime2/q2-longitudinal/issues/101
@@ -832,15 +835,7 @@ def _dodge_patsy_errors(metadata, metric, formula):
         # generate random column name but remove hyphens (patsy error)
         # and prepend word character (otherwise patsy splits strings starting
         # with numeral!)
-        new_metric = 'f' + _generate_column_name(metadata).replace("-", "")
-        metadata[new_metric] = metadata[metric]
-        # store original metric name to report in viz later
-        old_metric = metric
-        metric = new_metric
-        if formula is not None:
-            original_formula = formula
-            formula = formula.replace(old_metric, metric, 1)
-    else:
-        old_metric = None
+        metric = 'f' + _generate_column_name(metadata).replace("-", "")
+        metadata[metric] = metadata[old_metric]
 
-    return metadata, metric, old_metric, formula, original_formula
+    return metadata, metric, old_metric
