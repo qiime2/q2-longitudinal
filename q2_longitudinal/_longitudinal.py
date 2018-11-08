@@ -190,7 +190,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
     _validate_is_numeric_column(metadata, state_column)
 
     # Generate LME model summary
-    model_summary, model_results, model_fit = _linear_effects(
+    model_summary, model_results, model_fit, formula = _linear_effects(
         metadata, metric, state_column, group_columns,
         individual_id_column, random_effects=random_effects, formula=formula)
 
@@ -218,10 +218,10 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 
     # summarize parameters and visualize
     summary = pd.Series(
-        [metric, group_columns, state_column,
+        [formula, metric, group_columns, state_column,
          individual_id_column, random_effects],
-        index=['Metric', 'Group column', 'State column',
-               'Individual ID column', 'Random effects'],
+        index=['Fixed Effects formula', 'Metric', 'Group column',
+               'State column', 'Individual ID column', 'Random effects'],
         name='Linear mixed effects parameters')
 
     raw_data = metadata[list(set(raw_data_columns))]

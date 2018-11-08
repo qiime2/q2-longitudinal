@@ -326,12 +326,14 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         random_effects = None
 
     # reformat terms to avoid patsy errors
-    metadata, metric, old_metric, formula = \
+    metadata, metric, old_metric, formula, original_formula = \
         _dodge_patsy_errors(metadata, metric, formula)
 
     # format formula if one is not passed explicitly
     if formula is None:
         formula = "{0} ~ {1}".format(metric, " * ".join(fixed_effects))
+        original_formula = \
+            "{0} ~ {1}".format(old_metric, " * ".join(fixed_effects))
 
     # generate model
     mlm = mixedlm(
@@ -360,7 +362,7 @@ def _linear_effects(metadata, metric, state_column, group_columns,
     if old_metric is not None:
         model_summary.loc['Dependent Variable:', 'model summary'] = old_metric
 
-    return model_summary, model_results, model_fit
+    return model_summary, model_results, model_fit, original_formula
 
 
 def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
@@ -822,6 +824,7 @@ def _parse_formula(formula):
 
 
 def _dodge_patsy_errors(metadata, metric, formula):
+    original_formula = None
     # semicolon-delimited taxonomies cause an error; copy to new metric column
     # also spaces and starting numeral (e.g., in feature name) cause error:
     # https://github.com/qiime2/q2-longitudinal/issues/101
@@ -835,8 +838,9 @@ def _dodge_patsy_errors(metadata, metric, formula):
         old_metric = metric
         metric = new_metric
         if formula is not None:
+            original_formula = formula
             formula = formula.replace(old_metric, metric, 1)
     else:
         old_metric = None
 
-    return metadata, metric, old_metric, formula
+    return metadata, metric, old_metric, formula, original_formula
