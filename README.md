@@ -10,11 +10,11 @@ Follow the QIIME 2 core distribution installation instructions at https://qiime2
 
 ## Tutorials
 
-This is a QIIME 2 plugin. For details on QIIME 2 and tutorials demonstrating how to use this plugin, see the [QIIME 2 documentation](https://qiime2.org/). Tutorials for this plugin can be found [here](https://docs.qiime2.org/2018.8/tutorials/longitudinal/).
+This is a QIIME 2 plugin. For details on QIIME 2 and tutorials demonstrating how to use this plugin, see the [QIIME 2 documentation](https://qiime2.org/). Tutorials for this plugin can be found [here](https://docs.qiime2.org/2018.11/tutorials/longitudinal/).
 
 ## API documentation
 
-API documentation can be found [here](https://docs.qiime2.org/2018.8/plugins/available/longitudinal/).
+API documentation can be found [here](https://docs.qiime2.org/2018.11/plugins/available/longitudinal/).
 
 ## Help
 
