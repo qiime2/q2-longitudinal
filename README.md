@@ -23,3 +23,6 @@ For user support, see the [QIIME 2 Forum](https://forum.qiime2.org). Bug reports
 ## Contributing
 
 QIIME 2 is an open-source project, and we are very interested in contributions from the community. Please see the [contributing guidelines](https://github.com/qiime2/q2-sample-classifier/blob/master/.github/CONTRIBUTING.md) if you would like to get involved.
+
+## Citing q2-longitudinal
+Bokulich NA, Dillon M, Zhang Y, Rideout JR, Bolyen E, Li H, Albert PS, Caporaso JG. 2018. q2-longitudinal: longitudinal and paired-sample analyses of microbiome data. mSystems 3:e00219-18. https://doi.org/10.1128/mSystems.00219-18
