@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Citations, Visualization)
+                           Citations, Visualization, Int)
 from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -29,7 +29,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances,
                             maturity_index, feature_volatility,
-                            plot_feature_volatility)
+                            plot_feature_volatility, anova)
 import q2_longitudinal
 
 
@@ -130,6 +130,18 @@ paired_parameter_descriptions = {
 }
 
 
+formula_description = (
+    'Formulae will be in the format "a ~ b + c", where '
+    '"a" is the metric (dependent variable) and "b" and "c" are '
+    'independent covariates. Use "+" to add a variable; "+ a:b" to '
+    'add an interaction between variables a and b; "*" to include '
+    'a variable and all interactions; and "-" to subtract a '
+    'particular term (e.g., an interaction term). See '
+    'https://patsy.readthedocs.io/en/latest/formulas.html for full '
+    'documentation of valid formula operators. On command line, '
+    'remember to enclose in quotes if the formula contains spaces.')
+
+
 plugin.visualizers.register_function(
     function=pairwise_differences,
     inputs={'table': FeatureTable[RelativeFrequency]},
@@ -214,15 +226,7 @@ plugin.visualizers.register_function(
             'be used if the "metric" parameter is None. Note that the metric '
             'and group columns specified in the formula will override metric '
             'and group columns that are passed separately as parameters to '
-            'this method. Formulae will be in the format "a ~ b + c", where '
-            '"a" is the metric (dependent variable) and "b" and "c" are '
-            'independent covariates. Use "+" to add a variable; "+ a:b" to '
-            'add an interaction between variables a and b; "*" to include '
-            'a variable and all interactions; and "-" to subtract a '
-            'particular term (e.g., an interaction term). See '
-            'https://patsy.readthedocs.io/en/latest/formulas.html for full '
-            'documentation of valid formula operators. On command line, '
-            'remember to enclose in quotes if the formula contains spaces.'),
+            'this method. ' + formula_description),
     },
     name='Linear mixed effects modeling',
     description=(
@@ -233,6 +237,29 @@ plugin.visualizers.register_function(
         'though whether "metric" is derived from the feature table or '
         'metadata is optional.'),
     citations=[citations['seabold2010statsmodels']]
+)
+
+
+plugin.visualizers.register_function(
+    function=anova,
+    inputs={},
+    parameters={'metadata': Metadata,
+                'formula': Str,
+                'sstype': Int % Range(1, 3)},
+    input_descriptions={},
+    parameter_descriptions={
+        'metadata': 'Sample metadata containing formula terms.',
+        'formula': 'R-style formula specifying the model. All terms must be '
+                   'present in the sample metadata or metadata-transformable '
+                   'artifacts and can be continuous or categorical metadata '
+                   'columns. ' + formula_description,
+        'sstype': 'Type of sum of squares calculation to perform (1, 2, or 3).'
+    },
+    name='ANOVA test',
+    description=('Perform an ANOVA test on any factors present in a metadata '
+                 'file and/or metadata-transformable artifacts. This is '
+                 'followed by pairwise t-tests to examine pairwise '
+                 'differences between categorical sample groups.')
 )
 
 

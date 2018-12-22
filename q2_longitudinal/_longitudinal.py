@@ -16,6 +16,8 @@ import qiime2
 import q2templates
 import warnings
 import biom
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -26,7 +28,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _nmit, _validate_is_numeric_column, _maz_score,
                          _first_differences,
                          _summarize_feature_stats, _convert_nan_to_none,
-                         _parse_formula)
+                         _parse_formula, _visualize_anova)
 from ._vega_specs import render_spec_volatility
 
 
@@ -233,6 +235,46 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
                model_results=model_results, plot=g, summary=summary,
                raw_data=raw_data,
                plot_name='Regression scatterplots', residuals=res)
+
+
+def anova(output_dir: str,
+          metadata: qiime2.Metadata,
+          formula: str,
+          sstype: int = 2) -> None:
+
+    # Grab metric and covariate names from formula
+    metric, group_columns = _parse_formula(formula)
+    columns = [metric] + list(group_columns)
+
+    # Validate formula (columns are in metadata, etc)
+    for col in columns:
+        metadata.get_column(col)
+    metadata = metadata.to_dataframe()[columns].dropna()
+
+    # Run anova
+    lm = ols(formula, metadata).fit()
+    results = pd.DataFrame(sm.stats.anova_lm(lm, typ=sstype)).fillna('')
+    results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
+
+    # Run pairwise t-tests with multiple test correction
+    pairwise_tests = pd.DataFrame()
+    for group in group_columns:
+        # only run on categorical columns — numeric columns raise error
+        if metadata[group].dtype == 'O':
+            ttests = lm.t_test_pairwise(group, method='fdr_bh').result_frame
+            pairwise_tests = pd.concat([pairwise_tests, pd.DataFrame(ttests)])
+
+    # Plot fit vs. residuals
+    metadata['residual'] = lm.resid
+    metadata['fitted_values'] = lm.fittedvalues
+    res = _regplot_subplots_from_dataframe(
+        'fitted_values', 'residual', metadata, group_columns, lowess=False,
+        ci=95, palette='Set1', fit_reg=False)
+
+    # Visualize results
+    _visualize_anova(output_dir, pairwise_tests=pairwise_tests,
+                     model_results=results, residuals=res,
+                     pairwise_test_name='Pairwise t-tests')
 
 
 def _warn_column_name_exists(column_name):

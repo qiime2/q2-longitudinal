@@ -915,6 +915,30 @@ class TestLongitudinal(TestPluginBase):
             check_series_type=False, check_names=False)
 
 
+class AnovaTests(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+        self.anova = self.plugin.actions['anova']
+        self.md = qiime2.Metadata(
+            pd.DataFrame([[1, 'a', 3], [1, 'b', 7], [1, 'b', 4], [1, 'a', 4],
+                          [1, 'a', 3], [1, 'b', 6], [2, 'b', 14], [2, 'b', 12],
+                          [2, 'b', 13], [2, 'a', 9], [2, 'a', 8], [2, 'a', 9]],
+                         columns=['number', 'letter', 'result'],
+                         index=pd.Index(
+                            ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8',
+                             's9', 's10', 's11', 's12'], name='id')))
+
+    def test_execution(self):
+        # does it run?
+        self.anova(self.md, 'result ~ letter+number')
+
+    def test_invalid_formula(self):
+        with self.assertRaisesRegex(ValueError, "not a column"):
+            self.anova(self.md, 'result ~ letter+fakecolumn')
+
+
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
                    (2, 'a', 0.19, 1), (2, 'a', 0.18, 2), (2, 'a', 0.21, 3),
                    (1, 'b', 0.14, 4), (1, 'b', 0.13, 5), (1, 'b', 0.14, 6),
