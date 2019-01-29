@@ -527,20 +527,19 @@ def _visualize_anova(output_dir, pairwise_tests=False, model_results=False,
                               sep='\t')
         pairwise_tests = q2templates.df_to_html(pairwise_tests)
 
-    if model_results is not False:
-        model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
-                             sep='\t')
-        model_results = q2templates.df_to_html(model_results)
+    model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
+                         sep='\t')
+    model_results = q2templates.df_to_html(model_results)
 
-    if residuals is not False:
-        residuals.savefig(
-            os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
-        residuals.savefig(
-            os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
-        plt.close('all')
+    residuals.savefig(
+        os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
+    residuals.savefig(
+        os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
+    plt.close('all')
 
     index = os.path.join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
+        'plot_name': 'ANOVA',
         'model_results': model_results,
         'pairwise_tests': pairwise_tests,
         'residuals': residuals,
@@ -839,6 +838,9 @@ def _maz_score(metadata, predicted, column, group_by, control):
 
 def _parse_formula(formula):
     # head off patsy errors
+    if '~' not in formula:
+        raise ValueError('Formula not valid: missing tilde.\n'
+                         'Enter a valid formula in format "y ~ model".')
     if ';' in formula or formula.strip()[0].isdigit():
         metric = formula.split('~')[0].strip()
     else:

@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Citations, Visualization, Int)
+                           Citations, Visualization)
 from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -138,8 +138,8 @@ formula_description = (
     'a variable and all interactions; and "-" to subtract a '
     'particular term (e.g., an interaction term). See '
     'https://patsy.readthedocs.io/en/latest/formulas.html for full '
-    'documentation of valid formula operators. On command line, '
-    'remember to enclose in quotes if the formula contains spaces.')
+    'documentation of valid formula operators. Always enclose formulae in '
+    'quotes to avoid unpleasant surprises.')
 
 
 plugin.visualizers.register_function(
@@ -245,7 +245,7 @@ plugin.visualizers.register_function(
     inputs={},
     parameters={'metadata': Metadata,
                 'formula': Str,
-                'sstype': Int % Range(1, 3)},
+                'sstype': Str % Choices(['I', 'II', 'III'])},
     input_descriptions={},
     parameter_descriptions={
         'metadata': 'Sample metadata containing formula terms.',
@@ -253,7 +253,8 @@ plugin.visualizers.register_function(
                    'present in the sample metadata or metadata-transformable '
                    'artifacts and can be continuous or categorical metadata '
                    'columns. ' + formula_description,
-        'sstype': 'Type of sum of squares calculation to perform (1, 2, or 3).'
+        'sstype': (
+            'Type of sum of squares calculation to perform (I, II, or III).')
     },
     name='ANOVA test',
     description=('Perform an ANOVA test on any factors present in a metadata '

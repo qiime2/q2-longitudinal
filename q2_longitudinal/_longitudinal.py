@@ -240,7 +240,7 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def anova(output_dir: str,
           metadata: qiime2.Metadata,
           formula: str,
-          sstype: int = 2) -> None:
+          sstype: str = 'II') -> None:
 
     # Grab metric and covariate names from formula
     metric, group_columns = _parse_formula(formula)
@@ -249,6 +249,8 @@ def anova(output_dir: str,
     # Validate formula (columns are in metadata, etc)
     for col in columns:
         metadata.get_column(col)
+    # store categorical column names for later use
+    cats = metadata.filter_columns(column_type='categorical').columns.keys()
     metadata = metadata.to_dataframe()[columns].dropna()
 
     # Run anova
@@ -260,9 +262,11 @@ def anova(output_dir: str,
     pairwise_tests = pd.DataFrame()
     for group in group_columns:
         # only run on categorical columns — numeric columns raise error
-        if metadata[group].dtype == 'O':
+        if group in cats:
             ttests = lm.t_test_pairwise(group, method='fdr_bh').result_frame
             pairwise_tests = pd.concat([pairwise_tests, pd.DataFrame(ttests)])
+    if pairwise_tests.empty:
+        pairwise_tests = False
 
     # Plot fit vs. residuals
     metadata['residual'] = lm.resid
