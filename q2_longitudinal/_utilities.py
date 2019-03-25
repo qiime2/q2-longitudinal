@@ -397,7 +397,7 @@ def _add_sample_size_to_xtick_labels(groups):
 
 def _regplot_subplots_from_dataframe(state_column, metric, metadata,
                                      group_by, lowess=False, ci=95,
-                                     palette='Set1'):
+                                     palette='Set1', fit_reg=True):
     '''plot a single regplot for each group in group_by.'''
     if group_by is None:
         # create dummy group column in metadata so we can squeeze into a
@@ -412,7 +412,7 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
         ax = axes[num][0]
         sns.set_palette(palette)
         for name, group_data in metadata.groupby(group_column):
-            sns.regplot(state_column, metric, data=group_data, fit_reg=True,
+            sns.regplot(state_column, metric, data=group_data, fit_reg=fit_reg,
                         scatter_kws={"marker": ".", "s": 100}, label=name,
                         ax=ax, lowess=lowess, ci=ci)
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
@@ -514,6 +514,35 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
         'residuals': residuals,
         'plot_name': plot_name,
         'raw_data': raw_data,
+        'pairwise_test_name': pairwise_test_name,
+    })
+
+
+def _visualize_anova(output_dir, pairwise_tests=False, model_results=False,
+                     residuals=False, pairwise_test_name='Pairwise t-tests'):
+    pd.set_option('display.max_colwidth', -1)
+
+    if pairwise_tests is not False:
+        pairwise_tests.to_csv(os.path.join(output_dir, 'pairwise_tests.tsv'),
+                              sep='\t')
+        pairwise_tests = q2templates.df_to_html(pairwise_tests)
+
+    model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
+                         sep='\t')
+    model_results = q2templates.df_to_html(model_results)
+
+    residuals.savefig(
+        os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
+    residuals.savefig(
+        os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
+    plt.close('all')
+
+    index = os.path.join(TEMPLATES, 'index.html')
+    q2templates.render(index, output_dir, context={
+        'plot_name': 'ANOVA',
+        'model_results': model_results,
+        'pairwise_tests': pairwise_tests,
+        'residuals': residuals,
         'pairwise_test_name': pairwise_test_name,
     })
 
@@ -809,6 +838,9 @@ def _maz_score(metadata, predicted, column, group_by, control):
 
 def _parse_formula(formula):
     # head off patsy errors
+    if '~' not in formula:
+        raise ValueError('Formula not valid: missing tilde.\n'
+                         'Enter a valid formula in format "y ~ model".')
     if ';' in formula or formula.strip()[0].isdigit():
         metric = formula.split('~')[0].strip()
     else:

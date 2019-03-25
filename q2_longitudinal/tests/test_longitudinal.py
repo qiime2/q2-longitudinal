@@ -10,6 +10,7 @@ import os
 import unittest
 from io import StringIO
 from warnings import filterwarnings
+import tempfile
 
 import numpy as np
 import pandas as pd
@@ -29,7 +30,7 @@ from q2_longitudinal._utilities import (
     _validate_metadata_is_superset, _summarize_feature_stats, _parse_formula)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
-    nmit, first_differences, first_distances, plot_feature_volatility)
+    nmit, first_differences, first_distances, plot_feature_volatility, anova)
 
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
@@ -913,6 +914,75 @@ class TestLongitudinal(TestPluginBase):
         pdt.assert_series_equal(
             maz, exp_maz, check_dtype=False, check_index_type=False,
             check_series_type=False, check_names=False)
+
+
+class AnovaTests(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+        self.md = qiime2.Metadata(
+            pd.DataFrame([[1, 'a', 3], [1, 'b', 7], [1, 'b', 4], [1, 'a', 4],
+                          [1, 'a', 3], [1, 'b', 6], [2, 'b', 14], [2, 'b', 12],
+                          [2, 'b', 13], [2, 'a', 9], [2, 'a', 8], [2, 'a', 9]],
+                         columns=['number', 'letter', 'result'],
+                         index=pd.Index(
+                            ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8',
+                             's9', 's10', 's11', 's12'], name='id')))
+
+    def test_execution(self):
+        exp = pd.DataFrame(
+            [['letter', 33.3333333333, 1.0, 27.2727272727, 0.0005474948912],
+             ['number', 120.333333333, 1.0, 98.4545454545, 3.81772037888e-06],
+             ['Residual', 11.0, 9.0, np.nan, np.nan]],
+            columns=['Unnamed: 0', 'sum_sq', 'df', 'F', 'PR(>F)'],
+            index=[0, 1, 2])
+        exp_pw = pd.DataFrame(
+            [['b-a', 3.333333333, 0.638284738, 5.222329678, 0.0005474948,
+              1.8894329402, 4.7772337, 0.000547494, True]],
+            columns=['Unnamed: 0', 'coef', 'std err', 't', 'P>|t|',
+                     'Conf. Int. Low', 'Conf. Int. Upp.', 'pvalue-fdr_bh',
+                     'reject-fdr_bh'],
+            index=[0])
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            anova(temp_dir_name, self.md, 'result ~ letter+number')
+
+            with open(os.path.join(temp_dir_name, 'anova.tsv'), 'r') as fh:
+                res = pd.read_csv(fh, sep='\t')
+                pdt.assert_frame_equal(
+                    res, exp, check_dtype=False, check_frame_type=False)
+            with open(os.path.join(
+                    temp_dir_name, 'pairwise_tests.tsv'), 'r') as fh:
+                res = pd.read_csv(fh, sep='\t')
+                pdt.assert_frame_equal(
+                    res, exp_pw, check_dtype=False, check_frame_type=False)
+
+    def test_pairwise(self):
+        exp = pd.DataFrame(
+            [['number', 120.33333333, 1.0, 27.14285714, 0.00039560940],
+             ['Residual', 44.3333333, 10.0, np.nan, np.nan]],
+            columns=['Unnamed: 0', 'sum_sq', 'df', 'F', 'PR(>F)'],
+            index=[0, 1])
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            anova(temp_dir_name, self.md, 'result ~ number')
+
+            with open(os.path.join(temp_dir_name, 'anova.tsv'), 'r') as fh:
+                res = pd.read_csv(fh, sep='\t')
+                pdt.assert_frame_equal(
+                    res, exp, check_dtype=False, check_frame_type=False)
+                # pairwise tests should not be created with 100% numeric data
+                self.assertFalse(os.path.exists(
+                    os.path.join(temp_dir_name, 'pairwise_tests.tsv')))
+
+    def test_invalid_formula(self):
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            with self.assertRaisesRegex(ValueError, "not a column"):
+                anova(temp_dir_name, self.md, 'result ~ letter+fakecolumn')
+
+    def test_missing_tilde(self):
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            with self.assertRaisesRegex(ValueError, "missing tilde"):
+                anova(temp_dir_name, self.md, 'letter')
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
