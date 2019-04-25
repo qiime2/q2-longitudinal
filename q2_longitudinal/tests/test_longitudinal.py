@@ -906,7 +906,8 @@ class TestLongitudinal(TestPluginBase):
         res = longitudinal.actions.maturity_index(
             table, self.md_ecam_fp, state_column='month', n_estimators=2,
             group_by='delivery', random_state=123, n_jobs=1, control='Vaginal',
-            test_size=0.4, missing_samples='ignore', stratify=True)
+            test_size=0.4, missing_samples='ignore', stratify=True,
+            feature_count=10)
         maz = pd.to_numeric(res[5].view(pd.Series))
         exp_maz = pd.read_csv(
             self.get_data_path('maz.tsv'), sep='\t', squeeze=True, index_col=0,

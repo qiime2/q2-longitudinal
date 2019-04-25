@@ -454,7 +454,8 @@ def maturity_index(ctx,
                    parameter_tuning=False,
                    optimize_feature_selection=False,
                    stratify=False,
-                   missing_samples='error'):
+                   missing_samples='error',
+                   feature_count=50):
 
     filter_samples = ctx.get_action('feature_table', 'filter_samples')
     filter_features = ctx.get_action('feature_table', 'filter_features')
@@ -518,8 +519,19 @@ def maturity_index(ctx,
                                    pred_md[maz])
 
     # make heatmap
-    # trim table to important features for viewing as heatmap
-    table, = filter_features(table, metadata=importance.view(qiime2.Metadata))
+    # load importance data and sum rows (to average importances if there are
+    # multiple scores).
+    imp = importance.view(pd.DataFrame).sum(1)
+
+    # filter importances by user criteria
+    imp = imp.sort_values(ascending=False)
+    if feature_count > 0:
+        imp = imp[:feature_count]
+    imp.name = 'importance'
+    imp = qiime2.Metadata(imp.to_frame())
+
+    # filter table to important features for viewing as heatmap
+    table, = filter_features(table, metadata=imp)
     # make sure IDs match between table and metadata
     cluster_table, = filter_samples(table, metadata=metadata)
     # need to group table by two columns together, so do this ugly hack

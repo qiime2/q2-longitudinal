@@ -9,7 +9,7 @@
 import importlib
 
 from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
-                           Citations, Visualization)
+                           Int, Citations, Visualization)
 from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
@@ -521,6 +521,7 @@ plugin.pipelines.register_function(
                 'metadata': Metadata,
                 'state_column': Str,
                 'stratify': Bool,
+                'feature_count': Int % Range(0, None)
                 },
     outputs=regressor_pipeline_outputs + [
         ('maz_scores', SampleData[RegressorPredictions]),
@@ -546,7 +547,10 @@ plugin.pipelines.register_function(
         'estimator': 'Regression model to use for prediction.',
         'stratify': 'Evenly stratify training and test data among metadata '
                     'categories. If True, all values in column must match '
-                    'at least two samples.'},
+                    'at least two samples.',
+        'feature_count': 'Filter feature table to include top N most '
+                         'important features. Set to zero to include all '
+                         'features.'},
     output_descriptions={
         **pipeline_output_descriptions,
         'maz_scores': 'Microbiota-for-age z-score predictions.',
