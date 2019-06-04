@@ -339,7 +339,7 @@ plugin.visualizers.register_function(
     description=(
         'Plots an interactive control chart of feature abundances (y-axis) '
         'in each sample across time (or state; x-axis). Feature importance '
-        'scores and descriptive statistics for each each feature are plotted '
+        'scores and descriptive statistics for each feature are plotted '
         'in interactive bar charts below the control chart, facilitating '
         'exploration of longitudinal feature data. This visualization is '
         'intended for use with the feature-volatility pipeline; use that '
