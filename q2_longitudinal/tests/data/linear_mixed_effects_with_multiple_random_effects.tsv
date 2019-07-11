@@ -1,23 +1,23 @@
 	Coef.	Std.Err.	z	P>|z|	[0.025	0.975]
-Intercept	32.844	7.79	4.216	0.0	17.576	48.113
-delivery[T.Vaginal]	-9.526	5.662999999999999	-1.682	0.09300000000000001	-20.625	1.5730000000000002
-diet[T.fd]	5.666	13.447000000000001	0.42100000000000004	0.674	-20.691	32.022
-antiexposedall[T.y]	-29.026999999999997	6.341	-4.578	0.0	-41.45399999999999	-16.599
-delivery[T.Vaginal]:diet[T.fd]	1.032	11.815999999999999	0.087	0.93	-22.127	24.19
-delivery[T.Vaginal]:antiexposedall[T.y]	9.935	7.472	1.33	0.184	-4.71	24.581
-diet[T.fd]:antiexposedall[T.y]	8.66	19.331	0.44799999999999995	0.654	-29.228	46.548
-delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	-17.987000000000002	24.705	-0.728	0.467	-66.408	30.434
-month	-0.077	0.715	-0.10800000000000001	0.914	-1.4780000000000002	1.3230000000000002
-month:delivery[T.Vaginal]	2.2969999999999997	0.795	2.889	0.004	0.738	3.855
-month:diet[T.fd]	0.32	0.899	0.35600000000000004	0.722	-1.443	2.083
-month:antiexposedall[T.y]	3.2689999999999997	0.7829999999999999	4.175	0.0	1.734	4.803
-month:delivery[T.Vaginal]:diet[T.fd]	-1.0270000000000001	1.2919999999999998	-0.795	0.42700000000000005	-3.56	1.506
-month:delivery[T.Vaginal]:antiexposedall[T.y]	-1.9409999999999998	0.887	-2.189	0.028999999999999998	-3.679	-0.203
-month:diet[T.fd]:antiexposedall[T.y]	-1.449	1.421	-1.02	0.308	-4.234	1.335
-month:delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	3.397	2.039	1.666	0.096	-0.6	7.394
-Group Var	89.70299999999999	19.331				
-Group x month Cov	-9.214	0.5479999999999999				
-month Var	1.348	0.028999999999999998				
-Group x studyid Cov	-0.44799999999999995	0.655				
-month x studyid Cov	0.044000000000000004	0.017				
-studyid Var	0.01	0.021				
+Intercept	32.842	6.69	4.909	0	19.729	45.955
+delivery[T.Vaginal]	-9.551	5.471	-1.746	0.081	-20.274	1.172
+diet[T.fd]	5.655	11.471	0.493	0.622	-16.827	28.137
+antiexposedall[T.y]	-29.005	6.215	-4.667	0	-41.185	-16.824
+delivery[T.Vaginal]:diet[T.fd]	1.078	11.064	0.097	0.922	-20.606	22.762
+delivery[T.Vaginal]:antiexposedall[T.y]	9.974	7.407	1.347	0.178	-4.543	24.492
+diet[T.fd]:antiexposedall[T.y]	8.711	19.329	0.451	0.652	-29.174	46.595
+delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	-18.076	24.671	-0.733	0.464	-66.429	30.278
+month	-0.077	0.712	-0.108	0.914	-1.473	1.319
+month:delivery[T.Vaginal]	2.297	0.791	2.902	0.004	0.746	3.848
+month:diet[T.fd]	0.319	0.891	0.358	0.72	-1.428	2.066
+month:antiexposedall[T.y]	3.267	0.783	4.174	0	1.733	4.802
+month:delivery[T.Vaginal]:diet[T.fd]	-1.028	1.276	-0.805	0.421	-3.53	1.474
+month:delivery[T.Vaginal]:antiexposedall[T.y]	-1.941	0.886	-2.19	0.029	-3.677	-0.204
+month:diet[T.fd]:antiexposedall[T.y]	-1.451	1.418	-1.023	0.306	-4.231	1.329
+month:delivery[T.Vaginal]:diet[T.fd]:antiexposedall[T.y]	3.401	2.039	1.668	0.095	-0.595	7.397
+Group Var	89.741	15.818				
+Group x month Cov	-9.218	0.479				
+month Var	1.349	0.029				
+Group x studyid Cov	-0.464	0.528				
+month x studyid Cov	0.046	0.014				
+studyid Var	0.01	0.017				
