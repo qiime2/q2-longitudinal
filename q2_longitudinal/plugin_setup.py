@@ -73,7 +73,7 @@ base_parameters = {
     'palette': Str % Choices([
         'Set1', 'Set2', 'Set3', 'Pastel1', 'Pastel2', 'Paired', 'Accent',
         'Dark2', 'tab10', 'tab20', 'tab20b', 'tab20c', 'viridis', 'plasma',
-        'inferno', 'magma', 'terrain', 'rainbow']),
+        'inferno', 'magma', 'terrain', 'rainbow', 'cividis']),
 }
 
 paired_params = {
