@@ -129,6 +129,20 @@ paired_parameter_descriptions = {
             miscellaneous_parameter_descriptions['replicate_handling']),
 }
 
+volatility_filtering_parameters = {
+    'feature_count': Int % Range(1, None) | Str % Choices(['all']),
+    'importance_threshold': (Float % Range(0, None, inclusive_start=False) |
+                             Str % Choices(['q1', 'q2', 'q3', 'None']))}
+
+volatility_filtering_parameter_descriptions = {
+    'feature_count': 'Filter feature table to include top N most '
+                     'important features. Set to "all" to include all '
+                     'features.',
+    'importance_threshold': 'Filter feature table to exclude any features '
+                            'with an importance score less than this '
+                            'threshold. Set to "q1", "q2", or "q3" to select '
+                            'the first, second, or third quartile of values. '
+                            'Set to "None" to disable this filter.'}
 
 formula_description = (
     'Formulae will be in the format "a ~ b + c", where '
@@ -320,7 +334,9 @@ plugin.visualizers.register_function(
         **shared_parameters,
         'state_column': miscellaneous_parameters['state_column'],
         'default_group_column': Str,
-        'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS)
+        'yscale': Str % Choices(_VOLATILITY_SCALE_OPTS),
+        **volatility_filtering_parameters,
+        'missing_samples': Str % Choices(['error', 'ignore'])
     },
     input_descriptions={
         'table': 'Feature table containing features found in importances.',
@@ -334,6 +350,12 @@ plugin.visualizers.register_function(
                                 'categorical metadata columns will be '
                                 'available in the visualization).',
         'yscale': 'y-axis scaling strategy to apply.',
+        **volatility_filtering_parameter_descriptions,
+        'missing_samples': (
+            'How to handle missing samples in metadata. "error" will fail '
+            'if missing samples are detected. "ignore" will cause the '
+            'feature table and metadata to be filtered, so that only '
+            'samples found in both files are retained.')
     },
     name='Plot longitudinal feature volatility and importances',
     description=(
@@ -473,7 +495,8 @@ plugin.pipelines.register_function(
         'estimator': Str % Choices(
             ['RandomForestRegressor', 'ExtraTreesRegressor',
              'GradientBoostingRegressor', 'AdaBoostRegressor', 'ElasticNet',
-             'Ridge', 'Lasso', 'KNeighborsRegressor', 'LinearSVR', 'SVR'])},
+             'Ridge', 'Lasso', 'KNeighborsRegressor', 'LinearSVR', 'SVR']),
+        **volatility_filtering_parameters},
     outputs=[('filtered_table', FeatureTable[RelativeFrequency]),
              ('feature_importance', FeatureData[Importance]),
              ('volatility_plot', Visualization),
@@ -491,7 +514,8 @@ plugin.pipelines.register_function(
                         'values.',
         **parameter_descriptions['base'],
         **parameter_descriptions['cv'],
-        **parameter_descriptions['estimator']},
+        **parameter_descriptions['estimator'],
+        **volatility_filtering_parameter_descriptions},
     output_descriptions={
         'filtered_table': 'Feature table containing only important features.',
         'feature_importance': output_descriptions['feature_importance'],
