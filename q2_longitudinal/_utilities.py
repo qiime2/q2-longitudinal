@@ -891,6 +891,7 @@ def _importance_filtering(table, importances, importance_threshold,
     # avg importances by rows (to take average if there are multiple scores).
     importances = importances.mean(1)
     importances = importances.sort_values(ascending=False)
+    importances.name = 'importance'
 
     filtered = False
     # filter importances by user criteria
@@ -912,4 +913,4 @@ def _importance_filtering(table, importances, importance_threshold,
     if filtered:
         table = table[importances.index]
 
-    return table, importances
+    return table, importances.to_frame()

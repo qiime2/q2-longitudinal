@@ -172,36 +172,37 @@ class TestImportanceFiltering(TestPluginBase):
         super().setUp()
 
         self.imp = pd.DataFrame([6., 5., 4., 3., 2., 1.],
-                                index=[i for i in 'abcdef'])
+                                index=[i for i in 'abcdef'],
+                                columns=['importance'])
         self.tab = pd.DataFrame([[1., 2., 3., 4., 5., 6.]] * 4,
                                 index=[s for s in 'vxyz'],
                                 columns=[i for i in 'abcdef'])
 
     def test_importance_filtering_none(self):
         tab, imps = _importance_filtering(
-            self.tab, self.imp, importance_threshold='None',
+            self.tab, self.imp, importance_threshold=None,
             feature_count='all')
         pdt.assert_frame_equal(self.tab, tab)
-        pdt.assert_frame_equal(self.imp, imps.to_frame())
+        pdt.assert_frame_equal(self.imp, imps)
 
     def test_importance_filtering_count(self):
         tab, imps = _importance_filtering(
-            self.tab, self.imp, importance_threshold='None',
+            self.tab, self.imp, importance_threshold=None,
             feature_count=3)
         pdt.assert_frame_equal(self.tab[['a', 'b', 'c']], tab)
-        pdt.assert_frame_equal(self.imp[:3], imps.to_frame())
+        pdt.assert_frame_equal(self.imp[:3], imps)
 
     def test_importance_float_threshold(self):
         tab, imps = _importance_filtering(
             self.tab, self.imp, importance_threshold=5., feature_count=10)
         pdt.assert_frame_equal(self.tab[['a', 'b']], tab)
-        pdt.assert_frame_equal(self.imp[:2], imps.to_frame())
+        pdt.assert_frame_equal(self.imp[:2], imps)
 
     def test_importance_quartile_threshold(self):
         tab, imps = _importance_filtering(
             self.tab, self.imp, importance_threshold='q2', feature_count='all')
         pdt.assert_frame_equal(self.tab[['a', 'b', 'c']], tab)
-        pdt.assert_frame_equal(self.imp[:3], imps.to_frame())
+        pdt.assert_frame_equal(self.imp[:3], imps)
 
 
 class TestParseFormula(TestPluginBase):

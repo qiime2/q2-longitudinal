@@ -132,7 +132,7 @@ paired_parameter_descriptions = {
 volatility_filtering_parameters = {
     'feature_count': Int % Range(1, None) | Str % Choices(['all']),
     'importance_threshold': (Float % Range(0, None, inclusive_start=False) |
-                             Str % Choices(['q1', 'q2', 'q3', 'None']))}
+                             Str % Choices(['q1', 'q2', 'q3']))}
 
 volatility_filtering_parameter_descriptions = {
     'feature_count': 'Filter feature table to include top N most '
