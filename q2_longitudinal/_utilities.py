@@ -898,10 +898,10 @@ def _importance_filtering(table, importances, importance_threshold,
     if importance_threshold in ['q1', 'q2', 'q3']:
         importance_threshold = importances.quantile(
             quantiles[importance_threshold])
+    elif importance_threshold is None:
+        importance_threshold = 0.0
 
-    if importance_threshold is None:
-        pass
-    elif importance_threshold > 0:
+    if importance_threshold > 0:
         importances = importances[importances >= importance_threshold]
         filtered = True
 
