@@ -418,7 +418,7 @@ def plot_feature_volatility(output_dir: str,
         _validate_metadata_is_superset(importances, table.T)
 
     # filter table, importances based on importance threshold / feature count
-    if importance_threshold is not None and feature_count is not None:
+    if importance_threshold is not None or feature_count is not None:
         table, importances = _importance_filtering(
             table, importances, importance_threshold, feature_count)
 

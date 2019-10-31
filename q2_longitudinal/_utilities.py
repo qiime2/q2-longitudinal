@@ -897,15 +897,19 @@ def _importance_filtering(table, importances, importance_threshold,
     if importance_threshold in ['q1', 'q2', 'q3']:
         importance_threshold = importances.quantile(
             quantiles[importance_threshold])
-    if importance_threshold == 'None':
+
+    if importance_threshold is None:
         pass
     elif importance_threshold > 0:
         importances = importances[importances >= importance_threshold]
         filtered = True
+
     if feature_count != 'all':
         importances = importances[:feature_count]
         filtered = True
+
     # if any importance filtering occurred, subset table features
     if filtered:
         table = table[importances.index]
+
     return table, importances
