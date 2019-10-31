@@ -27,7 +27,8 @@ from q2_longitudinal._utilities import (
     _multiple_group_difference, _per_method_pairwise_stats,
     _multiple_tests_correction, _add_sample_size_to_xtick_labels,
     _temporal_corr, _temporal_distance, _nmit, _validate_is_numeric_column,
-    _validate_metadata_is_superset, _summarize_feature_stats, _parse_formula)
+    _validate_metadata_is_superset, _summarize_feature_stats, _parse_formula,
+    _importance_filtering)
 from q2_longitudinal._longitudinal import (
     pairwise_differences, pairwise_distances, linear_mixed_effects, volatility,
     nmit, first_differences, first_distances, plot_feature_volatility, anova)
@@ -162,6 +163,46 @@ class TestUtilities(TestPluginBase):
         erroneous_metadata = pd.DataFrame({'a': [1, 2, 'b']})
         with self.assertRaisesRegex(ValueError, "is not a numeric"):
             _validate_is_numeric_column(erroneous_metadata, 'a')
+
+
+class TestImportanceFiltering(TestPluginBase):
+    package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+
+        self.imp = pd.DataFrame([6., 5., 4., 3., 2., 1.],
+                                index=[i for i in 'abcdef'],
+                                columns=['importance'])
+        self.tab = pd.DataFrame([[1., 2., 3., 4., 5., 6.]] * 4,
+                                index=[s for s in 'vxyz'],
+                                columns=[i for i in 'abcdef'])
+
+    def test_importance_filtering_none(self):
+        tab, imps = _importance_filtering(
+            self.tab, self.imp, importance_threshold=None,
+            feature_count='all')
+        pdt.assert_frame_equal(self.tab, tab)
+        pdt.assert_frame_equal(self.imp, imps)
+
+    def test_importance_filtering_count(self):
+        tab, imps = _importance_filtering(
+            self.tab, self.imp, importance_threshold=None,
+            feature_count=3)
+        pdt.assert_frame_equal(self.tab[['a', 'b', 'c']], tab)
+        pdt.assert_frame_equal(self.imp[:3], imps)
+
+    def test_importance_float_threshold(self):
+        tab, imps = _importance_filtering(
+            self.tab, self.imp, importance_threshold=5., feature_count=10)
+        pdt.assert_frame_equal(self.tab[['a', 'b']], tab)
+        pdt.assert_frame_equal(self.imp[:2], imps)
+
+    def test_importance_quartile_threshold(self):
+        tab, imps = _importance_filtering(
+            self.tab, self.imp, importance_threshold='q2', feature_count='all')
+        pdt.assert_frame_equal(self.tab[['a', 'b', 'c']], tab)
+        pdt.assert_frame_equal(self.imp[:3], imps)
 
 
 class TestParseFormula(TestPluginBase):

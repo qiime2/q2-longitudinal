@@ -26,7 +26,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column, _maz_score,
-                         _first_differences,
+                         _first_differences, _importance_filtering,
                          _summarize_feature_stats, _convert_nan_to_none,
                          _parse_formula, _visualize_anova)
 from ._vega_specs import render_spec_volatility
@@ -409,9 +409,21 @@ def plot_feature_volatility(output_dir: str,
                             state_column: str,
                             individual_id_column: str = None,
                             default_group_column: str = None,
-                            yscale: str = 'linear') -> None:
+                            yscale: str = 'linear',
+                            importance_threshold: float = None,
+                            feature_count: int = 100,
+                            missing_samples: str = 'error') -> None:
+    # validate importances index is superset of table columns
+    if missing_samples == 'error':
+        _validate_metadata_is_superset(importances, table.T)
+
+    # filter table, importances based on importance threshold / feature count
+    table, importances = _importance_filtering(
+        table, importances, importance_threshold, feature_count)
+
     # default_metric should be whatever the most important feature is
     default_metric = importances.index[0]
+
     _volatility(output_dir, metadata, state_column, individual_id_column,
                 default_group_column, default_metric, table, yscale,
                 importances)
@@ -614,7 +626,9 @@ def feature_volatility(ctx,
                        n_estimators=100,
                        estimator='RandomForestRegressor',
                        parameter_tuning=False,
-                       missing_samples='error'):
+                       missing_samples='error',
+                       importance_threshold=None,
+                       feature_count=100):
     regress = ctx.get_action('sample_classifier', 'regress_samples')
     # TODO: Add this back once filter_features can operate on a
     # FeatureTable[RelativeFrequency] artifact (see notes below)
@@ -657,6 +671,9 @@ def feature_volatility(ctx,
                                   state_column=state_column,
                                   individual_id_column=individual_id_column,
                                   default_group_column=None,
-                                  yscale='linear')
+                                  yscale='linear',
+                                  importance_threshold=importance_threshold,
+                                  feature_count=feature_count,
+                                  missing_samples='ignore')
 
     return filtered_table, importances, volatility_plot, accuracy, estimator

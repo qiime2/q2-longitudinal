@@ -871,3 +871,46 @@ def _dodge_patsy_errors(metadata, metric):
         metadata[metric] = metadata[old_metric]
 
     return metadata, metric, old_metric
+
+
+def _importance_filtering(table, importances, importance_threshold,
+                          feature_count):
+    '''
+    Filter feature table based on importance scores and thresholds.
+
+    table: pd.DataFrame
+        Feature table.
+    importances: pd.DataFrame
+        Importance scores for each feature.
+    importance_threshold: float or str % Choices(['q1', 'q2', 'q3']) or None
+        Importance filtering threshold
+    feature_count: int or None
+        Number of top features to retain
+    '''
+    quantiles = {'q1': 0.25, 'q2': 0.5, 'q3': 0.75}
+    # avg importances by rows (to take average if there are multiple scores).
+    importances = importances.mean(1)
+    importances = importances.sort_values(ascending=False)
+    importances.name = 'importance'
+
+    filtered = False
+    # filter importances by user criteria
+    if importance_threshold in ['q1', 'q2', 'q3']:
+        importance_threshold = importances.quantile(
+            quantiles[importance_threshold])
+    elif importance_threshold is None:
+        importance_threshold = 0.0
+
+    if importance_threshold > 0:
+        importances = importances[importances >= importance_threshold]
+        filtered = True
+
+    if feature_count != 'all':
+        importances = importances[:feature_count]
+        filtered = True
+
+    # if any importance filtering occurred, subset table features
+    if filtered:
+        table = table[importances.index]
+
+    return table, importances.to_frame()
