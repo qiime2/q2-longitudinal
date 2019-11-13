@@ -240,7 +240,7 @@ def _compare_pairwise_differences(groups, parametric=False):
                 t, p = wilcoxon(values)
         except ValueError:
             # if test fails (e.g., because of zero variance), just skip
-            pass
+            t = p = np.nan
         pvals.append((name, t, p))
     result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
