@@ -232,6 +232,7 @@ def _compare_pairwise_differences(groups, parametric=False):
     pvals = []
     stat = 'W (wilcoxon signed-rank test)'
     for name, values in groups.items():
+        t = p = np.nan
         try:
             if parametric:
                 t, p = ttest_1samp(values, 0.0)
@@ -240,7 +241,7 @@ def _compare_pairwise_differences(groups, parametric=False):
                 t, p = wilcoxon(values)
         except ValueError:
             # if test fails (e.g., because of zero variance), just skip
-            t = p = np.nan
+            pass
         pvals.append((name, t, p))
     result = pd.DataFrame(pvals, columns=["Group", stat, "P-value"])
     result.set_index(["Group"], inplace=True)
