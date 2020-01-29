@@ -1,0 +1,6 @@
+sample-id	group	state	metric	studyid
+s1	a	1	100	1
+s2	b	1	101	2
+s3	b	2	102	2
+s4	b	3	103	2
+s5	a	3	100	1

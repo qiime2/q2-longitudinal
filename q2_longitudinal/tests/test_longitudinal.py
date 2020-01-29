@@ -328,6 +328,17 @@ class TestLongitudinal(TestPluginBase):
             individual_id_column='studyid', metric='observed_otus',
             replicate_handling='drop')
 
+    def test_pairwise_differences_zero_variance(self):
+        md_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_no_variance.txt'))
+
+        pairwise_differences(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=md_fp, group_column='group',
+            state_column='state', state_1=1, state_2=3,
+            individual_id_column='studyid', metric='metric',
+            replicate_handling='drop')
+
     def test_pairwise_differences_no_group_column(self):
         pairwise_differences(
             output_dir=self.temp_dir.name, table=None,
