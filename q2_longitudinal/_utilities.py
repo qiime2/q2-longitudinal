@@ -232,6 +232,7 @@ def _compare_pairwise_differences(groups, parametric=False):
     pvals = []
     stat = 'W (wilcoxon signed-rank test)'
     for name, values in groups.items():
+        t = p = np.nan
         try:
             if parametric:
                 t, p = ttest_1samp(values, 0.0)
