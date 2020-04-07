@@ -170,8 +170,8 @@ plugin.visualizers.register_function(
     name='Paired difference testing and boxplots',
     description=(
         'Performs paired difference testing between samples from each '
-        'subject. Sample pairs may represent a typical intervention study, '
-        'e.g., samples collected pre- and post-treatment; paired samples from '
+        'subject. Sample pairs may represent a typical intervention study '
+        '(e.g., samples collected pre- and post-treatment), paired samples from '
         'two different timepoints (e.g., in a longitudinal study design), or '
         'identical samples receiving different treatments. '
         'This action tests whether the change in a numeric metadata value '
