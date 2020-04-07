@@ -173,7 +173,7 @@ plugin.visualizers.register_function(
         'subject. Sample pairs may represent a typical intervention study, '
         'e.g., samples collected pre- and post-treatment; paired samples from '
         'two different timepoints (e.g., in a longitudinal study design), or '
-        'identical samples receiving different two different treatments. '
+        'identical samples receiving different treatments. '
         'This action tests whether the change in a numeric metadata value '
         '"metric" differs from zero and differs between groups (e.g., groups '
         'of subjects receiving different treatments), and produces boxplots '
