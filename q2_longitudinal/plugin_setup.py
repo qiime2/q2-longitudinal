@@ -170,16 +170,15 @@ plugin.visualizers.register_function(
     name='Paired difference testing and boxplots',
     description=(
         'Performs paired difference testing between samples from each '
-        'subject. Sample pairs may represent a typical intervention study, '
-        'e.g., samples collected pre- and post-treatment; paired samples from '
-        'two different timepoints (e.g., in a longitudinal study design), or '
-        'identical samples receiving different two different treatments. '
-        'This action tests whether the change in a numeric metadata value '
-        '"metric" differs from zero and differs between groups (e.g., groups '
-        'of subjects receiving different treatments), and produces boxplots '
-        'of paired difference distributions for each group. A feature table '
-        'artifact is required input, though whether "metric" is derived from '
-        'the feature table or metadata is optional.')
+        'subject. Sample pairs may represent a typical intervention study '
+        '(e.g., samples collected pre- and post-treatment), paired samples '
+        'from two different timepoints (e.g., in a longitudinal study '
+        'design), or identical samples receiving different treatments. This '
+        'action tests whether the change in a numeric metadata value "metric" '
+        'differs from zero and differs between groups (e.g., groups of '
+        'subjects receiving different treatments), and produces boxplots of '
+        'paired difference distributions for each group. Note that "metric" '
+        'can be derived from a feature table or metadata.')
 )
 
 
