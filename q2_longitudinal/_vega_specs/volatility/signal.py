@@ -23,7 +23,9 @@ def render_signals_ctrl(default_group, group_columns, default_metric,
                         metric_columns, is_feat_vol_plot):
     _signals_ctrl = [
         # LAYOUT/DIMENSIONS
-        {'name': SIG_WIDTH, 'value': '800', 'bind': {'input': 'text'}},
+        {'name': SIG_WIDTH, 'value': '800', 'bind': {'input': 'text'},
+         'on': [{'events': {'source': 'window', 'type': 'resize'},
+                 'update': 'containerSize()[0]'}]},
         {'name': SIG_CTRL_CHART_HEIGHT, 'value': 400},
         {'name': SIG_CTRL_CHART_WIDTH, 'update': '[0, %s]' % SIG_WIDTH},
 

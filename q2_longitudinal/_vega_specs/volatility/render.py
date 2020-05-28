@@ -69,7 +69,7 @@ def render_spec_volatility(control_chart_data: pd.DataFrame,
         # appear to create any kind of XHR side-effect when loading the
         # visualization in an offline context.
         '$schema': 'https://vega.github.io/schema/vega/v5.12.3.json',
-        'autosize': {'type': 'pad', 'contains': 'padding', 'resize': True},
+        'autosize': {'type': 'fit-x', 'contains': 'padding', 'resize': True},
         # This dimension is here for when the viz is opened in the online
         # Vega Editor.
         'title': {'text': {'signal': SIG_METRIC}},
