@@ -151,6 +151,12 @@
     var toolbar = $('div .vega-actions').detach();
     toolbar.addClass('btn-group');
     toolbar.children('a').each(function() {
+      // NOTE: We're just skipping this bit until we get the plot working with
+      // Vega 5
+      if(this.innerHTML == "Open in Vega Editor"){
+        this.remove()
+        return true
+      }
       $(this).addClass('btn btn-default');
     });
     $('<a href="data.tsv" target="_blank" rel="noopener noreferrer" class="btn btn-default">Export as TSV</a>')
