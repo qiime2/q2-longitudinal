@@ -91,8 +91,8 @@ class TestUtilities(TestPluginBase):
 
     def test_compare_pairwise_differences_nonparametric(self):
         res = _compare_pairwise_differences(groups, parametric=False)
-        self.assertAlmostEqual(res['FDR P-value']['a'], 0.0021830447373622506)
-        self.assertAlmostEqual(res['FDR P-value']['b'], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value']['a'], 0.00048828125)
+        self.assertAlmostEqual(res['FDR P-value']['b'], 0.00048828125)
 
     def test_multiple_group_difference_parametric(self):
         res = _multiple_group_difference(groups.values(), parametric=True)
@@ -117,7 +117,7 @@ class TestUtilities(TestPluginBase):
 
     def test_per_method_pairwise_stats_paired_nonparametric(self):
         res = _per_method_pairwise_stats(groups, paired=True, parametric=False)
-        self.assertAlmostEqual(res['FDR P-value'][0], 0.0021830447373622506)
+        self.assertAlmostEqual(res['FDR P-value'][0], 0.00048828125)
 
     def test_add_sample_size_to_xtick_labels(self):
         groups = {'a': [1, 2, 3], 'b': [1, 2], 'c': [1, 2, 3]}
