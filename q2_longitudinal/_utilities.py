@@ -415,7 +415,7 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
         for name, group_data in metadata.groupby(group_column):
             sns.regplot(state_column, metric, data=group_data, fit_reg=fit_reg,
                         scatter_kws={"marker": ".", "s": 100}, label=name,
-                        ax=ax, lowess=lowess, ci=ci)
+                        ax=ax, lowess=lowess, ci=ci, truncate=False)
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
 
