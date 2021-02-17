@@ -47,4 +47,4 @@ jobs:
       with:
         package-name: q2-longitudinal
         build-target: staging
-        additional-tests: py.test --pyargs q2_longitudinal
+        additional-tests: py.test --pyargs q2_longitudinal --capture=tee-sys
