@@ -500,7 +500,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
             os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
         residuals.savefig(
             os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
-        plt.close('all')
+    plt.close('all')
 
     index = os.path.join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
