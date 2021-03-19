@@ -52,3 +52,4 @@ jobs:
         package-name: q2-longitudinal
         build-target: staging
         additional-tests: py.test --pyargs q2_longitudinal
+        library-token: ${{ secrets.LIBRARY_TOKEN }}
