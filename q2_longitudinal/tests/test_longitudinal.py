@@ -14,7 +14,7 @@ import tempfile
 
 import numpy as np
 import pandas as pd
-import pandas.util.testing as pdt
+import pandas.testing as pdt
 import skbio
 import qiime2
 from qiime2.plugin.testing import TestPluginBase

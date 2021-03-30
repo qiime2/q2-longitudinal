@@ -413,9 +413,10 @@ def _regplot_subplots_from_dataframe(state_column, metric, metadata,
         ax = axes[num][0]
         sns.set_palette(palette)
         for name, group_data in metadata.groupby(group_column):
-            sns.regplot(state_column, metric, data=group_data, fit_reg=fit_reg,
-                        scatter_kws={"marker": ".", "s": 100}, label=name,
-                        ax=ax, lowess=lowess, ci=ci, truncate=False)
+            sns.regplot(x=state_column, y=metric, data=group_data,
+                        fit_reg=fit_reg, scatter_kws={"marker": ".", "s": 100},
+                        label=name, ax=ax, lowess=lowess, ci=ci,
+                        truncate=False)
         ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     return f
 
@@ -457,7 +458,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
                residuals=False,
                pairwise_test_name='Pairwise group comparison tests'):
 
-    pd.set_option('display.max_colwidth', -1)
+    pd.set_option('display.max_colwidth', None)
 
     if summary is not False:
         summary = q2templates.df_to_html(summary.to_frame())
@@ -521,7 +522,7 @@ def _visualize(output_dir, multiple_group_test=False, pairwise_tests=False,
 
 def _visualize_anova(output_dir, pairwise_tests=False, model_results=False,
                      residuals=False, pairwise_test_name='Pairwise t-tests'):
-    pd.set_option('display.max_colwidth', -1)
+    pd.set_option('display.max_colwidth', None)
 
     if pairwise_tests is not False:
         pairwise_tests.to_csv(os.path.join(output_dir, 'pairwise_tests.tsv'),
