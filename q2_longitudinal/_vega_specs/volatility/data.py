@@ -19,7 +19,7 @@ from .const import (
 def render_data_ctrl(control_chart_data, state):
     return [
         {'name': DAT_INDIVIDUAL,
-         'values': control_chart_data.to_dict('record'),
+         'values': control_chart_data.to_dict('records'),
          'transform': [
              {'type': 'formula', 'as': FLD_GROUP_BY,
               'expr': 'datum[%s]' % SIG_GROUP},
@@ -73,7 +73,7 @@ def render_data_ctrl(control_chart_data, state):
 def render_data_stats(stats_chart_data):
     return [
         {'name': DAT_STATS,
-         'values': stats_chart_data.to_dict('record'),
+         'values': stats_chart_data.to_dict('records'),
          'format': {'parse': {'importance': 'number'}}
          },
         # This gets used to set the initial values for the x-axis extent

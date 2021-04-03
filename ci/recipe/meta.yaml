@@ -30,7 +30,6 @@ requirements:
     - q2-types {{ release }}.*
     - q2-sample-classifier {{ release }}.*
     - q2templates {{ release }}.*
-    - q2-sample-classifier {{ release }}.*
     - q2-feature-table {{ release }}.*
     - matplotlib
 
