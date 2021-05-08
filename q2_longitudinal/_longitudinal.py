@@ -18,6 +18,7 @@ import warnings
 import biom
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from statsmodels.stats.anova import AnovaRM
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -28,7 +29,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _nmit, _validate_is_numeric_column, _maz_score,
                          _first_differences, _importance_filtering,
                          _summarize_feature_stats, _convert_nan_to_none,
-                         _parse_formula, _visualize_anova)
+                         _parse_formula, _visualize_anova, _validate_balanced)
 from ._vega_specs import render_spec_volatility
 
 
@@ -677,3 +678,27 @@ def feature_volatility(ctx,
                                   missing_samples='ignore')
 
     return filtered_table, importances, volatility_plot, accuracy, estimator
+
+
+
+
+def anova_rm(outcome: str, 
+             subject: str, 
+             predictors: str, 
+             metadata: Metadata, 
+             table: pd.DataFrame,
+             output_dir: str):
+    #create a dataframe to work with
+    metadata = _load_metadata(metadata)
+    data = _add_metric_to_metadata(table, metadata, outcome)
+
+    #turn predictors into a list
+    predictors = predictors.split(',')
+
+    #perform ANOVA RM
+    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors, )
+    results_table = aov.fit().anova_table #grab the table dataframe from results object
+
+    #Visualize the results
+    _visualize_anova_rm(output_dir, model_results=results_table)
+    

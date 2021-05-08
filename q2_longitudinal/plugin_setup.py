@@ -29,7 +29,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances,
                             maturity_index, feature_volatility,
-                            plot_feature_volatility, anova)
+                            plot_feature_volatility, anova, anova_rm)
 import q2_longitudinal
 
 
@@ -603,3 +603,34 @@ plugin.pipelines.register_function(
 
 
 importlib.import_module('q2_longitudinal._transformer')
+
+plugin.visualizers.register_function(
+    function=anova_rm,
+    inputs={'metadata': Metadata,
+            'table': FeatureTable[RelativeFrequency],
+            'outcome': Str,
+            'predictors': Str,
+            'subject': Str},
+    parameters={'output_dir': Str},
+    input_descriptions={
+        'metadata': 'Metadata file containing the predictor and subject'
+                    'columns.',
+            'table': 'Table containing the outcome (dependent) variable.',
+            'outcome': 'Name of the dependent variable column.',
+            'predictors': 'Comma-separated list (without spaces) of metadata columns to '
+                          'use as independent (predictor) variables.',
+            'subject': 'Name of the column containing participant ID.'},
+    parameter_descriptions={
+        'output_dir': 'Name of directory to output results.'},
+    name=('Repeated measures ANOVA'),
+    description=(
+        'Wrapper for statsmodels AnovaRM: '
+        'Repeated measures Anova using least squares regression '
+        'The full model regression residual sum of squares is used '
+        'to compare with the reduced model for calculating the '
+        'within-subject effect sum of squares.'
+        'Currently, only fully balanced within-subject designs are supported. ' 
+        'Calculation of between-subject effects and corrections for violation of '
+        'sphericity are not yet implemented.'),
+    citations=[citations[rutherford2011anova]]
+)
