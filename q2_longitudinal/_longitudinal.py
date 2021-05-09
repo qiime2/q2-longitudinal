@@ -696,7 +696,7 @@ def anova_rm(outcome: str,
     predictors = predictors.split(',')
 
     #perform ANOVA RM
-    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors, )
+    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors)
     results_table = aov.fit().anova_table #grab the table dataframe from results object
 
     #Visualize the results

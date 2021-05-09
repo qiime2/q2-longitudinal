@@ -632,5 +632,5 @@ plugin.visualizers.register_function(
         'Currently, only fully balanced within-subject designs are supported. ' 
         'Calculation of between-subject effects and corrections for violation of '
         'sphericity are not yet implemented.'),
-    citations=[citations[rutherford2011anova]]
+    citations=[citations['rutherford2011anova']]
 )
