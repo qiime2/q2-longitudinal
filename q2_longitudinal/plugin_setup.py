@@ -604,31 +604,40 @@ plugin.pipelines.register_function(
 
 importlib.import_module('q2_longitudinal._transformer')
 
+
 plugin.visualizers.register_function(
     function=anova_rm,
-    inputs={'metadata': Metadata,
-            'table': FeatureTable[RelativeFrequency],
-            'outcome': Str,
-            'predictors': Str,
-            'subject': Str},
-    parameters={'output_dir': Str},
-    input_descriptions={
-        'metadata': 'Metadata file containing the predictor and subject'
-                    'columns.',
-            'table': 'Table containing the outcome (dependent) variable.',
+    inputs={'table': FeatureTable[RelativeFrequency]},
+    parameters={'metadata': Metadata,
+                'outcome': Str,
+                'predictors': Str,
+                'subject': Str,
+                'aggregate_func': Str},
+    input_descriptions={'table': 'Table containing the outcome/dependent variable.'},
+    parameter_descriptions={
+            'metadata': 'Metadata file containing the predictor and subject '
+                        'columns. A second metadata file containing the outcome variable '
+                        'can also be passed in place of the Feature Table input.',
             'outcome': 'Name of the dependent variable column.',
             'predictors': 'Comma-separated list (without spaces) of metadata columns to '
-                          'use as independent (predictor) variables.',
-            'subject': 'Name of the column containing participant ID.'},
-    parameter_descriptions={
-        'output_dir': 'Name of directory to output results.'},
-    name=('Repeated measures ANOVA'),
+                          'use as predictor/group/class variables.',
+            'subject': 'Name of the column containing individual participant IDs.',
+            'aggregate_func': 'If the data set contains more than a single observation '
+                              'per subject and cell of the specified model, this function '
+                              'will be used to aggregate the data before running the Anova. '
+                              'None (the default) will not perform any aggregation; '
+                              '‘mean’ is a shortcut to numpy.mean. '
+                              'A callable numpy (loaded as np) function such as np.median '
+                              'can also be passed. '
+                              'An exception will be raised if aggregation is required, '
+                              'but no aggregation function was specified.'},
+    name='Repeated measures ANOVA',
     description=(
-        'Wrapper for statsmodels AnovaRM: '
-        'Repeated measures Anova using least squares regression '
+        'A wrapper for statsmodels AnovaRM: '
+        'Repeated measures Anova using least squares regression. '
         'The full model regression residual sum of squares is used '
         'to compare with the reduced model for calculating the '
-        'within-subject effect sum of squares.'
+        'within-subject effect sum of squares. '
         'Currently, only fully balanced within-subject designs are supported. ' 
         'Calculation of between-subject effects and corrections for violation of '
         'sphericity are not yet implemented.'),

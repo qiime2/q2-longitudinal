@@ -918,7 +918,7 @@ def _importance_filtering(table, importances, importance_threshold,
     return table, importances.to_frame()
 
 
-    def _visualize_anova_rm(output_dir, model_results=False):
+def _visualize_anova_rm(output_dir, model_results=False):
     pd.set_option('display.max_colwidth', None)
 
     model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),

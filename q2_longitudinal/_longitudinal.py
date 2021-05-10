@@ -11,6 +11,7 @@ import pkg_resources
 from distutils.dir_util import copy_tree
 
 import pandas as pd
+import numpy as np
 import skbio
 import qiime2
 import q2templates
@@ -29,7 +30,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _nmit, _validate_is_numeric_column, _maz_score,
                          _first_differences, _importance_filtering,
                          _summarize_feature_stats, _convert_nan_to_none,
-                         _parse_formula, _visualize_anova, _validate_balanced)
+                         _parse_formula, _visualize_anova, _visualize_anova_rm)
 from ._vega_specs import render_spec_volatility
 
 
@@ -682,12 +683,13 @@ def feature_volatility(ctx,
 
 
 
-def anova_rm(outcome: str, 
-             subject: str, 
+def anova_rm(output_dir: str,
+             metadata: qiime2.Metadata,
+             outcome: str, 
              predictors: str, 
-             metadata: Metadata, 
-             table: pd.DataFrame,
-             output_dir: str):
+             subject: str,
+             table: pd.DataFrame=None,
+             aggregate_func: str=None):
     #create a dataframe to work with
     metadata = _load_metadata(metadata)
     data = _add_metric_to_metadata(table, metadata, outcome)
@@ -695,8 +697,12 @@ def anova_rm(outcome: str,
     #turn predictors into a list
     predictors = predictors.split(',')
 
+    #format aggregate_func as a function unless it is 'mean', per AnovaRM callable func optionality
+    if aggregate_func is not None and aggregate_func != 'mean':
+        aggregate_func = eval(aggregate_func)
+
     #perform ANOVA RM
-    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors)
+    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors, aggregate_func=aggregate_func)
     results_table = aov.fit().anova_table #grab the table dataframe from results object
 
     #Visualize the results
