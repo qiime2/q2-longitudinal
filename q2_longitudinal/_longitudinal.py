@@ -495,8 +495,9 @@ def maturity_index(ctx,
         table, metadata=metadata, where="{0}='{1}'".format(group_by, control))
 
     md_column = metadata.get_column(state_column)
-    X_train, X_test = split(control_table, md_column, test_size, random_state,
-                            stratify, missing_samples='ignore')
+    X_train, X_test, _, _ = split(control_table, md_column, test_size,
+                                  random_state, stratify,
+                                  missing_samples='ignore')
 
     sample_estimator, importance = fit(
         X_train, md_column, step, cv, random_state, n_jobs, n_estimators,
