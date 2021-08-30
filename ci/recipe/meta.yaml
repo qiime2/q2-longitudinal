@@ -20,20 +20,23 @@ requirements:
   run:
     - python {{ python }}
     - numpy
-    - pandas
+    - pandas {{ pandas }}
     - scipy >=1.5
     - statsmodels >=0.9.0
     - patsy
     - scikit-bio >=0.5.5
     - seaborn
-    - qiime2 {{ release }}.*
-    - q2-types {{ release }}.*
-    - q2-sample-classifier {{ release }}.*
-    - q2templates {{ release }}.*
-    - q2-feature-table {{ release }}.*
+    - qiime2 {{ qiime2 }}
+    - q2-types {{ q2_types }}
+    - q2-sample-classifier {{ q2_sample_classifier }}
+    - q2templates {{ q2templates }}
+    - q2-feature-table {{ q2_feature_table }}
     - matplotlib
 
 test:
+  requires:
+    - pytest
+
   imports:
     - q2_longitudinal
     - qiime2.plugins.longitudinal
