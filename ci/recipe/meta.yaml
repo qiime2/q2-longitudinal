@@ -20,7 +20,7 @@ requirements:
   run:
     - python {{ python }}
     - numpy
-    - pandas
+    - pandas {{ pandas }}
     - scipy >=1.5
     - statsmodels >=0.9.0
     - patsy
