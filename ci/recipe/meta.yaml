@@ -1,6 +1,5 @@
 {% set data = load_setup_py_data() %}
 {% set version = data.get('version') or 'placehold' %}
-{% set release = '.'.join(version.split('.')[:2]) %}
 
 package:
   name: q2-longitudinal
@@ -26,15 +25,20 @@ requirements:
     - patsy
     - scikit-bio >=0.5.5
     - seaborn
-    - qiime2 {{ qiime2 }}
-    - q2-types {{ q2_types }}
-    - q2-sample-classifier {{ q2_sample_classifier }}
-    - q2templates {{ q2templates }}
-    - q2-feature-table {{ q2_feature_table }}
+    - qiime2 {{ qiime2_epoch }}.*
+    - q2-types {{ qiime2_epoch }}.*
+    - q2-sample-classifier {{ qiime2_epoch }}.*
+    - q2templates {{ qiime2_epoch }}.*
+    - q2-feature-table {{ qiime2_epoch }}.*
     - matplotlib
 
 test:
   requires:
+    - qiime2 >={{ qiime2 }}
+    - q2-types >={{ q2_types }}
+    - q2-sample-classifier >={{ q2_sample_classifier }}
+    - q2templates >={{ q2templates }}
+    - q2-feature-table >={{ q2_feature_table }}
     - pytest
 
   imports:
