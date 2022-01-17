@@ -11,6 +11,7 @@ import os.path
 import pkg_resources
 from random import choice
 import uuid
+import keyword
 
 import numpy as np
 from numpy.linalg.linalg import LinAlgError
@@ -310,24 +311,34 @@ def _per_method_pairwise_stats(groups, paired=False, parametric=True):
     return result
 
 
+def _patsy_Q(term):
+    if not term.isidentifier() or keyword.iskeyword(term):
+        # the repr will ensure Python appropriate quotation for the string
+        return 'Q(%r)' % term
+    else:
+        return term
+
+
 def _linear_effects(metadata, metric, state_column, group_columns,
                     individual_id_column, random_effects, formula):
+    state_column = _patsy_Q(state_column)
+    old_metric = metric
+    metric = _patsy_Q(metric)
+
     # Assemble fixed_effects
     if group_columns is not None:
-        fixed_effects = [state_column] + group_columns
+        fixed_effects = [state_column] + [_patsy_Q(g) for g in group_columns]
     else:
         fixed_effects = [state_column]
 
     # Assemble random_effects
     if random_effects is not None:
         # fit random slope to state_column
+        random_effects = [_patsy_Q(re) for re in random_effects]
         random_effects = "~{0}".format(" + ".join(random_effects))
     else:
         # fit random intercept by default
         random_effects = None
-
-    # reformat terms to avoid patsy errors
-    metadata, metric, old_metric = _dodge_patsy_errors(metadata, metric)
 
     # format formula if one is not passed explicitly
     if formula is None:
@@ -857,22 +868,6 @@ def _parse_formula(formula):
     if metric is None:
         metric = model_desc.lhs_termlist[0].name()
     return metric, group_columns
-
-
-def _dodge_patsy_errors(metadata, metric):
-    # store original metric name to report in viz later
-    old_metric = metric
-    # semicolon-delimited taxonomies cause an error; copy to new metric column
-    # also spaces and starting numeral (e.g., in feature name) cause error:
-    # https://github.com/qiime2/q2-longitudinal/issues/101
-    if ';' in metric or metric[0].isdigit() or ' ' in metric:
-        # generate random column name but remove hyphens (patsy error)
-        # and prepend word character (otherwise patsy splits strings starting
-        # with numeral!)
-        metric = 'f' + _generate_column_name(metadata).replace("-", "")
-        metadata[metric] = metadata[old_metric]
-
-    return metadata, metric, old_metric
 
 
 def _importance_filtering(table, importances, importance_threshold,
