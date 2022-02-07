@@ -26,6 +26,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _regplot_subplots_from_dataframe, _load_metadata,
                          _validate_input_values, _validate_input_columns,
                          _nmit, _validate_is_numeric_column, _maz_score,
+                         _first_distances_and_distance_to_baseline,
                          _first_differences, _importance_filtering,
                          _summarize_feature_stats, _convert_nan_to_none,
                          _parse_formula, _visualize_anova)
@@ -610,10 +611,10 @@ def first_distances(distance_matrix: skbio.DistanceMatrix,
     _validate_input_columns(
         metadata, individual_id_column, None, state_column, None)
 
-    return _first_differences(
-        metadata, state_column, individual_id_column, metric=None,
-        replicate_handling=replicate_handling, baseline=baseline,
-        distance_matrix=distance_matrix)
+    return _first_distances_and_distance_to_baseline(
+        metadata, state_column, individual_id_column,
+        distance_matrix=distance_matrix, replicate_handling=replicate_handling,
+        baseline=baseline)
 
 
 def feature_volatility(ctx,
