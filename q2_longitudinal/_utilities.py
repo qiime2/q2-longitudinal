@@ -692,15 +692,35 @@ def _vectorized_first_distances(
     output = pd.DataFrame(index=metadata.index[:-1], columns=['Distance'])
     output['Distance'] = distances
 
-    # Using the diagonal of the matrix will include some meaningless distances.
-    # For example the distance between the last sample of subject_j and the
-    # first sample of subject_j+1.  We only keep the distances between subjects
-    # with the same identifier.
+    # The next few columns are helpful to filter the results see below
     output['subject_1'] = metadata.loc[
         output.index, individual_id_column].values
     output['subject_2'] = metadata.loc[
         metadata.index[1:], individual_id_column].values
-    output = output[output['subject_1'] == output['subject_2']]['Distance']
+    output['state_1'] = metadata.loc[
+        output.index, state_column].values
+    output['state_2'] = metadata.loc[
+        metadata.index[1:], state_column].values
+
+    states = metadata[state_column].unique()
+    states.sort()
+    states = np.flip(states)
+    pairs = [(states[i], states[i+1]) for i in range(len(states) - 1)]
+
+    def is_keepable_pair(row, reference):
+        return (row['state_1'], row['state_2']) in reference
+
+    # Using the diagonal of the matrix will include some meaningless distances.
+    # For example the distance between the last sample of subject_j and the
+    # first sample of subject_j+1.  We only keep the distances between subjects
+    # with the same identifier.
+    #
+    # Also, not all the distance pairs are allowed
+    output = output[
+        (output['subject_1'] == output['subject_2']) &
+        output.apply(is_keepable_pair, axis=1, reference=pairs)
+    ]['Distance']
+
     output.index.name = '#SampleID'
     output = output.iloc[::-1]
     return output
@@ -760,14 +780,14 @@ def _first_distances_and_distance_to_baseline(metadata, state_column,
     _validate_is_numeric_column(metadata, state_column)
 
     # combine individual and state to vectorize checks
-    combo_name = _generate_column_name(metadata)
-    metadata[combo_name] = (metadata[state_column].astype(float).astype(str) +
-                            metadata[individual_id_column].astype(str))
+    combo_column = _generate_column_name(metadata)
+    metadata[combo_column] = (metadata[state_column].astype(float).astype(str)
+                              + metadata[individual_id_column].astype(str))
     if replicate_handling == 'drop':
-        duplicated = metadata.duplicated(subset=combo_name, keep=False)
+        duplicated = metadata.duplicated(subset=combo_column, keep=False)
     else:
         # this way of finding duplicates is relevant for "random" too
-        duplicated = metadata.duplicated(subset=combo_name)
+        duplicated = metadata.duplicated(subset=combo_column)
         if replicate_handling == 'error':
             if duplicated.any():
                 def summarizer(group, id_column=None):
@@ -784,9 +804,6 @@ def _first_distances_and_distance_to_baseline(metadata, state_column,
 
     # depending on the strategy selected above filter the table
     metadata = metadata[~duplicated].copy()
-
-    metadata[individual_id_column].value_counts()
-    metadata[state_column].value_counts()
 
     # if calculating static differences, validate baseline as a valid state
     if baseline is not None:
@@ -812,6 +829,8 @@ def _first_distances_and_distance_to_baseline(metadata, state_column,
     else:
         output = _vectorized_first_distances(
             distance_matrix, metadata, state_column, individual_id_column)
+
+    output.dropna(inplace=True)
 
     if output.empty:
         raise RuntimeError(
