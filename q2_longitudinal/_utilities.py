@@ -916,17 +916,3 @@ def _importance_filtering(table, importances, importance_threshold,
         table = table[importances.index]
 
     return table, importances.to_frame()
-
-
-def _visualize_anova_rm(output_dir, model_results=False):
-    pd.set_option('display.max_colwidth', None)
-
-    model_results.to_csv(os.path.join(output_dir, 'model_results.tsv'),
-                         sep='\t')
-    model_results = q2templates.df_to_html(model_results)
-
-    index = os.path.join(TEMPLATES, 'index.html')
-
-    q2templates.render(index, output_dir, context={
-        'plot_name': 'ANOVA_RM',
-        'model_results': model_results})
