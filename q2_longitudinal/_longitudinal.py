@@ -261,7 +261,7 @@ def anova(output_dir: str,
     if repeated_measures==False: 
         lm = ols(formula, metadata).fit()
     elif repeated_measures and individual_id_column is not None:
-        if individual_id_column is None:
+        if individual_id_column is None or individual_id_column=="":
             raise ValueError('individual ID column was not provided for repeated measures')
         lm = mixedlm(formula, metadata, groups=metadata[individual_id_column])
 
