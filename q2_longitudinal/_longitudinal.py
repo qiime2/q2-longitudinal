@@ -689,31 +689,4 @@ def feature_volatility(ctx,
 
     return filtered_table, importances, volatility_plot, accuracy, estimator
 
-
-
-
-def anova_rm(output_dir: str,
-             metadata: qiime2.Metadata,
-             outcome: str, 
-             predictors: str, 
-             subject: str,
-             table: pd.DataFrame=None,
-             aggregate_func: str=None):
-    #create a dataframe to work with
-    metadata = _load_metadata(metadata)
-    data = _add_metric_to_metadata(table, metadata, outcome)
-
-    #turn predictors into a list
-    predictors = predictors.split(',')
-
-    #format aggregate_func as a function unless it is 'mean', per AnovaRM callable func optionality
-    if aggregate_func is not None and aggregate_func != 'mean':
-        aggregate_func = eval(aggregate_func)
-
-    #perform ANOVA RM
-    aov = AnovaRM(data, depvar=outcome, subject=subject, within=predictors, aggregate_func=aggregate_func)
-    results_table = aov.fit().anova_table #grab the table dataframe from results object
-
-    #Visualize the results
-    _visualize_anova_rm(output_dir, model_results=results_table)
     
