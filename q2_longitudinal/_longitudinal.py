@@ -18,7 +18,7 @@ import q2templates
 import warnings
 import biom
 import statsmodels.api as sm
-from statsmodels.formula.api import ols
+from statsmodels.formula.api import ols, mixedlm
 from statsmodels.stats.anova import AnovaRM
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
@@ -242,7 +242,9 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def anova(output_dir: str,
           metadata: qiime2.Metadata,
           formula: str,
-          sstype: str = 'II') -> None:
+          sstype: str = 'II',
+          repeated_measures: bool = False,
+          individual_id_column: str = None) -> None:
 
     # Grab metric and covariate names from formula
     metric, group_columns = _parse_formula(formula)
@@ -256,7 +258,14 @@ def anova(output_dir: str,
     metadata = metadata.to_dataframe()[columns].dropna()
 
     # Run anova
-    lm = ols(formula, metadata).fit()
+    if repeated_measures==False: 
+        lm = ols(formula, metadata).fit()
+    elif repeated_measures and individual_id_column is not None:
+        if individual_id_column is None:
+            raise ValueError('individual ID column was not provided for repeated measures')
+        lm = mixedlm(formula, metadata, groups=metadata[individual_id_column])
+
+
     results = pd.DataFrame(sm.stats.anova_lm(lm, typ=sstype)).fillna('')
     results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
 
