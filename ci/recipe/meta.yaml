@@ -23,7 +23,7 @@ requirements:
     - scipy >=1.5
     - statsmodels >=0.9.0
     - patsy
-    - scikit-bio >=0.5.5
+    - scikit-bio {{ scikit_bio }}
     - seaborn
     - qiime2 {{ qiime2_epoch }}.*
     - q2-types {{ qiime2_epoch }}.*
