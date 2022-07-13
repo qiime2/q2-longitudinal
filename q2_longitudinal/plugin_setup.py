@@ -29,7 +29,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             linear_mixed_effects, volatility, nmit,
                             first_differences, first_distances,
                             maturity_index, feature_volatility,
-                            plot_feature_volatility, anova, anova_rm)
+                            plot_feature_volatility, anova)
 import q2_longitudinal
 
 
@@ -258,7 +258,10 @@ plugin.visualizers.register_function(
     inputs={},
     parameters={'metadata': Metadata,
                 'formula': Str,
-                'sstype': Str % Choices(['I', 'II', 'III'])},
+                'sstype': Str % Choices(['I', 'II', 'III']),
+                'repeated_measures': Bool,
+                'individual_id_column': Str,
+                'rm_aggregate': Bool},
     input_descriptions={},
     parameter_descriptions={
         'metadata': 'Sample metadata containing formula terms.',
@@ -267,7 +270,15 @@ plugin.visualizers.register_function(
                    'artifacts and can be continuous or categorical metadata '
                    'columns. ' + formula_description,
         'sstype': (
-            'Type of sum of squares calculation to perform (I, II, or III).')
+            'Type of sum of squares calculation to perform (I, II, or III).'),
+        'repeated_measures': 'Perform ANOVA as a repeated measures ANOVA',
+        'individual_id_column': 'The column containing individual ID with '
+                                'repeated measures to account for.'
+                                'This should not be included in the formula.',
+        'rm_aggregate': 'If the data set contains more than a single '
+                        'observation per individual id and cell of the specified '
+                        'model, this function will be used to aggregate '
+                        'the data by the mean before running the ANOVA.'
     },
     name='ANOVA test',
     description=('Perform an ANOVA test on any factors present in a metadata '
