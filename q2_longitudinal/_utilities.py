@@ -533,11 +533,12 @@ def _visualize_anova(output_dir, pairwise_tests=False, model_results=False,
                          sep='\t')
     model_results = q2templates.df_to_html(model_results)
 
-    residuals.savefig(
-        os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
-    residuals.savefig(
-        os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
-    plt.close('all')
+    if residuals is not False:
+        residuals.savefig(
+            os.path.join(output_dir, 'residuals.png'), bbox_inches='tight')
+        residuals.savefig(
+            os.path.join(output_dir, 'residuals.pdf'), bbox_inches='tight')
+        plt.close('all')
 
     index = os.path.join(TEMPLATES, 'index.html')
     q2templates.render(index, output_dir, context={
