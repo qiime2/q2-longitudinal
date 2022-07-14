@@ -282,9 +282,10 @@ plugin.visualizers.register_function(
                                 'repeated measures to account for.'
                                 'This should not be included in the formula.',
         'rm_aggregate': 'If the data set contains more than a single '
-                        'observation per individual id and cell of the specified '
-                        'model, this function will be used to aggregate '
-                        'the data by the mean before running the ANOVA. '
+                        'observation per individual id and cell of the '
+                        'specified model, this function will be used to '
+                        'aggregate the data by the mean before running '
+                        'the ANOVA. '
                         'Only applicable for repeated measures ANOVA. '
     },
     name='ANOVA test',
@@ -621,4 +622,3 @@ plugin.pipelines.register_function(
 
 
 importlib.import_module('q2_longitudinal._transformer')
-
