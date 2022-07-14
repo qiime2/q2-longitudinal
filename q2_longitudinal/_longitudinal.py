@@ -8,12 +8,10 @@
 
 import os.path
 
-import patsy
 import pkg_resources
 from distutils.dir_util import copy_tree
 
 import pandas as pd
-import numpy as np
 import skbio
 import qiime2
 import q2templates
@@ -254,9 +252,10 @@ def anova(output_dir: str,
     metric, group_columns = _parse_formula(formula)
     columns = [metric] + list(group_columns)
     # Add individual id col if performing repeated measures
-    if repeated_measures==True:
-        if individual_id_column is None or individual_id_column=="":
-            raise ValueError('individual ID column was not provided for repeated measures')
+    if repeated_measures is True:
+        if individual_id_column is None or individual_id_column == "":
+            raise ValueError('individual ID column was '
+                             'not provided for repeated measures')
         columns = columns + [individual_id_column]
 
     # Validate formula (columns are in metadata, etc)
@@ -267,7 +266,7 @@ def anova(output_dir: str,
     metadata = metadata.to_dataframe()[columns].dropna()
 
     # Run anova
-    if repeated_measures==False: 
+    if repeated_measures is False:
         lm = ols(formula, metadata).fit()
         results = pd.DataFrame(sm.stats.anova_lm(lm, typ=sstype)).fillna('')
         results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
@@ -277,8 +276,10 @@ def anova(output_dir: str,
         for group in group_columns:
             # only run on categorical columns — numeric columns raise error
             if group in cats:
-                ttests = lm.t_test_pairwise(group, method='fdr_bh').result_frame
-                pairwise_tests = pd.concat([pairwise_tests, pd.DataFrame(ttests)])
+                ttests = lm.t_test_pairwise(group,
+                                            method='fdr_bh').result_frame
+                pairwise_tests = pd.concat([pairwise_tests,
+                                            pd.DataFrame(ttests)])
         if pairwise_tests.empty:
             pairwise_tests = False
 
@@ -291,14 +292,13 @@ def anova(output_dir: str,
 
         pairwise_test_name = 'Pairwise t-tests'
 
-
-    elif repeated_measures==True:
+    elif repeated_measures is True:
         # create mapper for aggregate function (required arg for AnovaRM)
         agg_dict = {True: "mean", False: None}
 
-        # create anova
+        # run anova
         aov = AnovaRM(depvar=metric,
-                      within=[x for x in group_columns],
+                      within=list(group_columns),
                       subject=individual_id_column,
                       data=metadata,
                       aggregate_func=agg_dict[rm_aggregate]).fit()
@@ -306,6 +306,7 @@ def anova(output_dir: str,
         results = aov.anova_table
         results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
 
+        # set these for the visualize func
         pairwise_tests, res, pairwise_test_name = False, False, False
 
     # Visualize results
@@ -710,4 +711,3 @@ def feature_volatility(ctx,
                                   missing_samples='ignore')
 
     return filtered_table, importances, volatility_plot, accuracy, estimator
-
