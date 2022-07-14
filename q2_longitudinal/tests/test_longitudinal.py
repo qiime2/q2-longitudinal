@@ -987,14 +987,13 @@ class AnovaTests(TestPluginBase):
         # load longitudinal data for repeated measures
         # This is from statsmodels example use of AnovaRM
         self.pig_data = sm.datasets.get_rdataset("dietox", "geepack").data
-        self.pig_data["Early_Life"] = self.pig_data["Time"].apply(lambda x:
-                                                            1 if x<=6 else 0)
+        self.pig_data["Early_Life"] = self.pig_data[
+            "Time"].apply(lambda x: 1 if x <= 6 else 0)
         self.pig_data["Pig"] = self.pig_data["Pig"].astype(str)
         self.pig_data.index = [str(x) for x in self.pig_data.index]
         self.pig_data.index.name = "sampleid"
 
         self.pig_data = qiime2.Metadata(self.pig_data)
-
 
     def test_execution(self):
         exp = pd.DataFrame(
@@ -1058,8 +1057,10 @@ class AnovaTests(TestPluginBase):
               individual_id_column='Pig',
               rm_aggregate=True)
 
-        exp = pd.DataFrame([["Early_Life",6810.96834, 1.0, 71.0, 2.869744e-72]],
-                           columns=["Unnamed: 0", "F Value", "Num DF", "Den DF", "Pr > F"],
+        exp = pd.DataFrame([["Early_Life", 6810.96834, 1.0,
+                             71.0, 2.869744e-72]],
+                           columns=["Unnamed: 0", "F Value", "Num DF",
+                                    "Den DF", "Pr > F"],
                            index=[0])
 
         obs = pd.read_csv(
@@ -1068,16 +1069,18 @@ class AnovaTests(TestPluginBase):
         pdt.assert_frame_equal(obs, exp)
 
     def test_repeated_measures_raises_error_no_id_column(self):
-        with self.assertRaisesRegex(ValueError, 
-        "individual ID column was not provided for repeated measures"):
+        with self.assertRaisesRegex(ValueError, "individual ID column "
+                                                "was not provided for "
+                                                "repeated measures"):
             anova(output_dir=self.temp_dir.name,
-                metadata=self.pig_data,
-                formula = 'Weight ~ Early_Life',
-                repeated_measures = True,
-                individual_id_column = None)
+                  metadata=self.pig_data,
+                  formula='Weight ~ Early_Life',
+                  repeated_measures=True,
+                  individual_id_column=None)
 
-        with self.assertRaisesRegex(ValueError, 
-        "individual ID column was not provided for repeated measures"):
+        with self.assertRaisesRegex(ValueError, "individual ID column "
+                                                "was not provided for "
+                                                "repeated measures"):
             anova(output_dir=self.temp_dir.name,
                   metadata=self.pig_data,
                   formula='Weight ~ Early_Life',
