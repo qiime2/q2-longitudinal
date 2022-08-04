@@ -96,7 +96,7 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
                        palette: str = 'Set1',
                        replicate_handling: str = 'error',) -> None:
 
-    metadata = _load_metadata(metadata)
+    metadata = _load_metadata(metadata, group_column)
 
     _validate_input_values(metadata, None, individual_id_column, group_column,
                            state_column, state_1, state_2)
