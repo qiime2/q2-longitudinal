@@ -20,7 +20,7 @@ requirements:
     - python {{ python }}
     - numpy
     - pandas {{ pandas }}
-    - scipy >=1.5
+    - scipy {{ scipy }}
     - statsmodels >=0.9.0
     - patsy
     - scikit-bio {{ scikit_bio }}
