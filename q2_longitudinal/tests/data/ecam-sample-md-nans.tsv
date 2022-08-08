@@ -1,0 +1,8 @@
+sample-id	anti-exposed-all	day-of-life	delivery	diet	diet-3	mom-or-child	month	month-of-life	sex	studyid
+#q2:types	categorical	numeric	categorical	categorical	categorical	categorical	numeric	numeric	categorical	categorical
+149.C1.01SS	n	0	Vaginal	bd	eb	C	0	0	Female	1
+149.C7.10SS	y	244	Cesarean	bd	eb	C	8	8	Female	57
+149.C5.11SS	y	277	Cesarean	bd	eb	C	9	9.1	Female	57
+control1										
+control2										
+control3										

@@ -21,7 +21,7 @@ from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugins import longitudinal
 
 from q2_longitudinal._utilities import (
-    _get_group_pairs, _extract_distance_distribution,
+    _load_metadata, _get_group_pairs, _extract_distance_distribution,
     _get_pairwise_differences, _validate_input_values, _validate_input_columns,
     _between_subject_distance_distribution, _compare_pairwise_differences,
     _multiple_group_difference, _per_method_pairwise_stats,
@@ -39,6 +39,22 @@ filterwarnings("ignore", category=RuntimeWarning)
 
 class TestUtilities(TestPluginBase):
     package = 'q2_longitudinal.tests'
+
+    def setUp(self):
+        super().setUp()
+
+        self.md_ecam_no_nans_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam-sample-md.tsv'))
+
+        self.md_ecam_nans_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam-sample-md-nans.tsv'))
+
+    def test_load_metadata_nan_handling(self):
+        md_nans = _load_metadata(self.md_ecam_nans_fp, group_column='delivery')
+        md_no_nans = _load_metadata(self.md_ecam_no_nans_fp,
+                                    group_column='delivery')
+
+        self.assertTrue((md_nans.index == md_no_nans.index).all())
 
     def test_get_group_pairs(self):
         res, err = _get_group_pairs(
