@@ -43,16 +43,14 @@ class TestUtilities(TestPluginBase):
     def setUp(self):
         super().setUp()
 
-        self.md_ecam_no_nans_fp = qiime2.Metadata.load(
-            self.get_data_path('ecam-sample-md.tsv'))
-
+        self.md_ecam_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_map_maturity.txt'))
         self.md_ecam_nans_fp = qiime2.Metadata.load(
-            self.get_data_path('ecam-sample-md-nans.tsv'))
+            self.get_data_path('ecam_map_maturity_nans.txt'))
 
-    def test_load_metadata_nan_handling(self):
+    def test_load_metadata_group_nan_handling(self):
         md_nans = _load_metadata(self.md_ecam_nans_fp, group_column='delivery')
-        md_no_nans = _load_metadata(self.md_ecam_no_nans_fp,
-                                    group_column='delivery')
+        md_no_nans = _load_metadata(self.md_ecam_fp, group_column='delivery')
 
         self.assertTrue((md_nans.index == md_no_nans.index).all())
 
@@ -296,6 +294,8 @@ class TestLongitudinal(TestPluginBase):
         self.table_taxa_fp = _load_features('ecam-table-small.qza')
         self.md_ecam_fp = qiime2.Metadata.load(
             self.get_data_path('ecam_map_maturity.txt'))
+        self.md_ecam_nans_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam_map_maturity_nans.txt'))
         self.md_ecam_dm = _load_dm('ecam-unweighted-distance-matrix.qza')
 
     def test_validate_input_values(self):
@@ -372,10 +372,25 @@ class TestLongitudinal(TestPluginBase):
             metric='e2c3ff4f647112723741aa72087f1bfa',
             replicate_handling='drop')
 
+    def test_pairwise_differences_nan_group_column(self):
+        pairwise_differences(
+            output_dir=self.temp_dir.name, table=None,
+            metadata=self.md_ecam_nans_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid', metric='observed_otus',
+            replicate_handling='drop')
+
     def test_pairwise_distances(self):
         pairwise_distances(
             output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
             metadata=self.md_ecam_fp, group_column='delivery',
+            state_column='month', state_1=0, state_2=3,
+            individual_id_column='studyid', replicate_handling='drop')
+
+    def test_pairwise_distances_nan_group_column(self):
+        pairwise_distances(
+            output_dir=self.temp_dir.name, distance_matrix=self.md_ecam_dm,
+            metadata=self.md_ecam_nans_fp, group_column='delivery',
             state_column='month', state_1=0, state_2=3,
             individual_id_column='studyid', replicate_handling='drop')
 
