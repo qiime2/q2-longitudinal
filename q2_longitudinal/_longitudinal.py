@@ -44,7 +44,9 @@ def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
                          table: pd.DataFrame = None) -> None:
 
     # find metric in metadata or derive from table and merge into metadata
-    metadata = _add_metric_to_metadata(table, _load_metadata(metadata), metric)
+    metadata = _add_metric_to_metadata(table, _load_metadata(metadata,
+                                                             group_column),
+                                       metric)
 
     _validate_input_values(metadata, metric, individual_id_column,
                            group_column, state_column, state_1, state_2)
@@ -96,7 +98,7 @@ def pairwise_distances(output_dir: str, distance_matrix: skbio.DistanceMatrix,
                        palette: str = 'Set1',
                        replicate_handling: str = 'error',) -> None:
 
-    metadata = _load_metadata(metadata)
+    metadata = _load_metadata(metadata, group_column)
 
     _validate_input_values(metadata, None, individual_id_column, group_column,
                            state_column, state_1, state_2)

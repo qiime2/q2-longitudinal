@@ -441,9 +441,11 @@ def _multiple_tests_correction(df, method='fdr_bh'):
     return df.sort_index()
 
 
-def _load_metadata(metadata):
+def _load_metadata(metadata, group_column=None):
     metadata = metadata.to_dataframe()
     metadata = metadata.apply(lambda x: pd.to_numeric(x, errors='ignore'))
+    if group_column is not None and group_column in metadata.columns:
+        metadata = metadata.dropna(subset=[group_column])
     return metadata
 
 
