@@ -814,6 +814,7 @@ def _summarize_feature_stats(table, state_md_col):
 # df.fillna(None) does not work so used solution from:
 # https://github.com/pandas-dev/pandas/issues/1972
 def _convert_nan_to_none(df):
+    df = df.astype(object)
     return df.where(pd.notnull(df), None)
 
 
