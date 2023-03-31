@@ -30,8 +30,9 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             first_differences, first_distances,
                             maturity_index, feature_volatility,
                             plot_feature_volatility, anova)
-import q2_longitudinal
 
+import q2_longitudinal
+import q2_longitudinal._examples as ex
 
 citations = Citations.load('citations.bib', package='q2_longitudinal')
 
@@ -319,7 +320,9 @@ plugin.visualizers.register_function(
         'over time is co-plotted as "spaghetti" plots if the '
         '"individual_id_column" parameter is used. state_column will '
         'typically be a measure of time, but any numeric metadata column can '
-        'be used.')
+        'be used.'),
+    examples={'longitudinal_volatility_missing_numerical_md':
+              ex.longitudinal_volatility_missing_numerical_md}
 )
 
 
