@@ -11,6 +11,7 @@ import unittest
 from io import StringIO
 from warnings import filterwarnings
 import tempfile
+import re
 
 import numpy as np
 import pandas as pd
@@ -248,6 +249,8 @@ class TestLongitudinalPipelines(TestPluginBase):
 
         self.md_ecam_fp = qiime2.Metadata.load(
             self.get_data_path('ecam_map_maturity.txt'))
+        self.md_ecam_missing_fp = qiime2.Metadata.load(
+            self.get_data_path('ecam-sample-md-blanks.tsv'))
         table_fp = self.get_data_path('ecam-table-maturity.qza')
         self.table_ecam_fp = qiime2.Artifact.load(table_fp)
 
@@ -267,6 +270,36 @@ class TestLongitudinalPipelines(TestPluginBase):
                 table=self.table_ecam_fp, metadata=self.md_ecam_fp,
                 state_column='diet', individual_id_column='studyid',
                 n_estimators=10)
+
+    # Testing updated _convert_nan_to_none() util method
+    # This confirms that any NaNs present in the data are converted to None
+    # json.dumps then converts these values to null
+    def test_longitudinal_volatility_missing_numerical_md(self):
+        volatility_viz = longitudinal.actions.volatility(
+                            metadata=self.md_ecam_missing_fp,
+                            state_column='month')
+        match_json = \
+            r'(?:<script id="spec" type="application/json">)' + \
+            r'([\s\S]*?)(?:</script>)'
+        # First group matches <script> from vega spec, non-capturing
+        # Secound group matches the vega JSON object within <script></script>
+        # Non-greedy match, so only matches one script element
+        # Third group matches </script>, also non-capturing
+
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            viz_fp = volatility_viz[0].save(os.path.join(temp_dir_name,
+                                                         'viz.qzv'))
+            extracted_fp = \
+                qiime2.sdk.Result.extract(viz_fp,
+                                          os.path.join(temp_dir_name, 'viz'))
+            index_fp = os.path.join(extracted_fp, 'data', 'index.html')
+
+            with open(index_fp, 'r') as fh:
+                regex_match = re.findall(match_json, fh.read())[0]
+
+            self.assertNotIn('NaN', regex_match)
+            self.assertNotIn('nan', regex_match)
+            self.assertIn('null', regex_match)
 
 
 # This test class really just makes sure that each plugin runs without error.
