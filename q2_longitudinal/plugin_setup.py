@@ -32,6 +32,7 @@ from ._longitudinal import (pairwise_differences, pairwise_distances,
                             plot_feature_volatility, anova)
 import q2_longitudinal
 
+
 citations = Citations.load('citations.bib', package='q2_longitudinal')
 
 plugin = Plugin(
