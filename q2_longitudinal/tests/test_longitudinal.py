@@ -301,6 +301,9 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
 
+    def test_examples(self):
+        self.execute_examples()
+
 
 # This test class really just makes sure that each plugin runs without error.
 # UtilitiesTests handles all stats under the hood, so here we just want to make
