@@ -320,8 +320,8 @@ plugin.visualizers.register_function(
         '"individual_id_column" parameter is used. state_column will '
         'typically be a measure of time, but any numeric metadata column can '
         'be used.'),
-    examples={'volatility_missing_md_in_state_column':
-              ex.volatility_missing_md_in_state_column}
+    examples={'longitudinal_volatility':
+              ex.longitudinal_volatility}
 )
 
 

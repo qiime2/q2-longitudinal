@@ -23,13 +23,13 @@ def sample_md_blanks_factory():
     )
 
 
-def volatility_missing_md_in_state_column(use):
-    md = use.init_metadata('md', sample_md_blanks_factory)
+def longitudinal_volatility(use):
+    metadata = use.init_metadata('metadata', sample_md_blanks_factory)
 
     volatility_viz, = use.action(
         use.UsageAction('longitudinal', 'volatility'),
         use.UsageInputs(
-            metadata=md,
+            metadata=metadata,
             state_column='month'
         ),
         use.UsageOutputNames(
