@@ -22,15 +22,15 @@ requirements:
     - pandas {{ pandas }}
     - scipy {{ scipy }}
     - statsmodels >=0.9.0
-    - patsy
+    - patsy {{ patsy }}
     - scikit-bio {{ scikit_bio }}
-    - seaborn
+    - seaborn {{ seaborn }}
     - qiime2 {{ qiime2_epoch }}.*
     - q2-types {{ qiime2_epoch }}.*
     - q2-sample-classifier {{ qiime2_epoch }}.*
     - q2templates {{ qiime2_epoch }}.*
     - q2-feature-table {{ qiime2_epoch }}.*
-    - matplotlib
+    - matplotlib {{ matplotlib }}
 
 test:
   requires:
