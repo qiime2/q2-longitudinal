@@ -7,6 +7,7 @@
 # ----------------------------------------------------------------------------
 
 import os.path
+
 import pkg_resources
 from distutils.dir_util import copy_tree
 
@@ -18,6 +19,8 @@ import warnings
 import biom
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+from statsmodels.stats.anova import AnovaRM
+
 
 from ._utilities import (_get_group_pairs, _extract_distance_distribution,
                          _visualize, _validate_metadata_is_superset,
@@ -242,11 +245,20 @@ def linear_mixed_effects(output_dir: str, metadata: qiime2.Metadata,
 def anova(output_dir: str,
           metadata: qiime2.Metadata,
           formula: str,
-          sstype: str = 'II') -> None:
+          sstype: str = 'II',
+          repeated_measures: bool = False,
+          individual_id_column: str = None,
+          rm_aggregate: bool = False) -> None:
 
     # Grab metric and covariate names from formula
     metric, group_columns = _parse_formula(formula)
     columns = [metric] + list(group_columns)
+    # Add individual id col if performing repeated measures
+    if repeated_measures is True:
+        if individual_id_column is None or individual_id_column == "":
+            raise ValueError('individual ID column was '
+                             'not provided for repeated measures')
+        columns = columns + [individual_id_column]
 
     # Validate formula (columns are in metadata, etc)
     for col in columns:
@@ -256,31 +268,53 @@ def anova(output_dir: str,
     metadata = metadata.to_dataframe()[columns].dropna()
 
     # Run anova
-    lm = ols(formula, metadata).fit()
-    results = pd.DataFrame(sm.stats.anova_lm(lm, typ=sstype)).fillna('')
-    results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
+    if repeated_measures is False:
+        lm = ols(formula, metadata).fit()
+        results = pd.DataFrame(sm.stats.anova_lm(lm, typ=sstype)).fillna('')
+        results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
 
-    # Run pairwise t-tests with multiple test correction
-    pairwise_tests = pd.DataFrame()
-    for group in group_columns:
-        # only run on categorical columns — numeric columns raise error
-        if group in cats:
-            ttests = lm.t_test_pairwise(group, method='fdr_bh').result_frame
-            pairwise_tests = pd.concat([pairwise_tests, pd.DataFrame(ttests)])
-    if pairwise_tests.empty:
-        pairwise_tests = False
+        # Run pairwise t-tests with multiple test correction
+        pairwise_tests = pd.DataFrame()
+        for group in group_columns:
+            # only run on categorical columns — numeric columns raise error
+            if group in cats:
+                ttests = lm.t_test_pairwise(group,
+                                            method='fdr_bh').result_frame
+                pairwise_tests = pd.concat([pairwise_tests,
+                                            pd.DataFrame(ttests)])
+        if pairwise_tests.empty:
+            pairwise_tests = False
 
-    # Plot fit vs. residuals
-    metadata['residual'] = lm.resid
-    metadata['fitted_values'] = lm.fittedvalues
-    res = _regplot_subplots_from_dataframe(
-        'fitted_values', 'residual', metadata, group_columns, lowess=False,
-        ci=95, palette='Set1', fit_reg=False)
+        # Plot fit vs. residuals
+        metadata['residual'] = lm.resid
+        metadata['fitted_values'] = lm.fittedvalues
+        res = _regplot_subplots_from_dataframe(
+            'fitted_values', 'residual', metadata, group_columns, lowess=False,
+            ci=95, palette='Set1', fit_reg=False)
+
+        pairwise_test_name = 'Pairwise t-tests'
+
+    elif repeated_measures is True:
+        # create mapper for aggregate function (required arg for AnovaRM)
+        agg_dict = {True: "mean", False: None}
+
+        # run anova
+        aov = AnovaRM(depvar=metric,
+                      within=list(group_columns),
+                      subject=individual_id_column,
+                      data=metadata,
+                      aggregate_func=agg_dict[rm_aggregate]).fit()
+
+        results = aov.anova_table
+        results.to_csv(os.path.join(output_dir, 'anova.tsv'), sep='\t')
+
+        # set these for the visualize func
+        pairwise_tests, res, pairwise_test_name = False, False, False
 
     # Visualize results
     _visualize_anova(output_dir, pairwise_tests=pairwise_tests,
                      model_results=results, residuals=res,
-                     pairwise_test_name='Pairwise t-tests')
+                     pairwise_test_name=pairwise_test_name)
 
 
 def _warn_column_name_exists(column_name):

@@ -258,7 +258,10 @@ plugin.visualizers.register_function(
     inputs={},
     parameters={'metadata': Metadata,
                 'formula': Str,
-                'sstype': Str % Choices(['I', 'II', 'III'])},
+                'sstype': Str % Choices(['I', 'II', 'III']),
+                'repeated_measures': Bool,
+                'individual_id_column': Str,
+                'rm_aggregate': Bool},
     input_descriptions={},
     parameter_descriptions={
         'metadata': 'Sample metadata containing formula terms.',
@@ -267,7 +270,23 @@ plugin.visualizers.register_function(
                    'artifacts and can be continuous or categorical metadata '
                    'columns. ' + formula_description,
         'sstype': (
-            'Type of sum of squares calculation to perform (I, II, or III).')
+            'Type of sum of squares calculation to perform (I, II, or III).'),
+        'repeated_measures': 'Perform ANOVA as a repeated measures ANOVA. '
+                             'Implemented via statsmodels, which has the '
+                             'following limitations: Currently, only '
+                             'fully balanced within-subject designs are '
+                             'supported. Calculation of between-subject '
+                             'effects and corrections for violation of '
+                             'sphericity are not yet implemented.',
+        'individual_id_column': 'The column containing individual ID with '
+                                'repeated measures to account for.'
+                                'This should not be included in the formula.',
+        'rm_aggregate': 'If the data set contains more than a single '
+                        'observation per individual id and cell of the '
+                        'specified model, this function will be used to '
+                        'aggregate the data by the mean before running '
+                        'the ANOVA. '
+                        'Only applicable for repeated measures ANOVA. '
     },
     name='ANOVA test',
     description=('Perform an ANOVA test on any factors present in a metadata '

@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import pandas.testing as pdt
 import skbio
+import statsmodels.api as sm
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugins import longitudinal
@@ -1050,6 +1051,17 @@ class AnovaTests(TestPluginBase):
                             ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8',
                              's9', 's10', 's11', 's12'], name='id')))
 
+        # load longitudinal data for repeated measures
+        # This is from statsmodels example use of AnovaRM
+        self.pig_data = sm.datasets.get_rdataset("dietox", "geepack").data
+        self.pig_data["Early_Life"] = self.pig_data[
+            "Time"].apply(lambda x: 1 if x <= 6 else 0)
+        self.pig_data["Pig"] = self.pig_data["Pig"].astype(str)
+        self.pig_data.index = [str(x) for x in self.pig_data.index]
+        self.pig_data.index.name = "sampleid"
+
+        self.pig_data = qiime2.Metadata(self.pig_data)
+
     def test_execution(self):
         exp = pd.DataFrame(
             [['letter', 33.3333333333, 1.0, 27.2727272727, 0.0005474948912],
@@ -1103,6 +1115,44 @@ class AnovaTests(TestPluginBase):
         with tempfile.TemporaryDirectory() as temp_dir_name:
             with self.assertRaisesRegex(ValueError, "missing tilde"):
                 anova(temp_dir_name, self.md, 'letter')
+
+    def test_repeated_measures_anova(self):
+        anova(self.temp_dir.name,
+              metadata=self.pig_data,
+              formula='Weight ~ Early_Life',
+              repeated_measures=True,
+              individual_id_column='Pig',
+              rm_aggregate=True)
+
+        exp = pd.DataFrame([["Early_Life", 6810.96834, 1.0,
+                             71.0, 2.869744e-72]],
+                           columns=["Unnamed: 0", "F Value", "Num DF",
+                                    "Den DF", "Pr > F"],
+                           index=[0])
+
+        obs = pd.read_csv(
+            os.path.join(self.temp_dir.name, 'anova.tsv'), sep='\t')
+
+        pdt.assert_frame_equal(obs, exp)
+
+    def test_repeated_measures_raises_error_no_id_column(self):
+        with self.assertRaisesRegex(ValueError, "individual ID column "
+                                                "was not provided for "
+                                                "repeated measures"):
+            anova(output_dir=self.temp_dir.name,
+                  metadata=self.pig_data,
+                  formula='Weight ~ Early_Life',
+                  repeated_measures=True,
+                  individual_id_column=None)
+
+        with self.assertRaisesRegex(ValueError, "individual ID column "
+                                                "was not provided for "
+                                                "repeated measures"):
+            anova(output_dir=self.temp_dir.name,
+                  metadata=self.pig_data,
+                  formula='Weight ~ Early_Life',
+                  repeated_measures=True,
+                  individual_id_column="")
 
 
 md = pd.DataFrame([(1, 'a', 0.11, 1), (1, 'a', 0.12, 2), (1, 'a', 0.13, 3),
