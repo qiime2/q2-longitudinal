@@ -825,7 +825,8 @@ class TestLongitudinal(TestPluginBase):
     def test_first_differences_taxa(self):
         exp = pd.read_csv(self.get_data_path(
             'ecam-taxa-first-differences.tsv'),
-            sep='\t', squeeze=True, index_col=0)
+            sep='\t', index_col=0)
+        exp = exp.squeeze('columns')
         obs = first_differences(
             metadata=self.md_ecam_fp, state_column='month',
             individual_id_column='studyid',
@@ -945,7 +946,8 @@ class TestLongitudinal(TestPluginBase):
 
     def test_first_distances_ecam(self):
         exp = pd.read_csv(self.get_data_path(
-            'ecam-first-distances.tsv'), sep='\t', squeeze=True, index_col=0)
+            'ecam-first-distances.tsv'), sep='\t', index_col=0)
+        exp = exp.squeeze('columns')
         obs = first_distances(
             distance_matrix=self.md_ecam_dm, metadata=self.md_ecam_fp,
             state_column='month', individual_id_column='studyid',
@@ -1030,8 +1032,9 @@ class TestLongitudinal(TestPluginBase):
             feature_count=10)
         maz = pd.to_numeric(res[5].view(pd.Series))
         exp_maz = pd.read_csv(
-            self.get_data_path('maz.tsv'), sep='\t', squeeze=True, index_col=0,
+            self.get_data_path('maz.tsv'), sep='\t', index_col=0,
             header=0)
+        exp_maz = exp_maz.squeeze('columns')
         pdt.assert_series_equal(
             maz, exp_maz, check_dtype=False, check_index_type=False,
             check_series_type=False, check_names=False)

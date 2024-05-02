@@ -835,7 +835,7 @@ def _maz_score(metadata, predicted, column, group_by, control):
     # calculate maturity and MAZ scores in all samples
     maturity_scores = []
     maz_scores = []
-    for i, v in metadata[predicted].iteritems():
+    for i, v in metadata[predicted].items():
         _median, _std = medians[metadata.loc[i][column]]
         maturity = v - _median
         maturity_scores.append(maturity)
