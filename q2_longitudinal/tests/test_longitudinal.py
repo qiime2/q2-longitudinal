@@ -342,8 +342,6 @@ class TestLongitudinalPipelines(TestPluginBase):
             webdriver.ActionChains(driver).move_by_offset(
                 x_coord, y_coord).perform()
 
-            # import time
-            # time.sleep(100)
             self.assertIn('visible', tooltip.get_attribute('class'))
 
     def test_examples(self):
