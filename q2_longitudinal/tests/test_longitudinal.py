@@ -19,6 +19,9 @@ import pandas.testing as pdt
 import skbio
 import statsmodels.api as sm
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
@@ -304,20 +307,44 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
 
-    # The only good way I can think of to test this would be to set the browser
-    # to a specific size and move the mouse to a specific XY coordinate in the
-    # browser, somewhere on the canvas that should create a pop-up, the assert
-    # that the node representing the pop-up was properly created. That is
-    # fiddly and fragile.
-    def test_longitudinal_viz(self):
-        with webdriver.Chrome() as driver:
-            with tempfile.TemporaryDirectory() as output_dir:
-                volatility(
-                    output_dir,
-                    metadata=self.md_ecam_fp, state_column='month',
-                    individual_id_column='studyid')
+    def test_longitudinal_viz_chrome(self):
+        chrome_options = ChromeOptions()
+        chrome_options.add_argument('-headless')
 
-                driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
+        with webdriver.Chrome(options=chrome_options) as driver:
+            self._selenium_test(driver, 1165, 205)
+
+    def test_longitudinal_viz_firefox(self):
+        firefox_options = FirefoxOptions()
+        firefox_options.add_argument('-headless')
+
+        with webdriver.Firefox(options=firefox_options) as driver:
+            self._selenium_test(driver, 1150, 205)
+
+    def _selenium_test(self, driver, x_coord, y_coord):
+        with tempfile.TemporaryDirectory() as output_dir:
+            volatility(
+                output_dir,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid')
+
+            driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
+
+            tooltip = driver.find_element(By.ID, 'vg-tooltip-element')
+            self.assertNotIn('visible', tooltip.get_attribute('class'))
+
+            # Set a known size for the browser
+            driver.set_window_size(1920, 1080)
+            # This ought to move the cursor to about the top right of the lines
+            # in the plot which should make the tooltip appear. This basically
+            # just asserts that we have lines on the plot that end in the
+            # correct place
+            webdriver.ActionChains(driver).move_by_offset(
+                x_coord, y_coord).perform()
+
+            # import time
+            # time.sleep(100)
+            self.assertIn('visible', tooltip.get_attribute('class'))
 
     def test_examples(self):
         self.execute_examples()
