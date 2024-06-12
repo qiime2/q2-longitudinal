@@ -327,12 +327,18 @@ class TestLongitudinalPipelines(TestPluginBase):
 
                 # Set a known size for the browser
                 driver.set_window_size(1920, 1080)
+                width = plot.size['width']
+                height = plot.size['height']
+
+                xOffset = (width / 2) * .816
+                yOffset = -((height / 2) * .71)
+
                 # This ought to move the cursor to about the top right of the
                 # lines in the plot which should make the tooltip appear. This
                 # basically just asserts that we have lines on the plot that
                 # end in the correct place
                 webdriver.ActionChains(driver).move_to_element_with_offset(
-                    plot, 510, -165).perform()
+                    plot, xOffset, yOffset).perform()
                 self.assertIn('visible', tooltip.get_attribute('class'))
 
     def test_examples(self):
