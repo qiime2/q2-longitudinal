@@ -20,7 +20,6 @@ import skbio
 import statsmodels.api as sm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 import qiime2
@@ -307,42 +306,34 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
 
-    def test_longitudinal_viz_chrome(self):
-        chrome_options = ChromeOptions()
-        chrome_options.add_argument('-headless')
-
-        with webdriver.Chrome(options=chrome_options) as driver:
-            self._selenium_test(driver, 1165, 205)
-
+    # Only testing this in Firefox not Chrome because it is so fragile and
+    # dependent on specific positioning of elements that different browsers
+    # make things unpredictable
     def test_longitudinal_viz_firefox(self):
         firefox_options = FirefoxOptions()
         firefox_options.add_argument('-headless')
 
         with webdriver.Firefox(options=firefox_options) as driver:
-            self._selenium_test(driver, 1150, 205)
+            with tempfile.TemporaryDirectory() as output_dir:
+                volatility(
+                    output_dir,
+                    metadata=self.md_ecam_fp, state_column='month',
+                    individual_id_column='studyid')
 
-    def _selenium_test(self, driver, x_coord, y_coord):
-        with tempfile.TemporaryDirectory() as output_dir:
-            volatility(
-                output_dir,
-                metadata=self.md_ecam_fp, state_column='month',
-                individual_id_column='studyid')
+                driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
+                tooltip = driver.find_element(By.ID, 'vg-tooltip-element')
+                plot = driver.find_element(By.ID, 'plot')
+                self.assertNotIn('visible', tooltip.get_attribute('class'))
 
-            driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
-
-            tooltip = driver.find_element(By.ID, 'vg-tooltip-element')
-            self.assertNotIn('visible', tooltip.get_attribute('class'))
-
-            # Set a known size for the browser
-            driver.set_window_size(1920, 1080)
-            # This ought to move the cursor to about the top right of the lines
-            # in the plot which should make the tooltip appear. This basically
-            # just asserts that we have lines on the plot that end in the
-            # correct place
-            webdriver.ActionChains(driver).move_by_offset(
-                x_coord, y_coord).perform()
-
-            self.assertIn('visible', tooltip.get_attribute('class'))
+                # Set a known size for the browser
+                driver.set_window_size(1920, 1080)
+                # This ought to move the cursor to about the top right of the
+                # lines in the plot which should make the tooltip appear. This
+                # basically just asserts that we have lines on the plot that
+                # end in the correct place
+                webdriver.ActionChains(driver).move_to_element_with_offset(
+                    plot, 510, -165).perform()
+                self.assertIn('visible', tooltip.get_attribute('class'))
 
     def test_examples(self):
         self.execute_examples()
