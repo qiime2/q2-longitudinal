@@ -39,6 +39,7 @@ test:
     - q2-sample-classifier >={{ q2_sample_classifier }}
     - q2templates >={{ q2templates }}
     - q2-feature-table >={{ q2_feature_table }}
+    - selenium
     - pytest
 
   imports:

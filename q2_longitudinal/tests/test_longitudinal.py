@@ -18,6 +18,8 @@ import pandas as pd
 import pandas.testing as pdt
 import skbio
 import statsmodels.api as sm
+from selenium import webdriver
+
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugins import longitudinal
@@ -301,6 +303,21 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('NaN', regex_match)
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
+
+    # The only good way I can think of to test this would be to set the browser
+    # to a specific size and move the mouse to a specific XY coordinate in the
+    # browser, somewhere on the canvas that should create a pop-up, the assert
+    # that the node representing the pop-up was properly created. That is
+    # fiddly and fragile.
+    def test_longitudinal_viz(self):
+        with webdriver.Chrome() as driver:
+            with tempfile.TemporaryDirectory() as output_dir:
+                volatility(
+                    output_dir,
+                    metadata=self.md_ecam_fp, state_column='month',
+                    individual_id_column='studyid')
+
+                driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
 
     def test_examples(self):
         self.execute_examples()
