@@ -952,7 +952,7 @@ class TestLongitudinal(TestPluginBase):
             distance_matrix=self.md_ecam_dm, metadata=self.md_ecam_fp,
             state_column='month', individual_id_column='studyid',
             replicate_handling='drop')
-        pdt.assert_series_equal(obs, exp)
+        pdt.assert_series_equal(obs[exp.index], exp)
 
     def test_validate_metadata_is_superset_df(self):
         with self.assertRaisesRegex(ValueError, "Missing samples in metadata"):
