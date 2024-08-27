@@ -126,14 +126,17 @@
 {% set loading_selector = '#loading' %}
 {% include 'js-error-handler.html' %}
 <script id="spec" type="application/json">{{ vega_spec }}</script>
+<script id="renderer" type="application/json">{{ renderer }}</script>
 <script type="text/javascript">
   $(document).ready(function() {
     var spec = JSON.parse(document.getElementById('spec').innerHTML);
+    var renderer = JSON.parse(document.getElementById('renderer').innerHTML);
 
     // Try and come up with a good initial estimate of plot dimensions,
     // based on the browser dimensions.
     var opts = {
       width: $('#plot').width(),
+      renderer: renderer,
     };
 
     vegaEmbed('#plot', spec, opts).then(function(result) {
