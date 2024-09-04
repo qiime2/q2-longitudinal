@@ -6,6 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import json
 import os.path
 
 import pkg_resources
@@ -420,9 +421,16 @@ def _volatility(output_dir, metadata, state_column, individual_id_column,
     metadata.save(os.path.join(output_dir, 'data.tsv'))
     copy_tree(os.path.join(TEMPLATES, 'volatility'), output_dir)
     index = os.path.join(TEMPLATES, 'volatility', 'index.html')
-    q2templates.render(index, output_dir,
-                       context={'vega_spec': vega_spec,
-                                'is_feat_vol_plot': is_feat_vol_plot})
+    # Render in svg for testing so we can assert things about the plot. Use a
+    # canvas for the real runs to reduce resource usage
+    renderer = \
+        json.dumps('svg' if 'PYTEST_CURRENT_TEST' in os.environ else 'canvas')
+    q2templates.render(
+        index,
+        output_dir,
+        context={'vega_spec': vega_spec,
+                 'is_feat_vol_plot': is_feat_vol_plot,
+                 'renderer': renderer})
 
 
 def volatility(output_dir: str,

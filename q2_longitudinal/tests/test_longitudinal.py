@@ -18,6 +18,13 @@ import pandas as pd
 import pandas.testing as pdt
 import skbio
 import statsmodels.api as sm
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
 import qiime2
 from qiime2.plugin.testing import TestPluginBase
 from qiime2.plugins import longitudinal
@@ -301,6 +308,42 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('NaN', regex_match)
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
+
+    def test_longitudinal_viz_chrome(self):
+        chrome_options = ChromeOptions()
+        chrome_options.add_argument('-headless')
+
+        with webdriver.Chrome(options=chrome_options) as driver:
+            self._selenium_test(driver)
+
+    def test_longitudinal_viz_firefox(self):
+        firefox_options = FirefoxOptions()
+        firefox_options.add_argument('-headless')
+
+        with webdriver.Firefox(options=firefox_options) as driver:
+            self._selenium_test(driver)
+
+    def _selenium_test(self, driver):
+        with tempfile.TemporaryDirectory() as output_dir:
+            volatility(
+                output_dir,
+                metadata=self.md_ecam_fp, state_column='month',
+                individual_id_column='studyid')
+
+            driver.get(f"file://{os.path.join(output_dir, 'index.html')}")
+            tooltip = driver.find_element(By.ID, 'vg-tooltip-element')
+
+            self.assertNotIn('visible', tooltip.get_attribute('class'))
+
+            # This ought to grab a div towards the end of the line on the graph
+            # and move the mouse cursor to that div to make the tooltip show up
+            end_point = \
+                driver.find_element(
+                    By.CLASS_NAME, 'mark-rect').find_elements(
+                        By.TAG_NAME, 'path')[17]
+            ActionChains(driver).move_to_element(end_point).perform()
+
+            self.assertIn('visible', tooltip.get_attribute('class'))
 
     def test_examples(self):
         self.execute_examples()
