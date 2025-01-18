@@ -27,6 +27,7 @@ requirements:
   - q2-feature-table {{ qiime2_epoch }}.*
   - matplotlib {{ matplotlib }}
   build:
+  - python {{ python }}
   - setuptools
   - versioningit
 test:
