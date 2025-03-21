@@ -8,7 +8,7 @@
 
 from itertools import combinations
 import os.path
-import pkg_resources
+import importlib.resources
 from random import choice
 import uuid
 import keyword
@@ -30,7 +30,7 @@ import biom
 from patsy import ModelDesc
 
 
-TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
+TEMPLATES = importlib.resources.files('q2_longitudinal') / 'assets'
 
 
 def _validate_input_values(df, metric, individual_id_column, group_column,

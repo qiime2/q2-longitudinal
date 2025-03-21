@@ -7,14 +7,14 @@
 # ----------------------------------------------------------------------------
 
 import os
-import pkg_resources
+import importlib.resources
 
 import qiime2
 
 
 def _get_data_from_tests(path):
-    return pkg_resources.resource_filename('q2_longitudinal.tests',
-                                           os.path.join('data', path))
+    return importlib.resources.files(
+        'q2_longitudinal.tests') / os.path.join('data', path)
 
 
 def sample_md_blanks_factory():

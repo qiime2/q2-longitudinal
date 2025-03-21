@@ -9,7 +9,7 @@
 import json
 import os.path
 
-import pkg_resources
+import importlib.resources
 from distutils.dir_util import copy_tree
 
 import pandas as pd
@@ -36,7 +36,7 @@ from ._utilities import (_get_group_pairs, _extract_distance_distribution,
 from ._vega_specs import render_spec_volatility
 
 
-TEMPLATES = pkg_resources.resource_filename('q2_longitudinal', 'assets')
+TEMPLATES = importlib.resources.files('q2_longitudinal') / 'assets'
 
 
 def pairwise_differences(output_dir: str, metadata: qiime2.Metadata,
