@@ -16,7 +16,7 @@ requirements:
   - numpy {{ numpy }}
   - pandas {{ pandas }}
   - scipy {{ scipy }}
-  - statsmodels >=0.9.0
+  - statsmodels {{ statsmodels }}
   - patsy {{ patsy }}
   - scikit-bio {{ scikit_bio }}
   - seaborn {{ seaborn }}
