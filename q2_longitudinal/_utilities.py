@@ -396,6 +396,7 @@ def _boxplot_from_dict(groups, hue=None, y_label=None, x_label=None,
     ax.set_ylim(bottom=y_min, top=y_max)
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
+    ax.set_xticks(range(len(vals)))
     ax.set_xticklabels(x_tick_labels, rotation=label_rotation)
     return ax
 
