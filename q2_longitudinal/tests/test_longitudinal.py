@@ -8,6 +8,7 @@
 
 import os
 import unittest
+import pytest
 from io import StringIO
 from warnings import filterwarnings
 import tempfile
@@ -309,6 +310,7 @@ class TestLongitudinalPipelines(TestPluginBase):
             self.assertNotIn('nan', regex_match)
             self.assertIn('null', regex_match)
 
+    @pytest.mark.selenium
     def test_longitudinal_viz_chrome(self):
         chrome_options = ChromeOptions()
         chrome_options.add_argument('-headless')
@@ -316,6 +318,7 @@ class TestLongitudinalPipelines(TestPluginBase):
         with webdriver.Chrome(options=chrome_options) as driver:
             self._selenium_test(driver)
 
+    @pytest.mark.selenium
     def test_longitudinal_viz_firefox(self):
         firefox_options = FirefoxOptions()
         firefox_options.add_argument('-headless')
