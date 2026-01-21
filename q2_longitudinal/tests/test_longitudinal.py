@@ -46,16 +46,16 @@ from q2_longitudinal._longitudinal import (
 filterwarnings("ignore", category=UserWarning)
 filterwarnings("ignore", category=RuntimeWarning)
 
-# This is a temporary 'fix' to failing selenium tests with chrome when they
-# are run within a container on the GHA linux runner.
+# This is a temporary 'fix' to failing selenium tests when they are run
+# within a container on the GHA linux runner.
 # The failures aren't interesting and the hope is that this will either be
 # fixed such that:
 # A. None of the tests are run within a container, or
-# B. The firefox tests in container plus chrome tests on mac will fill in
-# enough gaps that we can see if something goes wrong that is interesting.
+# B. The chrome & firefox tests on mac will fill in enough gaps
+# that we can see if something goes wrong that is interesting.
 skip_linux = pytest.mark.skipif(
     os.getenv('SKIP_SELENIUM', '') == '1',
-    reason='skipping Selenium tests on chrome within linux container'
+    reason='skipping Selenium tests within linux container'
     )
 
 
@@ -330,6 +330,7 @@ class TestLongitudinalPipelines(TestPluginBase):
         with webdriver.Chrome(options=chrome_options) as driver:
             self._selenium_test(driver)
 
+    @skip_linux
     def test_longitudinal_viz_firefox(self):
         firefox_options = FirefoxOptions()
         firefox_options.add_argument('-headless')
