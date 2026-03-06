@@ -14,7 +14,7 @@ import uuid
 import keyword
 
 import numpy as np
-from numpy.linalg.linalg import LinAlgError
+from numpy.linalg import LinAlgError
 from scipy import linalg
 from scipy.stats import (kruskal, mannwhitneyu, wilcoxon, ttest_ind, ttest_rel,
                          ttest_1samp, f_oneway)
@@ -354,7 +354,7 @@ def _linear_effects(metadata, metric, state_column, group_columns,
         formula, metadata, groups=metadata[individual_id_column],
         re_formula=random_effects)
 
-    # numpy.linalg.linalg.LinAlgError appears to raise
+    # numpy.linalg.LinAlgError appears to raise
     # See https://github.com/qiime2/q2-longitudinal/issues/39
     try:
         model_fit = mlm.fit()
