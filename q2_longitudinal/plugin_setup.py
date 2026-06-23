@@ -13,9 +13,9 @@ from qiime2.plugin import (Str, Bool, Plugin, Metadata, Choices, Range, Float,
 from q2_types.feature_table import FeatureTable, RelativeFrequency, Frequency
 from q2_types.distance_matrix import DistanceMatrix
 from q2_types.sample_data import SampleData
-from q2_types.feature_data import (FeatureData, Importance)
+from q2_types.feature_data import FeatureData
 
-from q2_sample_classifier import (RegressorPredictions,
+from q2_sample_classifier import (Importance, RegressorPredictions,
                                   SampleEstimator, Regressor)
 from q2_sample_classifier.plugin_setup import (
     parameters, parameter_descriptions, output_descriptions,
